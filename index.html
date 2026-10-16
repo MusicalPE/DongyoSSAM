@@ -103,7 +103,7 @@ textarea{min-height:110px;resize:vertical;font-family:var(--hand);font-size:19px
 .tile{aspect-ratio:1.25;max-width:100%;min-width:0;overflow:hidden;border-radius:46% 54% 42% 58% / 55% 45% 55% 45%;display:grid;place-content:center;text-align:center;font-size:13px;line-height:1.2;color:var(--ink)}
 .tile b{font-family:var(--display);font-weight:400;font-size:15px;display:block}
 .tile.hot{color:var(--on-accent)}
-.tile.mine{outline:3px dashed var(--c1);outline-offset:1px}
+.tile.mine{outline:3px solid var(--c1);outline-offset:2px}
 .legend{display:flex;gap:4px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
 .legend i{width:18px;height:10px;border-radius:5px;display:inline-block}
 .rank{display:grid;gap:6px}
@@ -183,6 +183,8 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
 .check{display:flex;gap:8px;align-items:center;font-size:14.5px}
 .foot{margin-top:36px;text-align:center;font-size:13px;color:var(--muted)}
 .linkbtn{font:inherit;background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;padding:4px}
+.rrow.mine{outline:3px solid var(--c1);outline-offset:2px;border-radius:12px;background:var(--c1-soft)}
+.rank{padding-inline:20px}
 </style>
 </head>
 <body style="margin:0">
@@ -484,11 +486,11 @@ function render() {
             const n = NAT.regions[r[0]].stamps, h = heat(n);
             return `<div class="tile${h >= 3 ? " hot" : ""}${r[0] === ME.region ? " mine" : ""}" style="background:var(--heat${h})"><b>${r[0]}</b><span class="num">${n}</span></div>` }).join("")}
         </div>
-        <div class="legend">적음 <i style="background:var(--heat1)"></i><i style="background:var(--heat2)"></i><i style="background:var(--heat3)"></i><i style="background:var(--heat4)"></i> 많음 · 점선 테두리가 우리 지역</div>
+        <div class="legend">적음 <i style="background:var(--heat1)"></i><i style="background:var(--heat2)"></i><i style="background:var(--heat3)"></i><i style="background:var(--heat4)"></i> 많음 · 주황 테두리가 우리 지역</div>
       </div>
       <h2>지역 순위</h2>
       <div class="card rank">
-        ${rk.map(([r, x], i) => `<div class="rrow${i < 3 && x.stamps ? " top" : ""}"><span class="n">${i + 1}</span><span>${r}${r === ME.region ? " ·우리" : ""}</span><span class="bar"><span style="width:${x.stamps / max * 100}%"></span></span><span class="num">${x.stamps}</span></div>`).join("")}
+        ${rk.map(([r, x], i) => `<div class="rrow${i < 3 && x.stamps ? " top" : ""}${r === ME.region ? " mine" : ""}"><span class="n">${i + 1}</span><span>${r}</span><span class="bar"><span style="width:${x.stamps / max * 100}%"></span></span><span class="num">${x.stamps}</span></div>`).join("")}
       </div>
       <h2>이어 부르기 릴레이</h2>
       <p class="sub">${esc(APP.relay.id)} 곡은 「${esc(rs.title)}」이에요. 반마다 한 줄씩 이어 불러 한 곡을 온 나라로 돌려요.</p>
