@@ -639,6 +639,11 @@ body.kara-on .mini-video{z-index:41;top:max(56px,env(safe-area-inset-top));botto
 @media (min-width:1000px){.app-install{right:28px;bottom:16px;font-size:15px;padding:7px 16px 7px 12px}.app-install svg{width:18px;height:18px}}
 @media (max-width:480px){.app-install span{display:none}.app-install{padding:6px;bottom:8px}}
 .install-steps{display:grid;gap:10px}
+/* 사용 설명서 링크 (동요샘 카페 아래) */
+.cafe.manual-link{background:var(--c4-soft) repeating-linear-gradient(-45deg,transparent 0 14px,rgba(255,255,255,.18) 14px 28px);border-color:var(--c4)}
+.cafe.manual-link .cafe-go{background:var(--c4)}
+.book-ico{display:grid;place-items:center;width:34px;height:30px}
+.book-ico svg{width:28px;height:28px}
 /* 엑셀로 한꺼번에 올리기 */
 .bulk-steps{margin:0;padding-left:20px;display:grid;gap:8px;line-height:1.7}
 .bulk-steps .btn{padding:3px 12px;font-size:14px;vertical-align:1px}
@@ -712,7 +717,7 @@ body.kara-on .mini-video{z-index:41;top:max(56px,env(safe-area-inset-top));botto
   <div class="content">
   <p class="example" id="exampleNote"></p>
   <main id="view"></main>
-  <footer class="foot"><a class="linkbtn" href="https://cafe.daum.net/jbdongyo" target="_blank" rel="noopener">동요샘 카페</a> · <button class="linkbtn" data-tab="op">운영진</button> · Made by 음악적체육인</footer>
+  <footer class="foot"><a class="linkbtn" href="https://cafe.daum.net/jbdongyo" target="_blank" rel="noopener">동요샘 카페</a> · <a class="linkbtn" href="docs/manual.pdf" target="_blank" rel="noopener">사용 설명서</a> · <button class="linkbtn" data-tab="op">운영진</button> · Made by 음악적체육인</footer>
   </div>
 </div>
 </div>
@@ -975,6 +980,10 @@ function renderSide() {
     <a class="cafe cafe-side" href="https://cafe.daum.net/jbdongyo" target="_blank" rel="noopener">
       <span class="cafe-notes" aria-hidden="true"><i></i><i></i><i></i></span>
       <span class="min"><b>동요샘 카페</b><small>노래 이야기와 발표회 소식</small></span>
+    </a>
+    <a class="cafe cafe-side manual-link" href="docs/manual.pdf" target="_blank" rel="noopener">
+      <span class="book-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" fill="var(--c4-soft)" stroke="var(--c4)" stroke-width="2" stroke-linejoin="round"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" fill="none" stroke="var(--c4)" stroke-width="2" stroke-linejoin="round"/><path d="M9 8h7M9 11.5h5" stroke="var(--c4)" stroke-width="2" stroke-linecap="round"/></svg></span>
+      <span class="min"><b>사용 설명서</b><small>노래상자 쓰는 법 (PDF)</small></span>
     </a>`;
 }
 function render() {
@@ -1016,6 +1025,11 @@ function render() {
         <span class="cafe-notes" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="min"><b>동요샘 카페</b><small>선생님들의 노래 이야기와 발표회 소식을 만나요</small></span>
         <span class="cafe-go">놀러 가기</span>
+      </a>
+      <a class="cafe manual-link" href="docs/manual.pdf" target="_blank" rel="noopener">
+        <span class="book-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" fill="var(--c4-soft)" stroke="var(--c4)" stroke-width="2" stroke-linejoin="round"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" fill="none" stroke="var(--c4)" stroke-width="2" stroke-linejoin="round"/><path d="M9 8h7M9 11.5h5" stroke="var(--c4)" stroke-width="2" stroke-linecap="round"/></svg></span>
+        <span class="min"><b>사용 설명서</b><small>노래상자 쓰는 법을 그림과 함께 봐요 (PDF)</small></span>
+        <span class="cafe-go">열어 보기</span>
       </a>
       <div class="card">
         <span class="eyebrow">${PERIOD_LABEL()} 전국 무대</span>
