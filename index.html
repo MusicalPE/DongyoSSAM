@@ -185,6 +185,13 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
 .linkbtn{font:inherit;background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;padding:4px}
 .rrow.mine{outline:3px solid var(--c1);outline-offset:2px;border-radius:12px;background:var(--c1-soft)}
 .rank{padding-inline:20px}
+.tops{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:360px){.tops{grid-template-columns:minmax(0,1fr)}}
+.topcard{display:grid;gap:2px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--c2-soft);border:2px solid var(--c2);border-radius:var(--wob);padding:12px 14px;min-width:0}
+.topcard.sung{background:var(--c3-soft);border-color:var(--c3)}
+.topcard .eyebrow{font-size:16px}
+.topcard b{font-family:var(--display);font-weight:400;font-size:20px;line-height:1.25;overflow-wrap:anywhere}
+.done-chip{font-family:var(--display);font-size:12.5px;line-height:1.3;text-align:center;width:64px;color:var(--leaf);border:2px solid var(--c3);background:var(--c3-soft);border-radius:12px;padding:3px 6px}
 </style>
 </head>
 <body style="margin:0">
@@ -400,6 +407,7 @@ function quests() {
 
 /* ---------- 화면 조각 ---------- */
 let filter = { q: "", theme: null, grade: null, mode: "concert" };
+let chartMode = "vote";
 let tab = APP.q.tab || "today";
 function songRow(s) {
   const c = s.id % 6;
@@ -503,14 +511,22 @@ function render() {
     </section>`;
   }
   if (tab === "chart") {
-    const list = SONGS.slice().sort((a, b) => votesFor(b.id) - votesFor(a.id)), mv = myVoteSong();
+    const mv = myVoteSong(), sung = chartMode === "sung";
+    const byVote = SONGS.slice().sort((a, b) => votesFor(b.id) - votesFor(a.id));
+    const bySung = SONGS.slice().sort((a, b) => classesSung(b.id) - classesSung(a.id));
+    const topV = byVote[0], topS = bySung[0], list = sung ? bySung : byVote;
     v.innerHTML = `<section>
-      <h2>${MONTH_LABEL()} 동요샘 차트</h2>
-      <p class="sub">반마다 한 달에 한 곡씩 투표할 수 있어요. 매달 1일에 새로 시작해요.</p>
+      <h2>동요샘 차트</h2>
+      <div class="tops">
+        <button class="topcard" data-open="${topV.id}"><span class="eyebrow">이달 투표 1위</span><b>${esc(topV.title)}</b><small class="meta">${votesFor(topV.id)}표</small></button>
+        <button class="topcard sung" data-open="${topS.id}"><span class="eyebrow">가장 많이 불린 곡</span><b>${esc(topS.title)}</b><small class="meta">${classesSung(topS.id)}개 반이 불렀어요</small></button>
+      </div>
+      <div class="chips"><button class="chip" data-chart="vote" aria-pressed="${!sung}">투표 순위</button><button class="chip" data-chart="sung" aria-pressed="${sung}">많이 불린 순위</button></div>
+      <p class="sub" style="margin:0">${sung ? "반이 함께 부르고 도장을 찍은 곡을 셌어요. 지금까지 쌓인 기록이에요." : "반마다 한 달에 한 곡씩 투표할 수 있어요. 매달 1일에 새로 시작해요."}</p>
       <div class="list">${list.map((s, i) => { const on = mv === s.id;
-        return `<div class="crow p${i + 1}"><span class="n">${i + 1}</span><span class="min"><b data-open="${s.id}">${esc(s.title)}</b><br><small class="meta">${esc(s.lyric)} · ${votesFor(s.id)}표</small></span>
-        <button class="vote${on ? " on" : ""}" data-vote="${s.id}">${on ? "투표함" : "투표"}</button></div>` }).join("")}</div>
-      <p class="meta">${mv ? "이번 달 투표를 했어요. 다른 곡을 누르면 투표가 옮겨져요." : "아직 이번 달 투표를 하지 않았어요."}</p>
+        return `<div class="crow p${i + 1}"><span class="n">${i + 1}</span><span class="min"><b data-open="${s.id}">${esc(s.title)}</b><br><small class="meta">${sung ? classesSung(s.id) + "개 반" : votesFor(s.id) + "표"} · ${esc(s.lyric)}</small></span>
+        ${sung ? (ME.stamps.has(s.id) ? `<span class="done-chip">우리 반 불렀어요</span>` : `<button class="vote" data-open="${s.id}">들어 보기</button>`) : `<button class="vote${on ? " on" : ""}" data-vote="${s.id}">${on ? "투표함" : "투표"}</button>`}</div>` }).join("")}</div>
+      ${sung ? "" : `<p class="meta">${mv ? "이번 달 투표를 했어요. 다른 곡을 누르면 투표가 옮겨져요." : "아직 이번 달 투표를 하지 않았어요."}</p>`}
     </section>`;
   }
   if (tab === "mine") renderMine(v);
@@ -647,6 +663,7 @@ document.addEventListener("click", e => {
   if (d.tab) { goTab(d.tab); return; }
   if (t.hasAttribute("data-close")) { $("#sheetHost").innerHTML = ""; return; }
   if (d.open) { openSong(+d.open); return; }
+  if (d.chart) { chartMode = d.chart; render(); return; }
   if (t.closest("[data-opzone]")) return;
   if (t.hasAttribute("data-login")) { doLogin(); return; }
   if (t.hasAttribute("data-logout")) { rpc("logout", [APP.token]).catch(() => {}); APP.token = ""; store.del("dys_token|" + APP.shellUrl); render(); toast("로그아웃했어요"); return; }
