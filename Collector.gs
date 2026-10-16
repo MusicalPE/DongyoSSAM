@@ -17,7 +17,7 @@
  * 시트에서 직접 고쳐도 됩니다. 고친 내용은 2분 안에 화면에 반영됩니다.
  *************************************************************/
 
-const SERVER_VERSION = 5;   // 5: 이번 달·학년도 집계, 로그인 유지, 알림 메일, 기록 내려받기, 공개 동의, 운영 기록  4: 곡 지우기·예시 곡 한꺼번에 지우기  3: 한 시트 방식 — 가입·승인·로그인, 계정 하나에 여러 반
+const SERVER_VERSION = 6;   // 6: 노래 파일(mp3)·악보 파일 올리기, 곡 종류(창작곡·편곡)·편곡자, 발표회 없는 개인 창작곡  5: 이번 달·학년도 집계, 로그인 유지, 알림 메일, 기록 내려받기, 공개 동의, 운영 기록  4: 곡 지우기·예시 곡 한꺼번에 지우기  3: 한 시트 방식 — 가입·승인·로그인, 계정 하나에 여러 반
 const TZ_ = 'Asia/Seoul';
 const BOARD_CACHE_SEC = 120;
 const TOKEN_SEC = 21600;    // 로그인 6시간 (로그인 유지를 고르면 30일)
@@ -29,7 +29,7 @@ const SH_ACC = '계정', SH_CLASSES = '반', SH_SONGS = '곡 목록', SH_SET = '
 const HEAD_ = {
   '계정': ['아이디', '비밀번호(암호화)', '선생님 이름', '학교', '지역', '신청한 날', '승인', '마지막 로그인', '메모'],
   '반': ['반 ID', '아이디', '반 이름', '지역', '도장', '투표 달', '투표 곡', '좋아요', '릴레이', '만든 날', '마지막 기록', '숨김'],
-  '곡 목록': ['곡번호', '곡 제목', '작사', '작곡', '발표회', '발표 연도', '추천 학년군', '주제(쉼표로)', '계절', '조성', '박자', '음역', '가사', '소개', '수업 활용', '영상 주소', '악보 주소', '숨김', '공개 동의'],
+  '곡 목록': ['곡번호', '곡 제목', '작사', '작곡', '발표회', '발표 연도', '추천 학년군', '주제(쉼표로)', '계절', '조성', '박자', '음역', '가사', '소개', '수업 활용', '영상 주소', '악보 주소', '숨김', '공개 동의', '노래 파일', '곡 종류', '편곡'],
   '설정': ['항목', '값', '설명'],
   '바꾼 가사': ['가사 ID', '반 ID', '곡번호', '바꾼 가사', '반 이름', '지역', '받은 날', '공개'],
   '릴레이 기록': ['릴레이', '반 ID', '반 이름', '지역', '이어받은 때'],
@@ -325,9 +325,10 @@ function getBoard_() {
     if (!id || !String(r[1]).trim() || isO_(r[17])) return;
     songs.push({ id: id, title: clean_(r[1], 40), lyricist: clean_(r[2], 40), composer: clean_(r[3], 40), concert: clean_(r[4], 40),
       year: num_(r[5]) || '', grade: clean_(r[6], 10), themes: String(r[7]).split(/[,，、]/).map(function (x) { return clean_(x, 10); }).filter(String),
-      season: clean_(r[8], 4), key: clean_(r[9], 4), beat: clean_(r[10], 6), range: clean_(r[11], 12),
+      season: clean_(r[8], 20), key: clean_(r[9], 4), beat: clean_(r[10], 6), range: clean_(r[11], 12),
       lyrics: String(r[12] || '').slice(0, 2000), intro: String(r[13] || '').slice(0, 600), tip: String(r[14] || '').slice(0, 600),
-      video: /^https:\/\//.test(String(r[15])) ? String(r[15]).trim() : '', score: /^https:\/\//.test(String(r[16])) ? String(r[16]).trim() : '' });
+      video: /^https:\/\//.test(String(r[15])) ? String(r[15]).trim() : '', score: /^https:\/\//.test(String(r[16])) ? String(r[16]).trim() : '',
+      audio: /^https:\/\//.test(String(r[19] || '')) ? String(r[19]).trim() : '', type: String(r[20] || '').trim() === '편곡' ? '편곡' : '창작곡', arranger: clean_(r[21], 40) });
   });
   const set = settings_();
   const relay = { id: clean_(set['릴레이 이름'], 30) || '첫 번째 릴레이', song: num_(set['릴레이 곡번호']) || (songs[0] ? songs[0].id : 0) };
@@ -355,6 +356,8 @@ function log_(who, what, target) { try { sheet_(SH_LOG).appendRow([now_(), who, 
 function opWho_(token) { return CacheService.getScriptCache().get('OP_' + token) || '운영진'; }
 function opLogout_(token) { if (token) CacheService.getScriptCache().remove('OP_' + token); return { ok: true }; }
 function opNeed_(token) { if (!token || !CacheService.getScriptCache().get('OP_' + token)) throw new Error('운영진 로그인이 필요해요. 다시 로그인해 주세요.'); }
+// 드라이브 권한 허용: 노래 파일·악보 올리기용. 한 번 실행하면 권한 창이 떠요 (폴더 '동요샘 노래상자 파일'이 생겨요)
+function allowDrive() { Logger.log('파일 폴더: ' + folder_().getUrl()); }
 // 알림 메일 권한 허용: 새 코드를 붙여 넣은 뒤 이 함수를 한 번 실행하면 메일 보내기 권한을 허용하는 창이 떠요 (메일은 보내지 않아요)
 function allowMail() { Logger.log('오늘 보낼 수 있는 메일: ' + MailApp.getRemainingDailyQuota()); }
 // 운영진 비밀번호 정하기: 아래 "새비밀번호"를 바꾸고 이 함수를 한 번 실행하세요
@@ -373,7 +376,7 @@ function opData_(token) {
   const songs = values_(SH_SONGS).slice(1).filter(function (r) { return num_(r[0]); }).map(function (r) {
     return { id: num_(r[0]), title: String(r[1]), lyricist: String(r[2]), composer: String(r[3]), concert: String(r[4]), year: r[5] === '' ? '' : String(r[5]),
       grade: String(r[6]), themes: String(r[7]), season: String(r[8]), key: String(r[9]), beat: String(r[10]), range: String(r[11]),
-      lyrics: String(r[12]), intro: String(r[13]), tip: String(r[14]), video: String(r[15]), score: String(r[16]), hidden: isO_(r[17]), consent: isO_(r[18]) };
+      lyrics: String(r[12]), intro: String(r[13]), tip: String(r[14]), video: String(r[15]), score: String(r[16]), hidden: isO_(r[17]), consent: isO_(r[18]), audio: String(r[19] || ''), type: String(r[20] || '').trim() === '편곡' ? '편곡' : '창작곡', arranger: String(r[21] || '') };
   });
   const lyrics = values_(SH_LYRICS).slice(1).filter(function (r) { return r[0] !== ''; }).map(function (r) {
     const st = String(r[7] || '').trim();
@@ -442,6 +445,31 @@ function opToday_(token, month, entries) {
     bust_(); return opData_(token);
   });
 }
+// 노래 파일(mp3)·악보(PDF·그림) 올리기: 운영진 구글 드라이브의 '동요샘 노래상자 파일' 폴더에 저장하고 링크로 공유
+const UPLOAD_MAX = 20 * 1024 * 1024;
+function folder_() {
+  const p = PropertiesService.getScriptProperties(), id = p.getProperty('DRIVE_FOLDER');
+  if (id) { try { const f = DriveApp.getFolderById(id); if (!f.isTrashed()) return f; } catch (e) {} }
+  const f = DriveApp.createFolder('동요샘 노래상자 파일');
+  p.setProperty('DRIVE_FOLDER', f.getId());
+  return f;
+}
+function opUpload_(token, kind, name, mime, data) {
+  opNeed_(token);
+  mime = String(mime || '');
+  const okType = kind === 'audio' ? /^audio\//.test(mime) || mime === 'video/mp4' : /^image\//.test(mime) || mime === 'application/pdf';
+  if (!okType) throw new Error(kind === 'audio' ? 'mp3 같은 노래 파일만 올릴 수 있어요.' : '악보는 PDF나 그림 파일만 올릴 수 있어요.');
+  const bytes = Utilities.base64Decode(String(data || ''));
+  if (!bytes.length) throw new Error('파일이 비어 있어요.');
+  if (bytes.length > UPLOAD_MAX) throw new Error('파일이 너무 커요. 20MB까지 올릴 수 있어요.');
+  let file;
+  try { file = folder_().createFile(Utilities.newBlob(bytes, mime, clean_(name, 80) || '파일')); }
+  catch (e) { throw new Error('드라이브에 저장하지 못했어요. 편집기에서 allowDrive 를 한 번 실행해 권한을 허용해 주세요.'); }
+  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); }
+  catch (e) { throw new Error('파일은 올렸지만 링크 공유를 켜지 못했어요. 드라이브에서 직접 "링크가 있는 모든 사용자"로 바꿔 주세요.'); }
+  log_(opWho_(token), kind === 'audio' ? '노래 파일 올림' : '악보 파일 올림', file.getName());
+  return { id: file.getId(), name: file.getName(), url: 'https://drive.google.com/file/d/' + file.getId() + '/view' };
+}
 // 기록 내려받기: 반별·곡별
 function opExport_(token) {
   opNeed_(token);
@@ -460,19 +488,21 @@ function opExport_(token) {
   values_(SH_CLASSES).slice(1).forEach(function (r) { if (mstr_(r[5]) === month && num_(r[6])) votes[num_(r[6])] = (votes[num_(r[6])] || 0) + 1; });
   const songs = values_(SH_SONGS).slice(1).filter(function (r) { return num_(r[0]); }).map(function (r) {
     const id = num_(r[0]), st = songStat[id] || { all: 0, year: 0, month: 0 };
-    return [id, String(r[1]), String(r[2]), String(r[3]), String(r[4]), st.all, st.year, st.month, votes[id] || 0, lyrSong[id] || 0, isO_(r[17]) ? '숨김' : '', isO_(r[18]) ? 'O' : ''];
+    return [id, String(r[1]), String(r[20] || '').trim() === '편곡' ? '편곡' : '창작곡', String(r[2]), String(r[3]), String(r[21] || ''), String(r[4]) || '발표회 없음', st.all, st.year, st.month, votes[id] || 0, lyrSong[id] || 0, isO_(r[17]) ? '숨김' : '', isO_(r[18]) ? 'O' : ''];
   });
   log_(opWho_(token), '기록 내려받기', '');
   return { month: month, yearStart: ys,
     classHead: ['반 이름', '지역', '학교', '선생님', '아이디', '스티커(모두)', '스티커(올해)', '스티커(이번 달)', '이번 달 투표 곡번호', '올린 가사', '릴레이 참여', '만든 날', '마지막 기록', '숨김'], classes: classes,
-    songHead: ['곡번호', '곡 제목', '작사', '작곡', '발표회', '부른 반(모두)', '부른 반(올해)', '부른 반(이번 달)', '이번 달 투표', '공개된 바꾼 가사', '숨김', '공개 동의'], songs: songs };
+    songHead: ['곡번호', '곡 제목', '곡 종류', '작사', '작곡', '편곡', '발표회', '부른 반(모두)', '부른 반(올해)', '부른 반(이번 달)', '이번 달 투표', '공개된 바꾼 가사', '숨김', '공개 동의'], songs: songs };
 }
 function opSaveSong_(token, s) {
   opNeed_(token);
   s = s || {};
   const title = clean_(s.title, 40);
   if (!title) throw new Error('곡 제목을 적어 주세요.');
-  if (!s.consent) throw new Error('작사·작곡 선생님께 공개 동의를 받았는지 확인해 주세요.');
+  if (!s.consent) throw new Error('작사·작곡·편곡 선생님께 공개 동의를 받았는지 확인해 주세요.');
+  if (s.type === '편곡' && !clean_(s.arranger, 40)) throw new Error('편곡한 선생님 이름을 적어 주세요.');
+  if (/^[-–—\s]+$/.test(String(s.concert || ''))) s.concert = '';
   const link = function (u) { u = String(u || '').trim(); if (u && !/^https:\/\//.test(u)) throw new Error('영상·악보 주소는 https:// 로 시작해야 해요.'); return u.slice(0, 500); };
   const long = function (t, n) { return String(t == null ? '' : t).replace(/\r/g, '').replace(/[<>]/g, '').slice(0, n); };
   return withLock_(function () {
@@ -481,8 +511,8 @@ function opSaveSong_(token, s) {
     for (let i = 1; i < v.length; i++) { const n = num_(v[i][0]); max = Math.max(max, n); if (id && n === id) row = i + 1; }
     if (!id) id = max + 1;
     const data = [id, title, clean_(s.lyricist, 40), clean_(s.composer, 40), clean_(s.concert, 40), num_(s.year) || '', clean_(s.grade, 10),
-      clean_(s.themes, 60), clean_(s.season, 4), clean_(s.key, 4), clean_(s.beat, 6), clean_(s.range, 12),
-      long(s.lyrics, 2000), long(s.intro, 600), long(s.tip, 600), link(s.video), link(s.score), s.hidden ? 'O' : '', 'O'];
+      clean_(s.themes, 60), clean_(s.season, 20), clean_(s.key, 4), clean_(s.beat, 6), clean_(s.range, 12),
+      long(s.lyrics, 2000), long(s.intro, 600), long(s.tip, 600), link(s.video), link(s.score), s.hidden ? 'O' : '', 'O', link(s.audio), s.type === '편곡' ? '편곡' : '창작곡', s.type === '편곡' ? clean_(s.arranger, 40) : ''];
     if (row) sh.getRange(row, 1, 1, data.length).setValues([data]);
     else { sh.appendRow(data); row = sh.getLastRow(); }
     sh.getRange(row, 13, 1, 3).setWrap(true);
@@ -546,7 +576,7 @@ const FN_ = {
   toggleStamp: toggleStamp_, vote: vote_, joinRelay: joinRelay_, addLyric: addLyric_, toggleLike: toggleLike_,
   opLogin: opLogin_, opLogout: opLogout_, opData: opData_, opSaveSong: opSaveSong_, opLyric: opLyric_, opRelay: opRelay_,
   opClass: opClass_, opAccount: opAccount_, opResetPw: opResetPw_, opContact: opContact_,
-  opDeleteSong: opDeleteSong_, opClearExamples: opClearExamples_, opNotify: opNotify_, opExport: opExport_, opToday: opToday_
+  opDeleteSong: opDeleteSong_, opClearExamples: opClearExamples_, opNotify: opNotify_, opExport: opExport_, opToday: opToday_, opUpload: opUpload_
 };
 
 /************ 곡 목록 예시 (처음 한 번) ************/

@@ -572,6 +572,17 @@ body.op-on .playerbar,body.op-on .mini-video{display:none!important}
 .mv-head span{display:flex;gap:4px;flex:none}
 .mv-head button{font:700 13px var(--body);color:#fff;background:rgba(255,255,255,.16);border:0;border-radius:999px;padding:5px 11px;cursor:pointer}
 .mv-frame{position:relative;aspect-ratio:16/9;background:#000}
+.mini-video.audio .mv-frame{aspect-ratio:auto;height:120px}
+.mini-video.audio.big .mv-frame{height:180px}
+body.kara-on .mini-video{z-index:41;top:max(56px,env(safe-area-inset-top));bottom:auto}
+.tag.arr{background:var(--c5-soft);border-color:var(--c5)}
+#f_concert:disabled{opacity:.5}
+.up-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+.up-btn{white-space:nowrap;text-align:center}
+.up-btn.loading{opacity:.6;pointer-events:none}
+@media (max-width:480px){.up-row{grid-template-columns:minmax(0,1fr)}}
+.vbox.audio{aspect-ratio:auto;height:130px}
+.vbox.score{aspect-ratio:3/4;max-height:80vh;background:#fff}
 .mv-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 @media (max-width:600px){.mini-video{left:16px;right:16px;width:auto}.mini-video.big{width:auto}}
 /* 오늘의 동요 달력 */
@@ -726,6 +737,17 @@ const THEMES = ["학교생활","친구","가족","자연","계절","몸놀이","
 const GRADES = ["1~2학년","3~4학년","5~6학년","전 학년"];
 const SEASON_OF_MONTH = m => m <= 1 || m === 11 ? "겨울" : m <= 4 ? "봄" : m <= 7 ? "여름" : "가을";
 const songById = id => SONGS.find(s => s.id === id);
+/* 계절은 여러 개 고를 수 있어요 (네 계절 모두 = 사계절) */
+const SEASONS = ["봄", "여름", "가을", "겨울"];
+const seasonsOf = s => { const t = String((s && s.season) || ""); return /사계절/.test(t) ? SEASONS.slice() : SEASONS.filter(x => t.includes(x)); };
+const inSeason = (s, se) => seasonsOf(s).includes(se);
+const seasonLabel = s => { const a = seasonsOf(s); return a.length === 4 ? "사계절" : a.join("·"); };
+const noConcert = c => !String(c || "").trim() || /^[-–—\s]+$/.test(String(c));
+function creditLine(s) {
+  const a = s.lyricist, c = s.composer, pre = s.type === "편곡" ? "원곡 " : "";
+  const base = a && a === c ? pre + "작사·작곡 " + a : [a && pre + "작사 " + a, c && pre + "작곡 " + c].filter(Boolean).join(" · ");
+  return [base, s.type === "편곡" && s.arranger ? "편곡 " + s.arranger : ""].filter(Boolean).join(" · ");
+}
 
 /* ---------- 시도 타일 지도 (대략적 위치) ---------- */
 const REGIONS = [
@@ -813,9 +835,9 @@ function localNational(withDemo) {
 }
 function songsFromCollector(list) {
   return list.map(s => ({ id: s.id, title: s.title,
-    lyric: s.lyricist && s.lyricist === s.composer ? "작사·작곡 " + s.lyricist : [s.lyricist && "작사 " + s.lyricist, s.composer && "작곡 " + s.composer].filter(Boolean).join(" · "),
-    concert: s.concert || "발표회 미정", year: s.year || "", grade: s.grade || "전 학년", themes: s.themes || [], season: s.season || "", key: s.key || "♪", beat: s.beat || "", range: s.range || "",
-    lyrics: s.lyrics || "", intro: s.intro || "", tip: s.tip || "", video: s.video || "", score: s.score || "" }));
+    lyric: creditLine(s), type: s.type === "편곡" ? "편곡" : "창작곡", arranger: s.arranger || "", hasConcert: !noConcert(s.concert),
+    concert: noConcert(s.concert) ? (s.type === "편곡" ? "편곡한 노래" : "개인 창작곡") : s.concert, year: s.year || "", grade: s.grade || "전 학년", themes: s.themes || [], season: s.season || "", key: s.key || "♪", beat: s.beat || "", range: s.range || "",
+    lyrics: s.lyrics || "", intro: s.intro || "", tip: s.tip || "", video: s.video || "", score: s.score || "", audio: s.audio || "" }));
 }
 
 /* ---------- 서버와 주고받기 ---------- */
@@ -855,10 +877,10 @@ function variantsFor(id) {
 }
 const LEVELS = [[0,"노래 씨앗"],[1,"첫 소리"],[3,"작은 합창단"],[5,"노래하는 반"],[8,"동요샘 명예반"],[15,"온 나라 합창단"],[30,"노래 나무"]];
 function levelOf(n) { let cur = LEVELS[0], next = null; for (const l of LEVELS) { if (n >= l[0]) cur = l; else { next = l; break } } return { cur, next } }
-function latestConcert() { const s = SONGS.slice().sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0))[0]; return s ? s.concert : ""; }
+function latestConcert() { const s = SONGS.filter(x => x.hasConcert !== false).sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0))[0]; return s ? s.concert : ""; }
 function quests() {
   const season = SEASON_OF_MONTH(new Date().getMonth());
-  const ss = SONGS.filter(s => s.season === season), lc = latestConcert(), c3 = SONGS.filter(s => s.concert === lc);
+  const ss = SONGS.filter(s => inSeason(s, season)), lc = latestConcert(), c3 = SONGS.filter(s => s.concert === lc);
   const themes = new Set(); SONGS.filter(s => ME.stamps.has(s.id)).forEach(s => s.themes.forEach(t => themes.add(t)));
   return [
    { name: `${season} 노래 모두 부르기`, have: ss.filter(s => ME.stamps.has(s.id)).length, need: Math.max(ss.length, 1) },
@@ -876,14 +898,14 @@ let tab = APP.q.tab || "today";
 function songRow(s) {
   const c = s.id % 6;
   return `<button class="song" data-open="${s.id}" style="--c:var(--c${c});--cs:var(--c${c}-soft)"><span class="key${ME.stamps.has(s.id) ? " stamped" : ""}">${esc(s.key)}</span>
-  <span class="min"><b>${esc(s.title)}</b><small>${esc(s.grade)} · ${s.themes.map(esc).join(", ")}</small></span>
+  <span class="min"><b>${esc(s.title)}</b><small>${s.type === "편곡" ? "편곡 · " : ""}${esc(s.grade)} · ${s.themes.map(esc).join(", ")}</small></span>
   <span class="side">${classesSung(s.id)}개 반</span></button>`;
 }
 function pickToday() {
   const d = new Date(), season = SEASON_OF_MONTH(d.getMonth());
   const fixed = APP.live ? APP.todaySong : ((OP.data && OP.data.schedule) || store.get("dys-demo-today", {}))[localDay()];
   if (fixed && songById(fixed.song)) return { song: songById(fixed.song), season, note: fixed.note || "", fixed: true };
-  const pool = SONGS.filter(s => s.season === season), list = pool.length ? pool : SONGS;
+  const pool = SONGS.filter(s => inSeason(s, season)), list = pool.length ? pool : SONGS;
   return { song: list[Math.floor(d.getTime() / 86400000) % list.length], season };
 }
 function stampBtn(id) { return ME.stamps.has(id) ? `<button class="btn done" data-stamp="${id}">불렀어요 도장 찍음</button>` : `<button class="btn ghost" data-stamp="${id}">우리 반이 불렀어요</button>`; }
@@ -928,7 +950,7 @@ function render() {
   if (tab === "today") {
     const { song: s, season, note, fixed } = pickToday();
     const rk = ranked(), myRank = ME.region ? rk.findIndex(([r]) => r === ME.region) + 1 : 0;
-    const others = SONGS.filter(x => x.season === season && x.id !== s.id);
+    const others = SONGS.filter(x => inSeason(x, season) && x.id !== s.id);
     const top3 = SONGS.slice().sort((a, b) => votesFor(b.id) - votesFor(a.id)).slice(0, 3);
     const lc = latestConcert(), newSongs = SONGS.filter(x => x.concert === lc).slice(0, 4);
     const rs = songById(APP.relay.song) || SONGS[0], rlines = rs.lyrics.split("\n").filter(Boolean), chain = NAT.relays[APP.relay.id] || [];
@@ -1138,22 +1160,36 @@ function embedSrc(u) {
   const d = driveId(u); if (d) return `https://drive.google.com/file/d/${d}/preview`;
   return "";
 }
-function videoBox(s) {
-  if (document.querySelector(".mini-video")) { const c = document.querySelector('.mini-video [data-mv="close"]'); if (c) c.click(); } const y = embedSrc(s.video); return y ? `<div class="vbox"><iframe src="${y}" title="${esc(s.title)} 영상" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>` : ""; }
+/* 아래 플레이어로 틀 것: 노래 파일이 있으면 노래, 없으면 영상 */
+const playSrc = s => s ? (embedSrc(s.audio) || embedSrc(s.video)) : "";
+const playIsAudio = s => !!(s && embedSrc(s.audio));
+const MEDIA = { audio: ["노래 듣기", "노래 닫기", "노래"], video: ["영상 보기", "영상 닫기", "영상"], score: ["악보 보기", "악보 닫기", "악보"] };
+/* 곡 창 안의 재생·보기 칸: 노래 파일, 영상, 악보 가운데 하나 */
+function mediaBox(s, kind) {
+  const src = embedSrc(s[kind]); if (!src) return "";
+  if (kind !== "score" && document.querySelector(".mini-video")) { const c = document.querySelector('.mini-video [data-mv="close"]'); if (c) c.click(); }
+  return `<div class="vbox ${kind}" data-kind="${kind}"><iframe src="${src}" title="${esc(s.title)} ${MEDIA[kind][2]}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+}
+function mediaBtn(s, kind) {
+  const [show, , word] = MEDIA[kind], v = s[kind];
+  if (embedSrc(v)) return `<button class="btn ghost" data-media="${kind}" data-id="${s.id}">${show}</button>`;
+  if (v) return `<a class="btn ghost" href="${esc(v)}" target="_blank" rel="noopener">${show}</a>`;
+  return kind === "audio" ? "" : `<button class="btn ghost" disabled>${word} 준비 중</button>`;
+}
 function openSong(id, o) {
   const s = songById(id); if (!s) return;
   const vs = variantsFor(id), on = myVoteSong() === id;
   const prev = $(".sheet"), same = prev && +prev.dataset.song === id;
-  const keep = same ? prev.scrollTop : 0, vidOpen = (o && o.video) || (same && !!prev.querySelector(".vbox"));
+  const keep = same ? prev.scrollTop : 0, openKind = (o && o.media) || (same && prev.querySelector(".vbox") ? prev.querySelector(".vbox").dataset.kind : "");
   $("#sheetHost").innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(s.title)}" data-song="${id}"><div class="in">
     <button class="btn ghost close" data-close>닫기</button>
     <div><h3>${esc(s.title)}</h3><span class="meta">${esc(s.lyric)}</span></div>
-    <div class="chips">${s.themes.map(t => `<span class="tag">${esc(t)}</span>`).join("")}${s.season ? `<span class="tag">${esc(s.season)}</span>` : ""}</div>
-    <div id="vHost">${vidOpen ? videoBox(s) : ""}</div>
+    <div class="chips">${s.themes.map(t => `<span class="tag">${esc(t)}</span>`).join("")}${s.season ? `<span class="tag">${esc(seasonLabel(s))}</span>` : ""}${s.type === "편곡" ? `<span class="tag arr">편곡</span>` : ""}</div>
+    <div id="vHost">${openKind ? mediaBox(s, openKind) : ""}</div>
     <p style="margin:0">${esc(s.intro)}</p>
     <div class="lyrics">${esc(s.lyrics)}</div>
     <dl class="facts">
-      <div><dt>발표</dt><dd>${esc(s.concert.replace(" 동요샘 창작동요", ""))}${s.year ? " (" + esc(s.year) + ")" : ""}</dd></div>
+      <div><dt>${s.hasConcert === false ? "만든 해" : "발표"}</dt><dd>${s.hasConcert === false ? (s.type === "편곡" ? "발표회 없이 편곡" : "개인 창작곡") : esc(s.concert.replace(" 동요샘 창작동요", ""))}${s.year ? " (" + esc(s.year) + ")" : ""}</dd></div>
       <div><dt>추천 학년군</dt><dd>${esc(s.grade)}</dd></div>
       ${s.key || s.beat ? `<div><dt>조성 · 박자</dt><dd>${esc(s.key)}${/^[A-G]/.test(s.key) ? "장조" : ""}${s.beat ? " · " + esc(s.beat) : ""}</dd></div>` : ""}
       ${s.range ? `<div><dt>음역</dt><dd>${esc(s.range)}</dd></div>` : ""}
@@ -1165,8 +1201,7 @@ function openSong(id, o) {
       ${stampBtn(id)}
       <button class="btn ghost" data-vote="${id}">${on ? "이달의 노래로 투표함" : "이달의 노래로 투표"}</button>
       <button class="btn ghost" data-karaoke="${id}">노래방 화면</button>
-      ${embedSrc(s.video) ? `<button class="btn ghost" data-video="${id}">${vidOpen ? "영상 닫기" : "영상 보기"}</button>` : s.video ? `<a class="btn ghost" href="${esc(s.video)}" target="_blank" rel="noopener">영상 보기</a>` : `<button class="btn ghost" disabled>영상 준비 중</button>`}
-      ${s.score ? `<a class="btn ghost" href="${esc(s.score)}" target="_blank" rel="noopener">악보 보기</a>` : `<button class="btn ghost" disabled>악보 준비 중</button>`}
+      ${mediaBtn(s, "audio")}${mediaBtn(s, "video")}${mediaBtn(s, "score")}
     </div>
     <h4>우리 반 가사 바꾸기</h4>
     <span class="meta">원래 가락에 우리 반 이야기를 넣어 바꿔 부른 가사예요. 좋아요가 많은 순서로 보여요.${APP.live ? " 새 가사는 운영진이 확인한 뒤 전국에 공개돼요." : ""}</span>
@@ -1178,7 +1213,9 @@ function openSong(id, o) {
     <div class="btns"><button class="btn" data-addvar="${id}">가사 올리기</button></div>
   </div></div>`;
   $(".sheet").scrollTop = keep;
+  syncMediaBtns();
 }
+function syncMediaBtns() { const k = ($("#vHost .vbox") || { dataset: {} }).dataset.kind; document.querySelectorAll(".sheet [data-media]").forEach(b => b.textContent = MEDIA[b.dataset.media][b.dataset.media === k ? 1 : 0]); }
 
 /* ---------- 노래방 화면: 가사를 한 줄씩 크게 ---------- */
 const KARA = { id: 0, i: 0, size: store.get("dys-kara-size", 1), auto: 0, t: 0 };
@@ -1208,6 +1245,7 @@ function drawKaraoke() {
       <button data-k="small" aria-label="글자 작게">가-</button><button data-k="big" aria-label="글자 크게">가+</button>
       <button data-k="auto" aria-pressed="${!!KARA.auto}">${KARA.auto ? "자동 " + KARA.auto + "초" : "자동 넘김"}</button>
       <button data-k="start">처음부터</button>
+      ${playSrc(s) && window.miniPlay ? `<button data-k="music">${playIsAudio(s) ? "노래 틀기" : "영상 틀기"}</button>` : ""}
       <button data-k="close">닫기</button>
     </div>
     <p class="k-help">화면 오른쪽을 누르거나 스페이스·오른쪽 화살표로 다음 줄, 왼쪽은 앞 줄이에요.</p>`;
@@ -1225,6 +1263,7 @@ document.addEventListener("click", e => {
   if (a === "start") { KARA.i = 0; drawKaraoke(); }
   if (a === "big" || a === "small") { KARA.size = Math.max(.7, Math.min(1.8, Math.round((KARA.size + (a === "big" ? .15 : -.15)) * 100) / 100)); store.set("dys-kara-size", KARA.size); drawKaraoke(); }
   if (a === "auto") { const seq = [0, 4, 6, 8, 3], nx = seq[(seq.indexOf(KARA.auto) + 1) % seq.length]; KARA.auto = nx; clearInterval(KARA.t); if (nx) KARA.t = setInterval(() => karaStep(1), nx * 1000); drawKaraoke(); }
+  if (a === "music") { const s = songById(KARA.id); if (s && window.miniPlay) window.miniPlay(s); }
   if (a === "close") closeKaraoke();
 }, true);
 document.addEventListener("keydown", e => {
@@ -1296,7 +1335,8 @@ document.addEventListener("click", e => {
   if (d.period) { PERIOD = d.period; store.set("dys-period", PERIOD); render(); return; }
   if (t.closest("[data-opzone], .playerbar, .mini-video")) return;
   if (d.karaoke) { openKaraoke(+d.karaoke); return; }
-  if (d.video) { const h = $("#vHost"), s = songById(+d.video); if (!h || !s) return; const open = !h.innerHTML.trim(); h.innerHTML = open ? videoBox(s) : ""; t.textContent = open ? "영상 닫기" : "영상 보기"; if (open) h.scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
+  if (d.media) { const h = $("#vHost"), s = songById(+d.id); if (!h || !s) return; const cur = ($("#vHost .vbox") || { dataset: {} }).dataset.kind, open = cur !== d.media;
+    h.innerHTML = open ? mediaBox(s, d.media) : ""; syncMediaBtns(); if (open) h.scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
   if (t.hasAttribute("data-login")) { doLogin(); return; }
   if (t.hasAttribute("data-signup")) { doSignup(); return; }
   if (d.auth) { APP.authView = d.auth; render(); return; }
@@ -1440,7 +1480,7 @@ function opDraftLoad(m) {
 function opAutoFill() {
   const d = OP.data, today = d.today || localDay(), mo = Number(OP.tm.slice(5, 7)) - 1;
   const live = d.songs.filter(s => !s.hidden), season = SEASON_OF_MONTH(mo);
-  const pool = live.filter(s => s.season === season), rest = live.filter(s => s.season !== season);
+  const pool = live.filter(s => inSeason(s, season)), rest = live.filter(s => !inSeason(s, season));
   const order = pool.concat(rest); if (!order.length) { toast("먼저 곡을 올려 주세요"); return; }
   let k = 0, n = 0;
   monthDays(OP.tm).forEach(ds => {
@@ -1500,7 +1540,7 @@ function renderOp(v) {
         <div class="btns">${OP.confirmEx ? `<button class="btn" data-opclearex>예, 예시 곡 ${ex.length}개 모두 지우기</button><button class="btn ghost" data-opconfirm="">그만두기</button>` : `<button class="btn ghost" data-opconfirm="ex">예시 곡 모두 지우기</button>`}</div></div>` : ""}
       <div class="btns"><button class="btn" data-opedit="0">새 곡 올리기</button></div>
       <div class="list">${list.map(s => `<div class="oprow${s.hidden ? " off" : ""}"><span class="key" style="--c:var(--c${s.id % 6});--cs:var(--c${s.id % 6}-soft)">${s.id}</span>
-        <span class="min"><b>${esc(s.title)}${s.consent ? "" : ` <span class="badge warn">동의 확인 필요</span>`}</b><small class="meta">${esc(s.concert || "발표회 미정")}${s.year ? " · " + esc(s.year) : ""}${s.hidden ? " · 숨김" : ""}${s.video ? (embedSrc(s.video) ? " · 영상(바로 재생)" : " · 영상") : ""}${s.score ? " · 악보" : ""}</small></span>
+        <span class="min"><b>${esc(s.title)}${s.consent ? "" : ` <span class="badge warn">동의 확인 필요</span>`}</b><small class="meta">${s.type === "편곡" ? "편곡 · " : ""}${esc(noConcert(s.concert) ? "발표회 없음" : s.concert)}${s.year ? " · " + esc(s.year) : ""}${s.hidden ? " · 숨김" : ""}${s.video ? (embedSrc(s.video) ? " · 영상(바로 재생)" : " · 영상") : ""}${s.score ? " · 악보" : ""}</small></span>
         <span class="btns del-zone"><button class="vote" data-opedit="${s.id}">고치기</button><button class="vote" data-opdelask="${s.id}">지우기</button><button class="vote danger" data-opdel="${s.id}" hidden>정말 지우기</button></span></div>`).join("")}</div>`;
   }
   if (OP.sub === "today") {
@@ -1522,7 +1562,7 @@ function renderOp(v) {
       </div>
       <div class="card day-edit"><span class="eyebrow">${Number(cur.slice(5, 7))}월 ${Number(cur.slice(8))}일 (${WEEK[dayOfWeek(cur)]})${cur === today ? " · 오늘" : ""}${past ? " · 지난 날" : ""}</span>
         <div class="form2"><label class="fld"><span class="label">이날의 동요</span><select id="dSong" data-opday-song="${cur}">
-          <option value="0">자동으로 고르기</option>${live.map(s => `<option value="${s.id}"${s.id === cv.song ? " selected" : ""}>${s.id}. ${esc(s.title)}${s.season ? " (" + esc(s.season) + ")" : ""}</option>`).join("")}</select></label>
+          <option value="0">자동으로 고르기</option>${live.map(s => `<option value="${s.id}"${s.id === cv.song ? " selected" : ""}>${s.id}. ${esc(s.title)}${s.season ? " (" + esc(seasonLabel(s)) + ")" : ""}</option>`).join("")}</select></label>
           <label class="fld"><span class="label">운영진 한마디 (선택, 첫 화면에 보여요)</span><input type="text" id="dNote" data-opday-note="${cur}" maxlength="80" value="${esc(cv.note)}" placeholder="예: 첫눈 오는 날 함께 불러요"></label></div>
         <div class="btns"><button class="vote" data-opstep="-1">‹ 앞날</button><button class="vote" data-opstep="1">다음 날 ›</button>${dr[cur] ? `<button class="vote" data-opclearday="${cur}">이날 비우기</button>` : ""}</div>
       </div>
@@ -1609,7 +1649,8 @@ function renderOp(v) {
   const on = v.querySelector(".admin-nav button.on"); if (on && on.scrollIntoView && matchMedia("(max-width: 760px)").matches) on.scrollIntoView({ block: "nearest", inline: "center" });
 }
 function openSongEditor(id) {
-  const d = OP.data, s = d.songs.find(x => x.id === id) || { id: 0, title: "", lyricist: "", composer: "", concert: "", year: String(new Date().getFullYear()), grade: "전 학년", themes: "", season: "", key: "", beat: "", range: "", lyrics: "", intro: "", tip: "", video: "", score: "", hidden: false, consent: false };
+  const d = OP.data, s = d.songs.find(x => x.id === id) || { id: 0, title: "", lyricist: "", composer: "", concert: "", year: String(new Date().getFullYear()), grade: "전 학년", themes: "", season: "", key: "", beat: "", range: "", lyrics: "", intro: "", tip: "", video: "", score: "", hidden: false, consent: false, type: "창작곡", arranger: "" };
+  const arr = s.type === "편곡", nc = s.id ? noConcert(s.concert) : false, ss = seasonsOf(s);
   const picked = String(s.themes).split(/[,，、]/).map(x => x.trim()).filter(Boolean);
   const extra = picked.filter(t => !THEMES.includes(t)).join(", ");
   const concerts = [...new Set(d.songs.map(x => x.concert).filter(Boolean))];
@@ -1620,9 +1661,16 @@ function openSongEditor(id) {
     <h3>${s.id ? s.id + "번 곡 고치기" : "새 곡 올리기"}</h3>
     <datalist id="concertList">${concerts.map(c => `<option value="${esc(c)}">`).join("")}</datalist>
     ${f("f_title", "곡 제목", s.title, "예: 운동장 한 바퀴")}
-    <div class="form2">${f("f_lyricist", "작사", s.lyricist, "지은 선생님")}${f("f_composer", "작곡", s.composer, "지은 선생님")}</div>
-    <div class="form2">${f("f_concert", "발표회", s.concert, "제4회 동요샘 창작동요 발표회")}${f("f_year", "발표 연도", s.year, "2026", "number")}</div>
-    <div class="form2">${sel("f_grade", "추천 학년군", GRADES, s.grade || "전 학년")}${sel("f_season", "계절", ["", "봄", "여름", "가을", "겨울"], s.season)}</div>
+    <span class="label">곡 종류</span>
+    <div class="chips" id="f_type"><button class="chip" data-optype="창작곡" aria-pressed="${!arr}">창작곡 (작사·작곡)</button><button class="chip" data-optype="편곡" aria-pressed="${arr}">편곡 (있던 노래를 새로 꾸밈)</button></div>
+    <div class="form2">${f("f_lyricist", arr ? "원곡 작사" : "작사", s.lyricist, arr ? "모르면 비워 두거나 '전래동요'" : "지은 선생님")}${f("f_composer", arr ? "원곡 작곡" : "작곡", s.composer, arr ? "모르면 비워 두기" : "지은 선생님")}</div>
+    <div class="arr-only"${arr ? "" : " hidden"}>${f("f_arranger", "편곡", s.arranger || "", "편곡한 선생님")}</div>
+    <div class="form2">${f("f_concert", "발표회", nc ? "" : s.concert, "제4회 동요샘 창작동요 발표회")}${f("f_year", nc ? "만든 해" : "발표 연도", s.year, "2026", "number")}</div>
+    <label class="check"><input type="checkbox" id="f_noconcert"${nc ? " checked" : ""}> 발표회 없이 개인이 만든 곡이에요</label>
+    <span class="label">추천 학년군</span>
+    <div class="chips" id="f_grade">${GRADES.map(gr => `<button class="chip" data-opgrade="${gr}" aria-pressed="${(s.grade || "전 학년") === gr}">${gr}</button>`).join("")}</div>
+    <span class="label">계절 (여러 개 고를 수 있어요)</span>
+    <div class="chips" id="f_season">${SEASONS.map(x => `<button class="chip" data-opseason="${x}" aria-pressed="${ss.includes(x)}">${x}</button>`).join("")}<button class="chip" data-opseason="all" aria-pressed="${ss.length === 4}">사계절 모두</button></div>
     <span class="label">주제</span>
     <div class="chips" id="f_themes">${THEMES.map(t => `<button class="chip" data-opth="${t}" aria-pressed="${picked.includes(t)}">${t}</button>`).join("")}</div>
     ${f("f_extra", "그 밖의 주제 (쉼표로)", extra, "예: 환경, 우정")}
@@ -1630,14 +1678,16 @@ function openSongEditor(id) {
     <label class="fld"><span class="label">가사 (줄 바꿔 적기, 노래방 화면에서 한 줄씩 보여요)</span><textarea id="f_lyrics" rows="6">${esc(s.lyrics)}</textarea></label>
     <label class="fld"><span class="label">곡 소개</span><textarea id="f_intro" rows="3" class="plain">${esc(s.intro)}</textarea></label>
     <label class="fld"><span class="label">수업 활용</span><textarea id="f_tip" rows="3" class="plain">${esc(s.tip)}</textarea></label>
-    ${f("f_video", "영상·노래 주소 (유튜브 주소나 구글 드라이브 공유 주소면 화면 안에서 바로 재생돼요)", s.video, "https://youtu.be/…")}
-    ${f("f_score", "악보 주소 (https://로 시작)", s.score, "https://drive.google.com/…")}
+    <div class="up-row">${f("f_audio", "노래 파일 (mp3)", s.audio || "", "파일 올리기를 누르거나 구글 드라이브 주소")}<label class="btn ghost up-btn">노래 파일 올리기<input type="file" accept="audio/*,.mp3,.m4a,.wav" data-opup="audio" hidden></label></div>
+    ${f("f_video", "영상 주소 (유튜브 주소면 화면 안에서 바로 재생돼요)", s.video, "https://youtu.be/…")}
+    <div class="up-row">${f("f_score", "악보 (PDF·그림)", s.score, "파일 올리기를 누르거나 https:// 주소")}<label class="btn ghost up-btn">악보 올리기<input type="file" accept="application/pdf,image/*" data-opup="score" hidden></label></div>
+    <p class="meta" style="margin:0">올린 파일은 운영진 구글 드라이브의 '동요샘 노래상자 파일' 폴더에 저장되고, 링크가 있는 사람만 볼 수 있게 공유돼요. 한 파일에 20MB까지예요. 올린 뒤 아래 저장을 눌러야 곡에 붙어요.</p>
     <label class="check"><input type="checkbox" id="f_hidden"${s.hidden ? " checked" : ""}> 화면에서 숨기기</label>
-    <label class="check consent"><input type="checkbox" id="f_consent"${s.consent ? " checked" : ""}> 작사·작곡 선생님께 노래상자에 가사·영상·악보를 공개해도 된다는 동의를 받았어요 <small class="meta">(꼭 확인해야 저장돼요)</small></label>
+    <label class="check consent"><input type="checkbox" id="f_consent"${s.consent ? " checked" : ""}> 작사·작곡(편곡) 선생님께 노래상자에 가사·노래·영상·악보를 공개해도 된다는 동의를 받았어요 <small class="meta">(꼭 확인해야 저장돼요)</small></label>
     <div class="btns"><button class="btn" data-opsave="${s.id}">${s.id ? "고친 내용 저장" : "곡 올리기"}</button>
       ${s.id ? `<span class="del-zone"><button class="btn ghost" data-opdelask="${s.id}">이 곡 지우기</button><button class="btn danger" data-opdel="${s.id}" hidden>정말 지우기 (되돌릴 수 없어요)</button></span>` : ""}</div>
     <p class="meta" style="margin:0">숨기기는 화면에서만 빼고 기록은 남겨 둬요. 지우기는 곡 목록에서 아예 없애요.</p>
-  </div></div>`;
+  </div></div>`;  if (nc) $("#f_concert").disabled = true;
 }
 async function opLogin() {
   const pw = $("#opPw"), nm = $("#opName"), name = nm ? nm.value.trim() : "";
@@ -1659,8 +1709,8 @@ function opDemoExport() {
   const d = OP.data, m = MONTH;
   return { month: m, classHead: ["반 이름", "지역", "학교", "선생님", "아이디", "스티커(모두)", "스티커(올해)", "스티커(이번 달)", "이번 달 투표 곡번호", "올린 가사", "릴레이 참여", "만든 날", "마지막 기록", "숨김"],
     classes: d.classes.map(c => [c.name, c.region, "", "", c.owner, c.stamps, c.stamps, Math.ceil(c.stamps / 3), "", 0, 0, "", c.last, c.hidden ? "숨김" : ""]),
-    songHead: ["곡번호", "곡 제목", "작사", "작곡", "발표회", "부른 반(모두)", "부른 반(올해)", "부른 반(이번 달)", "이번 달 투표", "공개된 바꾼 가사", "숨김", "공개 동의"],
-    songs: d.songs.map(s => [s.id, s.title, s.lyricist, s.composer, s.concert, (NAT.songYear || {})[s.id] || 0, (NAT.songYear || {})[s.id] || 0, (NAT.songMonth || {})[s.id] || 0, votesFor(s.id), d.lyrics.filter(l => l.songId === s.id && l.status === "O").length, s.hidden ? "숨김" : "", s.consent ? "O" : ""]) };
+    songHead: ["곡번호", "곡 제목", "곡 종류", "작사", "작곡", "편곡", "발표회", "부른 반(모두)", "부른 반(올해)", "부른 반(이번 달)", "이번 달 투표", "공개된 바꾼 가사", "숨김", "공개 동의"],
+    songs: d.songs.map(s => [s.id, s.title, s.type || "창작곡", s.lyricist, s.composer, s.arranger || "", noConcert(s.concert) ? "발표회 없음" : s.concert, (NAT.songYear || {})[s.id] || 0, (NAT.songYear || {})[s.id] || 0, (NAT.songMonth || {})[s.id] || 0, votesFor(s.id), d.lyrics.filter(l => l.songId === s.id && l.status === "O").length, s.hidden ? "숨김" : "", s.consent ? "O" : ""]) };
 }
 async function opExport(kind) {
   if (APP.busy) return;
@@ -1690,15 +1740,30 @@ document.addEventListener("click", e => {
   if (d.oplf !== undefined) { OP.lf = d.oplf; render(); return; }
   if (d.opedit !== undefined) { openSongEditor(+d.opedit); return; }
   if (d.opth) { t.setAttribute("aria-pressed", t.getAttribute("aria-pressed") !== "true"); return; }
+  if (d.optype) { const arr = d.optype === "편곡"; document.querySelectorAll("#f_type .chip").forEach(b => b.setAttribute("aria-pressed", b === t));
+    document.querySelector(".arr-only").hidden = !arr;
+    $("#f_lyricist").previousElementSibling.textContent = arr ? "원곡 작사" : "작사"; $("#f_composer").previousElementSibling.textContent = arr ? "원곡 작곡" : "작곡";
+    if (arr) $("#f_arranger").focus(); return; }
+  if (d.opgrade) { document.querySelectorAll("#f_grade .chip").forEach(b => b.setAttribute("aria-pressed", b === t)); return; }
+  if (d.opseason) { const all = document.querySelectorAll("#f_season [data-opseason]:not([data-opseason=all])"), allBtn = $('#f_season [data-opseason="all"]');
+    if (d.opseason === "all") { const on = allBtn.getAttribute("aria-pressed") !== "true"; all.forEach(b => b.setAttribute("aria-pressed", on)); }
+    else t.setAttribute("aria-pressed", t.getAttribute("aria-pressed") !== "true");
+    allBtn.setAttribute("aria-pressed", [...all].every(b => b.getAttribute("aria-pressed") === "true")); return; }
   if (d.opsave !== undefined) {
     const g = id => $("#" + id).value.trim();
     const themes = [...document.querySelectorAll("#f_themes [aria-pressed='true']")].map(b => b.dataset.opth).concat(g("f_extra").split(/[,，、]/).map(x => x.trim()).filter(Boolean));
-    const song = { id: +d.opsave, title: g("f_title"), lyricist: g("f_lyricist"), composer: g("f_composer"), concert: g("f_concert"), year: g("f_year"), grade: g("f_grade"), season: g("f_season"),
+    const pressed = sel => [...document.querySelectorAll(sel + " [aria-pressed='true']")];
+    const type = (pressed("#f_type")[0] || {}).dataset ? pressed("#f_type")[0].dataset.optype : "창작곡";
+    const seas = pressed("#f_season").map(b => b.dataset.opseason).filter(x => x !== "all");
+    const song = { id: +d.opsave, title: g("f_title"), type, arranger: type === "편곡" ? g("f_arranger") : "", lyricist: g("f_lyricist"), composer: g("f_composer"),
+      concert: $("#f_noconcert").checked ? "" : g("f_concert"), year: g("f_year"), grade: (pressed("#f_grade")[0] || { dataset: { opgrade: "전 학년" } }).dataset.opgrade,
+      season: seas.length === 4 ? "사계절" : seas.join(", "),
       themes: [...new Set(themes)].join(", "), key: g("f_key"), beat: g("f_beat"), range: g("f_range"), lyrics: $("#f_lyrics").value.replace(/\s+$/, ""), intro: g("f_intro"), tip: g("f_tip"),
-      video: g("f_video"), score: g("f_score"), hidden: $("#f_hidden").checked, consent: $("#f_consent").checked };
+      video: g("f_video"), score: g("f_score"), audio: g("f_audio"), hidden: $("#f_hidden").checked, consent: $("#f_consent").checked };
     if (!song.title) { toast("곡 제목을 적어 주세요"); $("#f_title").focus(); return; }
-    if ((song.video && !/^https:\/\//.test(song.video)) || (song.score && !/^https:\/\//.test(song.score))) { toast("영상·악보 주소는 https:// 로 시작해야 해요"); return; }
-    if (!song.consent) { toast("작사·작곡 선생님께 공개 동의를 받았는지 확인해 주세요"); $("#f_consent").focus(); return; }
+    if (song.type === "편곡" && !song.arranger) { toast("편곡한 선생님 이름을 적어 주세요"); $("#f_arranger").focus(); return; }
+    if ([song.video, song.score, song.audio].some(u => u && !/^https:\/\//.test(u))) { toast("노래·영상·악보 주소는 https:// 로 시작해야 해요"); return; }
+    if (!song.consent) { toast("작사·작곡·편곡 선생님께 공개 동의를 받았는지 확인해 주세요"); $("#f_consent").focus(); return; }
     opCall("opSaveSong", [song], song.id ? "곡을 고쳤어요" : "새 곡을 올렸어요").then(ok => { if (ok) $("#sheetHost").innerHTML = ""; });
     return;
   }
@@ -1731,8 +1796,26 @@ document.addEventListener("click", e => {
   }
   if (d.copy) { const v = d.copy; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast("복사했어요"), () => toast(v)); return; }
 });
+/* 노래 파일·악보 올리기 */
+async function opUploadFile(input) {
+  const file = input.files && input.files[0], kind = input.dataset.opup; input.value = "";
+  if (!file) return;
+  if (file.size > 20 * 1024 * 1024) { toast("파일이 너무 커요. 20MB까지 올릴 수 있어요"); return; }
+  const target = $(kind === "audio" ? "#f_audio" : "#f_score"), label = input.closest("label");
+  if (OP.demo) { target.value = "https://drive.google.com/file/d/DEMO_" + kind.toUpperCase() + "_FILE_0000000000/view"; toast("체험 모드라 실제로 올리지는 않았어요"); return; }
+  if (APP.busy) return;
+  APP.busy = true; document.body.classList.add("busy"); label.classList.add("loading"); const old = label.firstChild.textContent; label.firstChild.textContent = "올리는 중… ";
+  try {
+    const data = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1] || ""); r.onerror = () => no(new Error("파일을 읽지 못했어요")); r.readAsDataURL(file); });
+    const r = await opPost("opUpload", [OP.token, kind, file.name, file.type || (kind === "audio" ? "audio/mpeg" : "application/pdf"), data]);
+    target.value = r.url; toast(`「${r.name}」을 올렸어요. 저장을 눌러 곡에 붙여 주세요`);
+  } catch (e) { toast(e.message); }
+  finally { APP.busy = false; document.body.classList.remove("busy"); label.classList.remove("loading"); label.firstChild.textContent = old; }
+}
 document.addEventListener("change", e => {
   const el = e.target; if (!el.closest || !el.closest("[data-opzone]")) return;
+  if (el.dataset.opup) { opUploadFile(el); return; }
+  if (el.id === "f_noconcert") { const c = $("#f_concert"); c.disabled = el.checked; if (el.checked) c.value = ""; $("#f_year").previousElementSibling.textContent = el.checked ? "만든 해" : "발표 연도"; return; }
   if (el.id === "opWeekend") { OP.weekend = el.checked; store.set("dys-op-weekend", OP.weekend); return; }
   if (el.dataset.opdaySong) { const k = el.dataset.opdaySong, v = +el.value;
     if (v) OP.draft[k] = { song: v, note: (OP.draft[k] || {}).note || ($("#dNote") || {}).value || "" }; else delete OP.draft[k];
@@ -1787,14 +1870,15 @@ document.addEventListener("change", e => {
   /* 작은 영상 창: 플레이어 막대 위에 떠서 다른 메뉴로 가도 계속 재생 */
   function miniPlay(s) {
     let box = document.querySelector(".mini-video");
-    const y = s && embedSrc(s.video);
+    const y = playSrc(s);
     if (!y) { if (box) box.remove(); PLAYER.playing = 0; renderPlayer(); return; }
     if (!box) { document.body.insertAdjacentHTML("beforeend", '<div class="mini-video" role="region" aria-label="영상 재생"></div>'); box = document.querySelector(".mini-video"); }
-    PLAYER.playing = s.id;
+    PLAYER.playing = s.id; box.classList.toggle("audio", playIsAudio(s));
     box.innerHTML = `<div class="mv-head"><b>${esc(s.title)}</b><span><button data-mv="big" aria-label="크게 보기">크게</button><button data-mv="close" aria-label="영상 닫기">닫기</button></span></div>
       <div class="mv-frame"><iframe src="${y}" title="${esc(s.title)} 영상" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
     renderPlayer();
   }
+  window.miniPlay = miniPlay;
   document.addEventListener("click", e => {
     const b = e.target.closest("[data-mv]"); if (!b) return;
     e.stopPropagation();
@@ -1810,19 +1894,19 @@ document.addEventListener("change", e => {
     bar.hidden = false;
     const on = PLAYER.playing === s.id;
     bar.classList.toggle("playing", !!PLAYER.playing);
-    const play = embedSrc(s.video)
+    const play = playSrc(s)
       ? `<button class="main" data-pl="${on ? "stop" : "video"}" aria-label="${on ? "영상 멈추기" : "영상 재생"}"><svg viewBox="0 0 16 16">${on ? '<path d="M4 3h3v10H4zM9 3h3v10H9z" fill="#2B3A55"/>' : '<path d="M4 2l10 6-10 6z" fill="#2B3A55"/>'}</svg></button>`
       : s.video
       ? `<a class="main" href="${esc(s.video)}" target="_blank" rel="noopener" aria-label="영상으로 듣기"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="#2B3A55"/></svg></a>`
       : `<button class="main" data-pl="novideo" aria-label="듣기"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="#2B3A55"/></svg></button>`;
     bar.innerHTML = `<span class="mini-lp" aria-hidden="true"></span>
-      <button class="pl-title" data-open="${s.id}"><b>${esc(s.title)}</b><small>${on ? "영상 재생 중 · 누르면 가사" : s.video ? "누르면 가사, 가운데 버튼은 영상" : "누르면 가사와 수업 활용"}</small></button>
+      <button class="pl-title" data-open="${s.id}"><b>${esc(s.title)}</b><small>${on ? (playIsAudio(s) ? "노래" : "영상") + " 재생 중 · 누르면 가사" : playSrc(s) ? "누르면 가사, 가운데 버튼은 " + (playIsAudio(s) ? "노래" : "영상") : s.video ? "누르면 가사, 가운데 버튼은 영상" : "누르면 가사와 수업 활용"}</small></button>
       <span class="pb"><button data-pl="prev" aria-label="이전 곡"><svg viewBox="0 0 16 16"><path d="M3 3h2v10H3zM14 3v10L6 8z" fill="#fff"/></svg></button>${play}<button data-pl="next" aria-label="다음 곡"><svg viewBox="0 0 16 16"><path d="M11 3h2v10h-2zM2 3v10l8-5z" fill="#fff"/></svg></button></span>`;
   }
   document.addEventListener("click", e => {
     const b = e.target.closest("[data-pl]"); if (!b) return;
     const s = playerSong(), i = Math.max(0, SONGS.findIndex(x => x.id === s.id));
-    const go = d => { PLAYER.id = SONGS[(i + d + SONGS.length) % SONGS.length].id; if (PLAYER.playing) { const n = songById(PLAYER.id); if (embedSrc(n.video)) { miniPlay(n); return; } } renderPlayer(); };
+    const go = d => { PLAYER.id = SONGS[(i + d + SONGS.length) % SONGS.length].id; if (PLAYER.playing) { const n = songById(PLAYER.id); if (playSrc(n)) { miniPlay(n); return; } } renderPlayer(); };
     if (b.dataset.pl === "prev") go(-1);
     if (b.dataset.pl === "next") go(1);
     if (b.dataset.pl === "video") { miniPlay(s); return; }
