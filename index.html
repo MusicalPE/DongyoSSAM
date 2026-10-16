@@ -40,7 +40,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 main,section,.card,.list,.concert{min-width:0}
 /* 머리 장면 */
 .scene{position:relative;background:linear-gradient(to bottom,var(--sky),var(--bg));overflow:hidden}
-.scene svg{display:block;width:100%}
+
 .scene .title{position:absolute;left:0;right:0;top:26px;margin:0 auto;max-width:760px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .scene h1{font-family:var(--display);font-weight:400;font-size:34px;margin:0;line-height:1.1;color:var(--ink);text-shadow:0 2px 0 var(--paper)}
 .scene h1 .r0{color:var(--c0)}.scene h1 .r1{color:var(--c1)}.scene h1 .r2{color:var(--c3)}.scene h1 .r3{color:var(--c4)}
@@ -207,7 +207,7 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
 .scene .logo{height:72px;width:auto;max-width:none;filter:drop-shadow(0 2px 0 var(--paper))}
 .scene .h1t{font-size:36px;letter-spacing:.01em;-webkit-text-stroke:2px currentColor;paint-order:stroke fill;
   text-shadow:2px 0 0 var(--paper),-2px 0 0 var(--paper),0 2px 0 var(--paper),0 -2px 0 var(--paper),2px 2px 0 var(--paper),-2px 2px 0 var(--paper),2px -2px 0 var(--paper),-2px -2px 0 var(--paper),0 4px 0 var(--shadow)}
-.scene svg{height:160px}
+
 .hero{margin:0;position:relative;border-radius:var(--wob);overflow:hidden;border:2px solid var(--line);background:var(--paper)}
 .hero img{display:block;width:100%;height:auto;aspect-ratio:1200/620;object-fit:cover;object-position:50% 70%}
 .hero figcaption{position:absolute;left:12px;bottom:10px;font-family:var(--display);font-size:17px;color:#2B3A55;background:rgba(255,255,255,.88);border-radius:999px;padding:3px 14px}
@@ -216,12 +216,58 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
 :root[data-theme="dark"] .scene .night{display:inline}:root[data-theme="dark"] .scene .day{display:none}:root[data-theme="dark"] .scene .rainbow{opacity:.18}
 .tw{transform-box:fill-box;transform-origin:center}
 @media (prefers-reduced-motion:no-preference){.tw{animation:tw 3s ease-in-out infinite}.tw.t2{animation-delay:-1s}.tw.t3{animation-delay:-2s}@keyframes tw{50%{opacity:.25;transform:scale(.6)}}}
+
+/* ---- 머리 장면: 장식은 오른쪽에, 언덕은 화면 끝까지 ---- */
+.scene{position:relative}
+.scene-in{position:relative;max-width:1600px;margin:0 auto;height:160px}
+.scene .deco{position:absolute;right:0;bottom:0;width:min(100%,460px);height:160px}
+.scene .hills{position:absolute;left:0;right:0;bottom:0;width:100%;height:50px;display:block}
+.scene .title{z-index:1}
+/* ---- 휴대폰: 옆 칸 없이 한 줄로 ---- */
+.layout{display:block}
+.sidebar{display:contents}
+#sideExtra{display:none}
+.split>.col{display:contents}
+/* ---- PC: 다음 카페처럼 왼쪽 메뉴 ---- */
+@media (min-width:1000px){
+  .wrap{max-width:1600px}
+  .scene-in{height:190px}.scene .deco{height:190px;width:520px}.scene .hills{height:64px}
+  .scene .title{top:34px}
+  .layout{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,4fr);gap:28px;align-items:start;margin-top:18px}
+  .sidebar{display:grid;gap:14px;position:sticky;top:calc(16px + env(safe-area-inset-top,0px))}
+  .sidebar #statusHost .status{margin-top:0}
+  nav{position:static;flex-direction:column;overflow:visible;padding:14px;background:var(--paper);border:2px solid var(--line);border-radius:var(--wob);gap:6px}
+  nav::before{content:"메뉴";font-family:var(--body);font-weight:700;font-size:13px;color:var(--muted);padding:0 6px 4px}
+  nav button{text-align:left;font-size:16px;padding:10px 16px;border-radius:14px}
+  #sideExtra{display:grid;gap:14px}
+  .side-card{padding:16px;gap:8px}
+  .side-name{font-family:var(--display);font-weight:400;font-size:20px;line-height:1.3}
+  .cafe-side{grid-template-columns:auto minmax(0,1fr);padding:12px}
+  .cafe-side b{font-size:18px}
+  .content{min-width:0}
+  .content .example{margin-top:0}
+  .content .split .cafe{display:none}
+  .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+  .split>.col{display:grid;gap:16px;min-width:0;align-content:start}
+  .split>.col>h2:first-child{margin-top:0}
+  .songs-split .filters{position:sticky;top:calc(16px + env(safe-area-inset-top,0px))}
+  .hero img{aspect-ratio:1200/600}
+  .stampbook{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .foot{text-align:left}
+}
+
+.home{all:unset;display:flex;align-items:center;gap:10px;cursor:pointer;border-radius:16px}
+.home:focus-visible{outline:3px dashed var(--accent);outline-offset:4px}
+.home:hover .logo{transform:rotate(-4deg) scale(1.04)}
+.scene .logo{transition:transform .2s}
+@media (min-width:1000px){.scene .title{max-width:1600px}}
 </style>
 </head>
 <body style="margin:0">
 
 <div class="scene">
-  <svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+  <div class="scene-in">
+  <svg class="deco" viewBox="0 0 400 150" preserveAspectRatio="xMaxYMax meet" aria-hidden="true">
     <g class="night" aria-hidden="true">
       <circle cx="354" cy="38" r="34" fill="var(--sun)" opacity=".12"/>
       <path class="moon" d="M354 16 A22 22 0 0 1 354 60 Z" fill="var(--sun)" transform="rotate(62 354 38)"/>
@@ -235,16 +281,19 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
     <g class="rainbow" fill="none" stroke-width="5" stroke-linecap="round" opacity=".55" transform="translate(44 0)">
       <path d="M210 140a70 60 0 0 1 140 0" stroke="var(--c0)"/><path d="M215 140a65 55 0 0 1 130 0" stroke="var(--c2)"/>
       <path d="M220 140a60 50 0 0 1 120 0" stroke="var(--c3)"/><path d="M225 140a55 45 0 0 1 110 0" stroke="var(--c4)"/></g>
-    <path d="M0 128 Q 80 98 170 122 T 400 116 V150 H0Z" fill="var(--hill1)"/>
-    <path d="M0 142 Q 120 118 240 138 T 400 132 V150 H0Z" fill="var(--hill2)"/>
     <g class="float f2" fill="var(--c5)"><ellipse cx="370" cy="96" rx="6" ry="4.5" transform="rotate(-20 370 96)"/><ellipse cx="388" cy="90" rx="6" ry="4.5" transform="rotate(-20 388 90)"/>
       <rect x="374.5" y="74" width="2.2" height="22"/><rect x="392.5" y="68" width="2.2" height="22"/><path d="M374.5 74l20-6v4l-20 6z"/></g>
   </svg>
-  <div class="title"><h1><img class="logo" src="img/logo.png" alt="동요샘" width="371" height="272"><span class="h1t"><span class="r0">노</span><span class="r1">래</span><span class="r2">상</span><span class="r3">자</span></span></h1><p>선생님이 지은 동요를 함께 불러요</p></div>
+  <div class="title"><h1><button class="home" data-tab="today" title="첫 화면으로" aria-label="동요샘 노래상자 첫 화면으로"><img class="logo" src="img/logo.png" alt="동요샘" width="371" height="272"><span class="h1t"><span class="r0">노</span><span class="r1">래</span><span class="r2">상</span><span class="r3">자</span></span></button></h1><p>선생님이 지은 동요를 함께 불러요</p></div>
+  </div>
+  <svg class="hills" viewBox="0 96 400 54" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 128 Q 80 98 170 122 T 400 116 V150 H0Z" fill="var(--hill1)"/>
+    <path d="M0 142 Q 120 118 240 138 T 400 132 V150 H0Z" fill="var(--hill2)"/>
+  </svg>
 </div>
-<div class="wrap">
+<div class="wrap"><div class="layout">
+  <aside class="sidebar">
   <div id="statusHost"></div>
-  <p class="example" id="exampleNote"></p>
   <nav role="tablist" id="tabs">
     <button role="tab" data-tab="today" aria-selected="true">오늘의 동요</button>
     <button role="tab" data-tab="songs" aria-selected="false">노래 찾기</button>
@@ -252,8 +301,14 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
     <button role="tab" data-tab="chart" aria-selected="false">동요샘 차트</button>
     <button role="tab" data-tab="mine" aria-selected="false">우리 반</button>
   </nav>
+  <div id="sideExtra"></div>
+  </aside>
+  <div class="content">
+  <p class="example" id="exampleNote"></p>
   <main id="view"></main>
   <footer class="foot"><a class="linkbtn" href="https://cafe.daum.net/jbdongyo" target="_blank" rel="noopener">동요샘 카페</a> · <button class="linkbtn" data-tab="op">운영진</button> · Made by 음악적체육인</footer>
+  </div>
+</div>
 </div>
 <div id="sheetHost"></div>
 <div id="toastHost"></div>
@@ -456,7 +511,24 @@ function statusLine() {
   return `<span class="status on">${who}${APP.token ? " · 선생님" : ""}${nat}</span>`;
 }
 
+function renderSide() {
+  const host = $("#sideExtra"); if (!host) return;
+  const { cur, next } = levelOf(ME.stamps.size);
+  const pct = next ? Math.round((ME.stamps.size - cur[0]) / (next[0] - cur[0]) * 100) : 100;
+  host.innerHTML = `<div class="card side-card">
+      <span class="eyebrow">우리 반</span>
+      ${ME.configured ? `<b class="side-name">${esc(ME.name)}</b><span class="meta">${esc(ME.region)} · ${cur[1]}</span>
+      <div class="prog"><span style="width:${pct}%"></span></div><span class="meta">도장 ${ME.stamps.size}개${next ? ` · ${next[0] - ME.stamps.size}개 더 모으면 ${next[1]}` : ""}</span>`
+      : `<span class="meta">${ME.loaded ? "우리 반 이름과 지역을 정해 주세요." : "우리 반 시트를 여는 중이에요."}</span>`}
+      <button class="btn ghost" data-tab="mine">우리 반 보기</button>
+    </div>
+    <a class="cafe cafe-side" href="https://cafe.daum.net/jbdongyo" target="_blank" rel="noopener">
+      <span class="cafe-notes" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="min"><b>동요샘 카페</b><small>노래 이야기와 발표회 소식</small></span>
+    </a>`;
+}
 function render() {
+  renderSide();
   const v = $("#view");
   $("#statusHost").innerHTML = statusLine();
   $("#exampleNote").textContent = APP.live
@@ -467,7 +539,7 @@ function render() {
     const { song: s, season } = pickToday();
     const rk = ranked(), myRank = ME.region ? rk.findIndex(([r]) => r === ME.region) + 1 : 0;
     const others = SONGS.filter(x => x.season === season && x.id !== s.id);
-    v.innerHTML = `<section>
+    v.innerHTML = `<section class="split"><div class="col">
       <figure class="hero"><img src="img/kids.jpg" alt="마이크를 들고 함께 동요를 부르는 아이들 그림" width="1200" height="737"><figcaption>온 나라 교실이 함께 부르는 동요</figcaption></figure>
       <div class="card today">
         <span class="eyebrow">${season ? season + "에 부르기 좋은 노래" : "오늘의 동요"}</span>
@@ -477,8 +549,8 @@ function render() {
         <p style="margin:0">${esc(s.intro)}</p>
         <span class="meta">전국 ${classesSung(s.id)}개 반이 불렀어요</span>
         <div class="btns"><button class="btn" data-open="${s.id}">가사와 수업 활용 보기</button>${stampBtn(s.id)}</div>
-      </div>
-      <a class="cafe" href="https://cafe.daum.net/jbdongyo" target="_blank" rel="noopener">
+      </div></div>
+      <div class="col"><a class="cafe" href="https://cafe.daum.net/jbdongyo" target="_blank" rel="noopener">
         <span class="cafe-notes" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="min"><b>동요샘 카페</b><small>선생님들의 노래 이야기와 발표회 소식을 만나요</small></span>
         <span class="cafe-go">놀러 가기</span>
@@ -491,7 +563,7 @@ function render() {
         <div class="btns"><button class="btn ghost" data-tab="stage">지역 순위 보기</button>${ME.configured ? "" : `<button class="btn ghost" data-tab="mine">우리 반 정하기</button>`}</div>
       </div>
       ${others.length ? `<h2>같은 계절 노래</h2><div class="list">${others.map(songRow).join("")}</div>` : ""}
-    </section>`;
+    </div></section>`;
   }
   if (tab === "songs") {
     const q = filter.q.trim();
@@ -500,15 +572,16 @@ function render() {
     const groups = {}; res.forEach(s => (groups[s.concert] = groups[s.concert] || []).push(s));
     const order = Object.keys(groups).sort((a, b) => Math.max(...groups[b].map(s => Number(s.year) || 0)) - Math.max(...groups[a].map(s => Number(s.year) || 0)));
     const byConcert = order.map(c => `<div class="concert"><h3>${esc(c)}</h3><span class="meta">${groups[c][0].year ? groups[c][0].year + "년 · " : ""}${groups[c].length}곡</span><div class="list">${groups[c].map(songRow).join("")}</div></div>`).join("");
-    v.innerHTML = `<section>
+    v.innerHTML = `<section class="split songs-split"><div class="col filters">
       <input type="search" id="q" placeholder="곡 제목, 가사, 지은이로 찾기" value="${esc(filter.q)}">
       <span class="label">주제</span><div class="chips">${THEMES.map(t => `<button class="chip" data-theme-f="${t}" aria-pressed="${filter.theme === t}">${t}</button>`).join("")}</div>
       <span class="label">학년군</span><div class="chips">${GRADES.map(g => `<button class="chip" data-grade-f="${g}" aria-pressed="${filter.grade === g}">${g}</button>`).join("")}</div>
       <div class="chips"><button class="chip" data-mode="concert" aria-pressed="${filter.mode === "concert"}">발표회별로 보기</button><button class="chip" data-mode="all" aria-pressed="${filter.mode === "all"}">많이 부른 순</button></div>
+      </div><div class="col">
       <h2>${res.length}곡</h2>
       ${!res.length ? `<div class="empty">조건에 맞는 곡이 없어요. 주제나 학년군 선택을 하나 풀어 보세요.</div>`
         : filter.mode === "concert" ? byConcert : `<div class="list">${res.slice().sort((a, b) => classesSung(b.id) - classesSung(a.id)).map(songRow).join("")}</div>`}
-    </section>`;
+    </div></section>`;
     $("#q").addEventListener("input", e => { filter.q = e.target.value; const pos = e.target.selectionStart; render(); const n = $("#q"); n.focus(); n.setSelectionRange(pos, pos); });
   }
   if (tab === "stage") {
@@ -519,7 +592,7 @@ function render() {
     const rs = songById(APP.relay.song) || SONGS[0], lines = rs.lyrics.split("\n").filter(Boolean);
     const chain = NAT.relays[APP.relay.id] || [], joined = ME.relays.has(APP.relay.id);
     const nextLine = lines.length ? lines[chain.length % lines.length] : "";
-    v.innerHTML = `<section>
+    v.innerHTML = `<section class="split"><div class="col">
       <h2>전국 무대</h2><p class="sub">${MONTH_LABEL()} · ${classes}개 반이 도장 ${total}개를 모았어요. 반이 노래를 부르고 도장을 찍으면 지역 점수가 올라가요.</p>
       <div class="card">
         <div class="tilemap" role="img" aria-label="시도별 도장 수 지도">
@@ -529,10 +602,6 @@ function render() {
         </div>
         <div class="legend">적음 <i style="background:var(--heat1)"></i><i style="background:var(--heat2)"></i><i style="background:var(--heat3)"></i><i style="background:var(--heat4)"></i> 많음 · 주황 테두리가 우리 지역</div>
       </div>
-      <h2>지역 순위</h2>
-      <div class="card rank">
-        ${rk.map(([r, x], i) => `<div class="rrow${i < 3 && x.stamps ? " top" : ""}${r === ME.region ? " mine" : ""}"><span class="n">${i + 1}</span><span>${r}</span><span class="bar"><span style="width:${x.stamps / max * 100}%"></span></span><span class="num">${x.stamps}</span></div>`).join("")}
-      </div>
       <h2>이어 부르기 릴레이</h2>
       <p class="sub">${esc(APP.relay.id)} 곡은 「${esc(rs.title)}」이에요. 반마다 한 줄씩 이어 불러 한 곡을 온 나라로 돌려요.</p>
       <div class="card relay">
@@ -541,14 +610,19 @@ function render() {
         ${joined ? "" : `<div class="rstep next"><span class="dot"></span><p>${esc(nextLine)}<br><small>다음 차례를 기다리는 줄</small></p></div>`}
         <div class="btns">${joined ? `<button class="btn done" disabled>우리 반 참여 완료</button>` : `<button class="btn" data-relay>우리 반이 이어받기</button>`}</div>
       </div>
-    </section>`;
+      </div><div class="col">
+      <h2>지역 순위</h2>
+      <div class="card rank">
+        ${rk.map(([r, x], i) => `<div class="rrow${i < 3 && x.stamps ? " top" : ""}${r === ME.region ? " mine" : ""}"><span class="n">${i + 1}</span><span>${r}</span><span class="bar"><span style="width:${x.stamps / max * 100}%"></span></span><span class="num">${x.stamps}</span></div>`).join("")}
+      </div>
+    </div></section>`;
   }
   if (tab === "chart") {
     const mv = myVoteSong(), sung = chartMode === "sung";
     const byVote = SONGS.slice().sort((a, b) => votesFor(b.id) - votesFor(a.id));
     const bySung = SONGS.slice().sort((a, b) => classesSung(b.id) - classesSung(a.id));
     const topV = byVote[0], topS = bySung[0], list = sung ? bySung : byVote;
-    v.innerHTML = `<section>
+    v.innerHTML = `<section class="split"><div class="col">
       <h2>동요샘 차트</h2>
       <div class="tops">
         <button class="topcard" data-open="${topV.id}"><span class="eyebrow">이달 투표 1위</span><b>${esc(topV.title)}</b><small class="meta">${votesFor(topV.id)}표</small></button>
@@ -556,11 +630,12 @@ function render() {
       </div>
       <div class="chips"><button class="chip" data-chart="vote" aria-pressed="${!sung}">투표 순위</button><button class="chip" data-chart="sung" aria-pressed="${sung}">많이 불린 순위</button></div>
       <p class="sub" style="margin:0">${sung ? "반이 함께 부르고 도장을 찍은 곡을 셌어요. 지금까지 쌓인 기록이에요." : "반마다 한 달에 한 곡씩 투표할 수 있어요. 매달 1일에 새로 시작해요."}</p>
+      </div><div class="col">
       <div class="list">${list.map((s, i) => { const on = mv === s.id;
         return `<div class="crow p${i + 1}"><span class="n">${i + 1}</span><span class="min"><b data-open="${s.id}">${esc(s.title)}</b><br><small class="meta">${sung ? classesSung(s.id) + "개 반" : votesFor(s.id) + "표"} · ${esc(s.lyric)}</small></span>
         ${sung ? (ME.stamps.has(s.id) ? `<span class="done-chip">우리 반<br>불렀어요</span>` : `<button class="vote" data-open="${s.id}">들어 보기</button>`) : `<button class="vote${on ? " on" : ""}" data-vote="${s.id}">${on ? "투표함" : "투표"}</button>`}</div>` }).join("")}</div>
       ${sung ? "" : `<p class="meta">${mv ? "이번 달 투표를 했어요. 다른 곡을 누르면 투표가 옮겨져요." : "아직 이번 달 투표를 하지 않았어요."}</p>`}
-    </section>`;
+    </div></section>`;
   }
   if (tab === "mine") renderMine(v);
   if (tab === "op") renderOp(v);
@@ -592,7 +667,7 @@ function renderMine(v) {
   }
   const mineLyrics = ME.lyrics.map(l => { const s = songById(l.songId), pub = Object.values(NAT.lyrics).some(a => a.some(x => x.key === l.id));
     return `<div class="quest${pub ? " cleared" : ""}"><span class="ok"></span><span>${esc(s ? s.title : "곡 " + l.songId)} · ${esc(l.text.split("\n")[0])}</span><span class="meta">${APP.live ? (pub ? "공개됨" : "확인 중") : "체험"}</span></div>`; }).join("");
-  v.innerHTML = `<section>
+  v.innerHTML = `<section class="split"><div class="col">
       ${top}
       <div class="card">
         <div class="level"><b>${cur[1]}</b><span class="meta">도장 ${ME.stamps.size}개${next ? ` · ${next[0] - ME.stamps.size}개 더 모으면 ${next[1]}` : " · 최고 단계"}</span></div>
@@ -600,6 +675,7 @@ function renderMine(v) {
       </div>
       <h2>노래 도장판</h2><p class="sub">반이 함께 부른 곡에 도장을 찍어요. 다시 누르면 지워져요.</p>
       <div class="stampbook">${SONGS.map(s => `<button class="stamp${ME.stamps.has(s.id) ? " on" : ""}" style="--c:var(--c${s.id % 6})" data-stamp="${s.id}" aria-pressed="${ME.stamps.has(s.id)}">${ME.stamps.has(s.id) ? `<b>${esc(s.title)}</b>불렀어요` : esc(s.title)}</button>`).join("")}</div>
+      </div><div class="col">
       <h2>도전 과제</h2>
       <div class="card">${quests().map(q => `<div class="quest${q.have >= q.need ? " cleared" : ""}"><span class="ok"></span><span>${esc(q.name)}</span><span class="meta num">${q.have}/${q.need}</span></div>`).join("")}</div>
       ${mineLyrics ? `<h2>우리 반이 올린 가사</h2><div class="card">${mineLyrics}</div>` : ""}
@@ -608,7 +684,7 @@ function renderMine(v) {
         <div class="form2"><input type="password" id="newPw" placeholder="새 비밀번호 (4자 이상)" aria-label="새 비밀번호" autocomplete="new-password"><button class="btn ghost" data-pw>바꾸기</button></div>
         <div class="btns"><button class="btn ghost" data-resend>전국으로 다시 보내기</button><button class="btn ghost" data-logout>로그아웃</button></div>
       </div>` : ""}
-    </section>`;
+    </div></section>`;
   if (!APP.live) {
     const upd = () => { ME.name = $("#meName").value.trim() || "우리 반"; ME.region = $("#meRegion").value || "경기"; ME.example = false; demoMeSave(); NAT = localNational(true); };
     $("#meName").addEventListener("change", () => { upd(); toast("우리 반 이름을 바꿨어요"); });
