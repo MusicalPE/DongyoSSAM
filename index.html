@@ -192,6 +192,17 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
 .topcard .eyebrow{font-size:16px}
 .topcard b{font-family:var(--display);font-weight:400;font-size:20px;line-height:1.25;overflow-wrap:anywhere}
 .done-chip{font-family:var(--display);font-size:12.5px;line-height:1.3;text-align:center;white-space:nowrap;color:var(--leaf);border:2px solid var(--c3);background:var(--c3-soft);border-radius:12px;padding:3px 6px}
+.cafe{word-break:keep-all;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;text-decoration:none;color:var(--ink);
+  background:var(--c5-soft) repeating-linear-gradient(-45deg,transparent 0 14px,rgba(255,255,255,.18) 14px 28px);border:2px solid var(--c5);border-radius:var(--wob);padding:12px 14px;box-shadow:3px 4px 0 var(--shadow)}
+.cafe:hover{transform:rotate(-.5deg)}
+.cafe b{font-family:var(--display);font-weight:400;font-size:20px;display:block;line-height:1.3}
+.cafe small{color:var(--muted);font-size:12.5px;display:block}
+.cafe-go{font-family:var(--display);font-size:14px;white-space:nowrap;background:var(--c5);color:var(--on-accent);border-radius:999px;padding:5px 12px}
+.cafe-notes{display:flex;gap:3px;align-items:flex-end;height:30px}
+.cafe-notes i{width:9px;height:7px;border-radius:50%;background:var(--c5);transform:rotate(-20deg);position:relative}
+.cafe-notes i::after{content:"";position:absolute;right:0;bottom:4px;width:2px;height:16px;background:var(--c5);transform:rotate(20deg)}
+.cafe-notes i:nth-child(2){margin-bottom:8px;background:var(--c0)}.cafe-notes i:nth-child(2)::after{background:var(--c0)}
+.cafe-notes i:nth-child(3){margin-bottom:3px;background:var(--c3)}.cafe-notes i:nth-child(3)::after{background:var(--c3)}
 </style>
 </head>
 <body style="margin:0">
@@ -226,7 +237,7 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
     <button role="tab" data-tab="mine" aria-selected="false">우리 반</button>
   </nav>
   <main id="view"></main>
-  <footer class="foot"><button class="linkbtn" data-tab="op">운영진</button> · Made by 음악적체육인</footer>
+  <footer class="foot"><a class="linkbtn" href="https://cafe.daum.net/jbdongyo" target="_blank" rel="noopener">동요샘 카페</a> · <button class="linkbtn" data-tab="op">운영진</button> · Made by 음악적체육인</footer>
 </div>
 <div id="sheetHost"></div>
 <div id="toastHost"></div>
@@ -450,6 +461,11 @@ function render() {
         <span class="meta">전국 ${classesSung(s.id)}개 반이 불렀어요</span>
         <div class="btns"><button class="btn" data-open="${s.id}">가사와 수업 활용 보기</button>${stampBtn(s.id)}</div>
       </div>
+      <a class="cafe" href="https://cafe.daum.net/jbdongyo" target="_blank" rel="noopener">
+        <span class="cafe-notes" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="min"><b>동요샘 카페</b><small>선생님들의 노래 이야기와 발표회 소식을 만나요</small></span>
+        <span class="cafe-go">놀러 가기</span>
+      </a>
       <div class="card">
         <span class="eyebrow">${MONTH_LABEL()} 전국 무대</span>
         ${ME.configured ? `<div class="level"><b>${esc(ME.region)} ${myRank}위</b><span class="meta">1위 ${rk[0][0]} · 도장 ${rk[0][1].stamps}개</span></div>
