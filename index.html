@@ -406,12 +406,29 @@ body { padding-bottom: 80px }
 @media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) .stampbook { background: #3A3120 repeating-linear-gradient(0deg, transparent 0 26px, rgba(214,180,120,.12) 26px 27px) !important } }
 :root[data-theme="dark"] .stampbook { background: #3A3120 !important }
 
+/* 가운데 제목 */
+.scene .title{left:0;right:0;margin:0 auto;display:flex;justify-content:center;max-width:none!important;padding:0}
+.scene h1{justify-content:center}
+.scene .deco-left{position:absolute;left:0;bottom:0;width:min(42%,420px);height:160px;display:none}
+@media (min-width:700px){.scene .deco-left{display:block}}
+@media (min-width:1000px){.scene .deco-left{height:190px}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .scene .birds{display:none}}
+:root[data-theme="dark"] .scene .birds{display:none}
+@media (max-width:480px){.scene .logo{height:72px!important}.scene .h1t{font-size:32px!important}}
 </style>
 </head>
 <body style="margin:0">
 
 <div class="scene">
   <div class="scene-in">
+    <svg class="deco-left" viewBox="0 0 300 150" preserveAspectRatio="xMinYMax meet" aria-hidden="true">
+      <g class="cloud" fill="var(--cloud)"><ellipse cx="70" cy="46" rx="30" ry="14"/><ellipse cx="94" cy="38" rx="20" ry="16"/><ellipse cx="118" cy="47" rx="22" ry="13"/></g>
+      <g class="cloud" fill="var(--cloud)" opacity=".85"><ellipse cx="190" cy="84" rx="20" ry="9"/><ellipse cx="205" cy="78" rx="13" ry="10"/></g>
+      <g class="day birds" fill="none" stroke="var(--pencil)" stroke-width="2.4" stroke-linecap="round" opacity=".7">
+        <path d="M150 34q6-6 12 0q6-6 12 0"/><path d="M182 52q5-5 10 0q5-5 10 0"/><path d="M36 92q5-5 10 0q5-5 10 0"/></g>
+      <g class="float" fill="var(--c4)"><ellipse cx="236" cy="40" rx="6" ry="4.5" transform="rotate(-20 236 40)"/><rect x="240.5" y="18" width="2.2" height="22"/></g>
+      <g class="float f2" fill="var(--c0)"><ellipse cx="128" cy="104" rx="5" ry="4" transform="rotate(-20 128 104)"/><rect x="132" y="86" width="2" height="18"/></g>
+    </svg>
   <svg class="deco" viewBox="0 0 400 150" preserveAspectRatio="xMaxYMax meet" aria-hidden="true">
     <g class="night" aria-hidden="true">
       <circle cx="354" cy="38" r="34" fill="var(--sun)" opacity=".12"/>
