@@ -565,13 +565,17 @@ body.kara-on{overflow:hidden}
 body.op-on .playerbar,body.op-on .mini-video{display:none!important}
 .playerbar .mini-lp{animation-play-state:paused}
 .playerbar.playing .mini-lp{animation-play-state:running}
-.mini-video{position:fixed;z-index:16;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:min(360px,calc(100vw - 32px));background:#2B3A55;border:3px solid #2B3A55;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(20,30,60,.35)}
+.mini-video{position:fixed;z-index:16;right:max(12px,calc((100vw - 720px) / 2));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:min(380px,calc(100vw - 24px));background:#2B3A55;border:3px solid #2B3A55;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(20,30,60,.35)}
 .mini-video.big{width:min(760px,calc(100vw - 32px))}
 .mv-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 6px 6px 12px;color:#fff}
 .mv-head b{font-family:var(--display);font-weight:400;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .mv-head span{display:flex;gap:4px;flex:none}
 .mv-head button{font:700 13px var(--body);color:#fff;background:rgba(255,255,255,.16);border:0;border-radius:999px;padding:5px 11px;cursor:pointer}
 .mv-frame{position:relative;aspect-ratio:16/9;background:#000}
+.mini-video.off .mv-frame{height:1px!important;aspect-ratio:auto;opacity:0;overflow:hidden}
+.mini-video.off .mv-head button[data-mv="big"]{display:none}
+.mv-sound{display:none;font-family:var(--body);font-size:12px;color:#FFD866;margin-left:8px}
+.mini-video.off .mv-sound{display:inline}
 .mini-video.audio .mv-frame{aspect-ratio:auto;height:120px}
 .mini-video.audio.big .mv-frame{height:180px}
 body.kara-on .mini-video{z-index:41;top:max(56px,env(safe-area-inset-top));bottom:auto}
@@ -584,7 +588,8 @@ body.kara-on .mini-video{z-index:41;top:max(56px,env(safe-area-inset-top));botto
 .vbox.audio{aspect-ratio:auto;height:130px}
 .vbox.score{aspect-ratio:3/4;max-height:80vh;background:#fff}
 .mv-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-@media (max-width:600px){.mini-video{left:16px;right:16px;width:auto}.mini-video.big{width:auto}}
+@media (max-width:600px){.mini-video{left:12px;right:12px;width:auto}.mini-video.big{width:auto}}
+@media (min-width:1000px){.mini-video.big{right:max(12px,calc((100vw - 760px) / 2))}}
 /* 오늘의 동요 달력 */
 .cal-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .cal-head b{font-family:var(--display);font-weight:400;font-size:24px;white-space:nowrap}
@@ -1874,7 +1879,8 @@ document.addEventListener("change", e => {
     if (!y) { if (box) box.remove(); PLAYER.playing = 0; renderPlayer(); return; }
     if (!box) { document.body.insertAdjacentHTML("beforeend", '<div class="mini-video" role="region" aria-label="영상 재생"></div>'); box = document.querySelector(".mini-video"); }
     PLAYER.playing = s.id; box.classList.toggle("audio", playIsAudio(s));
-    box.innerHTML = `<div class="mv-head"><b>${esc(s.title)}</b><span><button data-mv="big" aria-label="크게 보기">크게</button><button data-mv="close" aria-label="영상 닫기">닫기</button></span></div>
+    const off = store.get("dys-mv-off", false); box.classList.toggle("off", off);
+    box.innerHTML = `<div class="mv-head"><b>${esc(s.title)}<small class="mv-sound">소리만 듣는 중</small></b><span><button data-mv="screen" aria-pressed="${off}">${off ? "화면 켜기" : "화면 끄기"}</button><button data-mv="big" aria-label="크게 보기">크게</button><button data-mv="close" aria-label="닫기">닫기</button></span></div>
       <div class="mv-frame"><iframe src="${y}" title="${esc(s.title)} 영상" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
     renderPlayer();
   }
@@ -1884,6 +1890,7 @@ document.addEventListener("change", e => {
     e.stopPropagation();
     const box = document.querySelector(".mini-video");
     if (b.dataset.mv === "close") miniPlay(null);
+    if (b.dataset.mv === "screen" && box) { const off = !box.classList.contains("off"); box.classList.toggle("off", off); store.set("dys-mv-off", off); b.textContent = off ? "화면 켜기" : "화면 끄기"; b.setAttribute("aria-pressed", off); }
     if (b.dataset.mv === "big" && box) { box.classList.toggle("big"); b.textContent = box.classList.contains("big") ? "작게" : "크게"; }
   }, true);
   function playerSong() { return songById(PLAYER.id) || pickToday().song; }
