@@ -468,6 +468,15 @@ body{padding-bottom:0!important}
 @media (min-width:1000px){.scene .h1t{-webkit-text-stroke:4px currentColor!important}
   .scene .h1t span{text-shadow:5px 0 0 #fff,-5px 0 0 #fff,0 5px 0 #fff,0 -5px 0 #fff,4px 4px 0 #fff,-4px 4px 0 #fff,4px -4px 0 #fff,-4px -4px 0 #fff,6px 2px 0 #fff,-6px 2px 0 #fff,2px 6px 0 #fff,-2px 6px 0 #fff,0 11px 0 rgba(43,58,85,.28)}}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .scene .h1t span{text-shadow:4px 0 0 #1D2742,-4px 0 0 #1D2742,0 4px 0 #1D2742,0 -4px 0 #1D2742,3px 3px 0 #1D2742,-3px 3px 0 #1D2742,3px -3px 0 #1D2742,-3px -3px 0 #1D2742,0 9px 0 rgba(0,0,0,.4)}}
+
+/* 로그인 · 가입 · 반 고르기 */
+.auth .fld input,.auth .fld select{width:100%}
+.copy-mail{font-weight:700;color:var(--ink);word-break:break-all}
+.cls-pick{font:inherit;font-size:14px;padding:7px 10px;border-radius:12px;border:2px solid var(--line);background:var(--paper);color:var(--ink);width:100%}
+.oprow.acc{grid-template-columns:44px minmax(0,1fr)}
+.oprow.acc .btns{grid-column:1/-1;justify-content:flex-end}
+.card.temp{border:2px solid var(--c2)!important;background:var(--c2-soft)}
+.tpw{font-family:ui-monospace,Menlo,monospace;font-size:18px;letter-spacing:.08em;background:var(--paper);padding:2px 8px;border-radius:8px}
 </style>
 </head>
 <body style="margin:0">
@@ -540,18 +549,12 @@ body{padding-bottom:0!important}
 <div id="toastHost"></div>
 
 <script>
-/* 동요샘 노래상자 화면 — 껍데기(?s=학교 시트 주소)가 있으면 우리 반 시트·전국 수집기와 연결, 없으면 체험 모드 */
-const APP = { version: '0.4', q: {}, live: false, shellUrl: '', collector: '', token: '', relay: { id: '예시 릴레이', song: 3 }, busy: false };
+/* 동요샘 노래상자 화면 — 서버(national.json 의 collector)가 있으면 로그인해서 반별로 기록, 없으면 체험 모드 */
+const APP = { version: '0.5', q: {}, live: false, server: '', token: '', acc: null, cid: '', contact: '', relay: { id: '예시 릴레이', song: 3 }, busy: false, authView: 'login' };
 new URLSearchParams(location.search).forEach(function (v, k) { APP.q[k] = v; });
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d } catch (e) { return d } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch (e) {} }, del(k) { try { localStorage.removeItem(k) } catch (e) {} } };
 function soundOn() { return store.get("dys-sound", true); }
-(function () {
-  let s = APP.q.s || '';
-  if (s) store.set('dys_shell', s); else s = store.get('dys_shell', '');
-  if (APP.q.demo !== undefined) s = '';
-  APP.shellUrl = s; APP.live = /^https:\/\/script\.google\.com\//.test(s);
-  if (APP.live) APP.token = store.get('dys_token|' + s, '');
-})();
+APP.token = store.get("dys_user", ""); APP.cid = store.get("dys_cid", "");
 
 /* ---------- 예시 곡 (곡 목록이 수집기에서 오기 전·체험 모드용) ---------- */
 const DEMO_SONGS = [
@@ -640,13 +643,24 @@ function demoMeLoad() {
   return m;
 }
 function demoMeSave() { store.set("dys-demo", { name: ME.name, region: ME.region, stamps: [...ME.stamps], vote: ME.vote, relays: [...ME.relays], lyrics: ME.lyrics, likes: [...ME.likes] }); }
-function setMe(st) {
+function setMe(c) {
   const m = blankMe();
-  m.pid = st.pid; m.name = st.name; m.region = st.region; m.configured = st.configured; m.loaded = true;
-  m.stamps = new Set(st.stamps); m.vote = st.vote; m.relays = new Set(st.relays); m.lyrics = st.lyrics || []; m.likes = new Set(st.likes);
-  if (st.month) MONTH = st.month;
-  ME = m;
+  if (c) {
+    m.pid = c.cid; m.name = c.name; m.region = c.region; m.configured = true;
+    m.stamps = new Set(c.stamps || []); m.vote = c.vote; m.relays = new Set(c.relays || []); m.lyrics = c.lyrics || []; m.likes = new Set(c.likes || []);
+  }
+  m.loaded = true; ME = m;
 }
+/* 서버가 돌려준 내 계정·반 목록 반영 (고른 반 기억) */
+function setAcc(me) {
+  APP.acc = me; if (me && me.month) MONTH = me.month;
+  const list = (me && me.classes) || [];
+  if (me && me.newCid) APP.cid = me.newCid;
+  if (!list.some(c => c.cid === APP.cid)) APP.cid = list.length ? list[0].cid : "";
+  store.set("dys_cid", APP.cid);
+  setMe(list.find(c => c.cid === APP.cid));
+}
+function signOut(msg) { APP.token = ""; APP.acc = null; store.del("dys_user"); setMe(null); if (msg) toast(msg); }
 function emptyRegions() { const r = {}; REGIONS.forEach(([n]) => r[n] = { stamps: 0, classes: 0 }); return r; }
 /* 체험 모드(예시 학교 포함) 또는 수집기가 아직 없을 때(우리 반만)의 전국 현황 */
 function localNational(withDemo) {
@@ -667,23 +681,24 @@ function songsFromCollector(list) {
     lyrics: s.lyrics || "", intro: s.intro || "", tip: s.tip || "", video: s.video || "", score: s.score || "" }));
 }
 
-/* ---------- 껍데기·수집기와 주고받기 ---------- */
+/* ---------- 서버와 주고받기 ---------- */
 function rpc(fn, args, retried) {
-  return fetch(APP.shellUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ fn: fn, args: args || [] }), redirect: "follow" })
-    .then(r => { if (!r.ok) { const e = new Error("학교 시트 응답 오류 (" + r.status + ")"); e.retry = true; throw e; } return r.json(); }, err => { err.retry = true; throw err; })
+  return fetch(APP.server, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ fn: fn, args: args || [] }), redirect: "follow" })
+    .then(r => { if (!r.ok) { const e = new Error("서버 응답 오류 (" + r.status + ")"); e.retry = true; throw e; } return r.json(); }, err => { err.retry = true; throw err; })
     .then(j => { if (!j.ok) throw new Error(j.error || "요청 실패"); return j.result; })
     .catch(err => { if (!err.retry || retried) throw err; return new Promise(ok => setTimeout(ok, 1500)).then(() => rpc(fn, args, true)); });
 }
 function loadNational() {
-  if (!APP.collector) { NAT = localNational(!APP.live); return Promise.resolve(); }
-  return fetch(APP.collector + "?api=board", { cache: "no-store" }).then(r => r.json()).then(j => {
+  if (!APP.live) { NAT = localNational(true); return Promise.resolve(); }
+  return fetch(APP.server + "?api=board", { cache: "no-store" }).then(r => r.json()).then(j => {
     if (!j.ok) throw new Error(j.error);
     const b = j.result;
     if (b.songs && b.songs.length) SONGS = songsFromCollector(b.songs);
     if (b.relay && b.relay.id) APP.relay = b.relay;
     if (b.month) MONTH = b.month;
+    APP.contact = b.contact || "";
     NAT = { regions: Object.assign(emptyRegions(), b.regions || {}), songClasses: b.songClasses || {}, votes: b.votes || {}, relays: b.relays || {}, lyrics: b.lyrics || {}, total: b.classes, updated: b.updated };
-  }).catch(() => { NAT = localNational(!APP.live); NAT.failed = true; });
+  }).catch(() => { NAT = localNational(false); NAT.failed = true; });
 }
 
 /* ---------- 계산 ---------- */
@@ -733,9 +748,10 @@ function stampBtn(id) { return ME.stamps.has(id) ? `<button class="btn done" dat
 function ranked() { return Object.entries(NAT.regions).sort((a, b) => b[1].stamps - a[1].stamps); }
 function statusLine() {
   if (!APP.live) return `<span class="status">체험 모드 · 예시 학교 기록</span>`;
-  const who = ME.loaded ? (ME.configured ? esc(ME.name) + " · " + esc(ME.region) : "반 이름을 정해 주세요") : "우리 반 시트 여는 중";
-  const nat = !APP.collector ? " · 전국 수집기 준비 중" : NAT.failed ? " · 전국 현황을 못 불러옴" : "";
-  return `<span class="status on">${who}${APP.token ? " · 선생님" : ""}${nat}</span>`;
+  const nat = NAT.failed ? " · 전국 현황을 못 불러옴" : "";
+  if (!APP.token) return `<span class="status">로그인하면 우리 반 기록을 남길 수 있어요${nat}</span>`;
+  const who = APP.acc ? esc(APP.acc.name) + " 선생님" : "로그인 중";
+  return `<span class="status on">${who}${ME.configured ? " · " + esc(ME.name) : ""}${nat}</span>`;
 }
 
 function renderSide() {
@@ -746,8 +762,9 @@ function renderSide() {
       <span class="eyebrow">우리 반</span>
       ${ME.configured ? `<b class="side-name">${esc(ME.name)}</b><span class="meta">${esc(ME.region)} · ${cur[1]}</span>
       <div class="prog"><span style="width:${pct}%"></span></div><span class="meta">도장 ${ME.stamps.size}개${next ? ` · ${next[0] - ME.stamps.size}개 더 모으면 ${next[1]}` : ""}</span>`
-      : `<span class="meta">${ME.loaded ? "우리 반 이름과 지역을 정해 주세요." : "우리 반 시트를 여는 중이에요."}</span>`}
-      <button class="btn ghost" data-tab="mine">우리 반 보기</button>
+      : `<span class="meta">${!APP.live ? "" : !APP.token ? "로그인하면 우리 반 도장과 칭호가 여기에 보여요." : "우리 반을 먼저 만들어 주세요."}</span>`}
+      ${APP.acc && APP.acc.classes.length > 1 ? `<select class="cls-pick" aria-label="반 고르기">${APP.acc.classes.map(c => `<option value="${esc(c.cid)}"${c.cid === APP.cid ? " selected" : ""}>${esc(c.name)}</option>`).join("")}</select>` : ""}
+      <button class="btn ghost" data-tab="mine">${APP.live && !APP.token ? "로그인 · 가입 신청" : "우리 반 보기"}</button>
     </div>
     <a class="cafe cafe-side" href="https://cafe.daum.net/jbdongyo" target="_blank" rel="noopener">
       <span class="cafe-notes" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -759,9 +776,9 @@ function render() {
   const v = $("#view");
   $("#statusHost").innerHTML = statusLine();
   $("#exampleNote").textContent = APP.live
-    ? "곡 목록은 동요샘 운영진이 관리해요. 바꾼 가사는 운영진이 확인한 뒤 전국에 보여요."
+    ? "곡 목록은 동요샘 운영진이 관리해요. 동요샘 선생님은 가입 신청 후 승인을 받으면 반별로 기록을 남길 수 있어요."
     : "체험 모드예요. 곡·가사·지은이·학교 기록은 모두 예시이고, 누른 도장·투표·가사는 이 기기에만 저장돼요.";
-  if (!SONGS.length) { v.innerHTML = `<section><div class="empty">곡 목록이 비어 있어요. 운영진이 곡을 올리면 여기에 보여요.</div></section>`; return; }
+  if (!SONGS.length && tab !== "op") { v.innerHTML = `<section><div class="empty">곡 목록이 비어 있어요. 운영진이 곡을 올리면 여기에 보여요.</div></section>`; return; }
   if (tab === "today") {
     const { song: s, season } = pickToday();
     const rk = ranked(), myRank = ME.region ? rk.findIndex(([r]) => r === ME.region) + 1 : 0;
@@ -896,29 +913,47 @@ function renderMine(v) {
         <span class="label">우리 반 정보${ME.example ? " (예시로 채워 둠)" : ""}</span>
         <div class="form2"><input type="text" id="meName" value="${esc(ME.name)}" placeholder="예: 서울햇살초 5-1" aria-label="학교와 반"><select id="meRegion" aria-label="지역">${regionOpts(ME.region)}</select></div>
       </div>
-      <div class="card"><span class="eyebrow">우리 학교 시트에 연결하기</span>
-        <p style="margin:0">학교 구글 시트에 껍데기를 설치하면 우리 반 기록이 시트에 쌓이고, 전국 무대·차트·릴레이에 실제로 올라가요. 껍데기 설치 확인 화면의 '노래상자 열기'로 들어오면 연결돼요.</p></div>`;
+      <div class="card"><span class="eyebrow">체험 모드</span>
+        <p style="margin:0">지금은 예시 기록으로 둘러보는 중이에요. 동요샘 서버가 열리면 이 자리에서 선생님 가입 신청과 로그인을 할 수 있어요.</p></div>`;
   } else if (!APP.token) {
-    top = `<div class="card"><span class="eyebrow">선생님 로그인</span>
-        <p class="meta" style="margin:0">도장·투표·릴레이·가사 올리기는 선생님이 로그인한 뒤에 눌러요. 처음 비밀번호는 1234예요.</p>
-        <div class="form2"><input type="password" id="pw" placeholder="비밀번호" aria-label="선생님 비밀번호" autocomplete="current-password"><button class="btn" data-login>로그인</button></div></div>`;
+    const contact = APP.contact ? `<span class="copy-mail">${esc(APP.contact)}</span>` : "운영진";
+    top = APP.authView === "signup" ? `<div class="card auth"><span class="eyebrow">가입 신청</span>
+        <p class="meta" style="margin:0">동요샘 운영진이 확인하고 승인하면 로그인할 수 있어요.</p>
+        <label class="fld"><span class="label">아이디 (영어 소문자·숫자 4~20자)</span><input type="text" id="suId" autocomplete="username" autocapitalize="off"></label>
+        <label class="fld"><span class="label">비밀번호 (6자 이상)</span><input type="password" id="suPw" autocomplete="new-password"></label>
+        <div class="form2"><label class="fld"><span class="label">선생님 이름</span><input type="text" id="suName" placeholder="예: 김햇살"></label>
+          <label class="fld"><span class="label">학교</span><input type="text" id="suSchool" placeholder="예: 햇살초등학교"></label></div>
+        <label class="fld"><span class="label">지역</span><select id="suRegion">${regionOpts("")}</select></label>
+        <div class="btns"><button class="btn" data-signup>가입 신청</button><button class="btn ghost" data-auth="login">로그인으로 돌아가기</button></div></div>`
+      : `<div class="card auth"><span class="eyebrow">선생님 로그인</span>
+        <p class="meta" style="margin:0">로그인하면 우리 반 도장, 투표, 릴레이, 가사 올리기를 할 수 있어요.</p>
+        <label class="fld"><span class="label">아이디</span><input type="text" id="liId" autocomplete="username" autocapitalize="off"></label>
+        <label class="fld"><span class="label">비밀번호</span><input type="password" id="liPw" autocomplete="current-password"></label>
+        <div class="btns"><button class="btn" data-login>로그인</button><button class="btn ghost" data-auth="signup">처음이에요 · 가입 신청</button></div>
+        <p class="meta" style="margin:0">비밀번호를 잊었다면 ${contact}${APP.contact ? "로" : "에게"} 아이디를 적어 요청해 주세요. 임시 비밀번호를 보내 드려요.${APP.contact ? ` <button class="more" data-copy="${esc(APP.contact)}">주소 복사</button>` : ""}</p></div>`;
   } else {
+    const acc = APP.acc || { name: "", school: "", classes: [] };
     top = `<div class="card">
-        <span class="label">우리 반 정보</span>
-        <div class="form2"><input type="text" id="meName" value="${esc(ME.name)}" placeholder="예: 서울햇살초 5-1" aria-label="학교와 반"><select id="meRegion" aria-label="지역">${regionOpts(ME.region)}</select></div>
-        <p class="meta" style="margin:0">전국 무대에 보이는 이름이에요. 지역 두 글자와 학교 이름, 반을 함께 적어 주세요.</p>
-        <div class="btns"><button class="btn" data-save>저장</button></div>
+        <span class="eyebrow">${esc(acc.name)} 선생님 · ${esc(acc.school)}</span>
+        ${acc.classes.length ? `<span class="label">우리 반 고르기</span><div class="chips">${acc.classes.map(c => `<button class="chip" data-cid="${esc(c.cid)}" aria-pressed="${c.cid === APP.cid}">${esc(c.name)}</button>`).join("")}</div>` : `<p style="margin:0">아직 만든 반이 없어요. 아래에서 우리 반을 만들어 주세요.</p>`}
+        ${ME.configured ? `<span class="label">지금 반 이름 · 지역 고치기</span>
+        <div class="form2"><input type="text" id="meName" value="${esc(ME.name)}" placeholder="예: 서울햇살초 5-1" aria-label="반 이름"><select id="meRegion" aria-label="지역">${regionOpts(ME.region)}</select></div>
+        <div class="btns"><button class="btn ghost" data-save>고친 내용 저장</button></div>` : ""}
+        <span class="label">반 새로 만들기</span>
+        <div class="form2"><input type="text" id="newCls" placeholder="예: 서울햇살초 5-1" aria-label="새 반 이름"><select id="newRegion" aria-label="새 반 지역">${regionOpts(acc.region)}</select></div>
+        <p class="meta" style="margin:0">전국 무대에 보이는 이름이에요. 지역 두 글자, 학교 이름, 반을 함께 적어 주세요. 전담 선생님은 반을 여러 개 만들 수 있어요.</p>
+        <div class="btns"><button class="btn" data-addclass>반 만들기</button></div>
       </div>`;
   }
   const mineLyrics = ME.lyrics.map(l => { const s = songById(l.songId), pub = Object.values(NAT.lyrics).some(a => a.some(x => x.key === l.id));
-    return `<div class="quest${pub ? " cleared" : ""}"><span class="ok"></span><span>${esc(s ? s.title : "곡 " + l.songId)} · ${esc(l.text.split("\n")[0])}</span><span class="meta">${APP.live ? (pub ? "공개됨" : "확인 중") : "체험"}</span></div>`; }).join("");
+    return `<div class="quest${pub ? " cleared" : ""}"><span class="ok"></span><span>${esc(s ? s.title : "곡 " + l.songId)} · ${esc(l.text.split("\n")[0])}</span><span class="meta">${APP.live ? (l.status === "O" || pub ? "공개됨" : l.status === "X" ? "공개 안 함" : "확인 중") : "체험"}</span></div>`; }).join("");
   v.innerHTML = `<section class="split book"><div class="col">
       ${top}
       <div class="card">
         <div class="level"><b>${cur[1]}</b><span class="meta">도장 ${ME.stamps.size}개${next ? ` · ${next[0] - ME.stamps.size}개 더 모으면 ${next[1]}` : " · 최고 단계"}</span></div>
         <div class="prog"><span style="width:${pct}%"></span></div>
       </div>
-      <h2>칭찬 스티커판</h2><p class="sub">반이 함께 부른 곡에 스티커를 붙여요. 다시 누르면 떼어져요. <button class="more" data-sound>효과음 ${soundOn() ? "끄기" : "켜기"}</button></p>
+      <h2>우리가 모은 동요 스티커</h2><p class="sub">반이 함께 부른 곡마다 스티커가 붙어요. 다시 누르면 떼어져요. <button class="more" data-sound>효과음 ${soundOn() ? "끄기" : "켜기"}</button></p>
       <div class="stampbook">${SONGS.map(s => `<span class="cell"><button class="stamp${ME.stamps.has(s.id) ? " on" : ""}" style="--c:var(--c${s.id % 6})" data-stamp="${s.id}" aria-pressed="${ME.stamps.has(s.id)}">${ME.stamps.has(s.id) ? `<b>${esc(s.title)}</b>불렀어요` : esc(s.title)}</button></span>`).join("")}</div>
       </div><div class="col">
       <h2>노래 탐험 지도</h2>
@@ -926,8 +961,8 @@ function renderMine(v) {
       ${mineLyrics ? `<h2>우리 반이 올린 가사</h2><div class="card">${mineLyrics}</div>` : ""}
       ${APP.live && APP.token ? `<h2>선생님 메뉴</h2><div class="card">
         <span class="label">비밀번호 바꾸기</span>
-        <div class="form2"><input type="password" id="newPw" placeholder="새 비밀번호 (4자 이상)" aria-label="새 비밀번호" autocomplete="new-password"><button class="btn ghost" data-pw>바꾸기</button></div>
-        <div class="btns"><button class="btn ghost" data-resend>전국으로 다시 보내기</button><button class="btn ghost" data-logout>로그아웃</button></div>
+        <div class="form2"><input type="password" id="oldPw" placeholder="지금 비밀번호" aria-label="지금 비밀번호" autocomplete="current-password"><input type="password" id="newPw" placeholder="새 비밀번호 (6자 이상)" aria-label="새 비밀번호" autocomplete="new-password"></div>
+        <div class="btns"><button class="btn ghost" data-pw>비밀번호 바꾸기</button><button class="btn ghost" data-logout>로그아웃</button></div>
       </div>` : ""}
     </div></section>`;
   if (!APP.live) {
@@ -935,7 +970,7 @@ function renderMine(v) {
     $("#meName").addEventListener("change", () => { upd(); toast("우리 반 이름을 바꿨어요"); });
     $("#meRegion").addEventListener("change", () => { upd(); toast(`지역을 ${ME.region}(으)로 바꿨어요`); render(); });
   }
-  const pw = $("#pw"); if (pw) pw.addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+  const pw = $("#liPw"); if (pw) pw.addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
 }
 
 function openSong(id) {
@@ -978,34 +1013,46 @@ function refreshSheet() { const sh = $(".sheet"); if (sh) openSong(+sh.dataset.s
 
 /* ---------- 누르기 ---------- */
 async function doLogin() {
-  const pw = $("#pw"); if (!pw || !pw.value) { toast("비밀번호를 적어 주세요"); return; }
-  try { const r = await rpc("login", [pw.value]);
+  const id = ($("#liId") || {}).value || "", pw = ($("#liPw") || {}).value || "";
+  if (!id.trim() || !pw) { toast("아이디와 비밀번호를 적어 주세요"); return; }
+  if (APP.busy) return; APP.busy = true; document.body.classList.add("busy");
+  try { const r = await rpc("login", [id.trim(), pw]);
     if (!r.ok) { toast(r.message); return; }
-    APP.token = r.token; store.set("dys_token|" + APP.shellUrl, r.token);
-    toast(r.defaultPw ? "로그인했어요. 처음 비밀번호이니 꼭 바꿔 주세요" : "로그인했어요"); render();
+    APP.token = r.token; store.set("dys_user", r.token); setAcc(r.me); await loadNational();
+    toast(ME.configured ? "로그인했어요" : "로그인했어요. 우리 반을 먼저 만들어 주세요"); render();
   } catch (e) { toast(e.message); }
+  finally { APP.busy = false; document.body.classList.remove("busy"); }
+}
+async function doSignup() {
+  const v = id => (($("#" + id) || {}).value || "").trim();
+  const p = { id: v("suId").toLowerCase(), pw: ($("#suPw") || {}).value || "", name: v("suName"), school: v("suSchool"), region: v("suRegion") };
+  if (!/^[a-z0-9_]{4,20}$/.test(p.id)) { toast("아이디는 영어 소문자·숫자·밑줄로 4~20자예요"); return; }
+  if (p.pw.length < 6) { toast("비밀번호는 6자 이상으로 정해 주세요"); return; }
+  if (!p.name || !p.school || !p.region) { toast("이름, 학교, 지역을 모두 적어 주세요"); return; }
+  if (APP.busy) return; APP.busy = true; document.body.classList.add("busy");
+  try { const r = await rpc("signup", [p]); toast(r.message); APP.authView = "login"; render(); const li = $("#liId"); if (li) li.value = p.id; }
+  catch (e) { toast(e.message); }
+  finally { APP.busy = false; document.body.classList.remove("busy"); }
 }
 function needTeacher() {
   if (!APP.live) return true;
-  if (!APP.token) { toast("선생님 로그인 후 누를 수 있어요"); goTab("mine"); return false; }
-  if (!ME.configured) { toast("우리 반 이름과 지역을 먼저 정해 주세요"); goTab("mine"); return false; }
+  if (!APP.token) { toast("로그인하면 누를 수 있어요"); goTab("mine"); return false; }
+  if (!ME.configured) { toast("우리 반을 먼저 만들어 주세요"); goTab("mine"); return false; }
   return true;
 }
-/* 체험 모드는 이 기기에, 연결 모드는 우리 반 시트에 저장한 뒤 전국 현황을 다시 읽음 */
-async function act(fn, args, demo, okMsg) {
-  if (!APP.live) { demo(); demoMeSave(); NAT = localNational(true); render(); refreshSheet(); if (okMsg) toast(okMsg); return true; }
+/* 체험 모드는 이 기기에, 서버 모드는 동요샘 시트에 저장한 뒤 전국 현황을 다시 읽음 */
+async function act(fn, args, demo, okMsg, noClass) {
+  if (!APP.live) { if (demo) { demo(); demoMeSave(); NAT = localNational(true); render(); refreshSheet(); if (okMsg) toast(okMsg); } return true; }
   if (APP.busy) return false;
   APP.busy = true; document.body.classList.add("busy");
   try {
-    const r = await rpc(fn, [APP.token].concat(args));
-    setMe(r.state);
-    if (r.nat && r.nat.ok) await loadNational(); else NAT = APP.collector ? NAT : localNational(false);
+    const me = await rpc(fn, [APP.token].concat(noClass ? [] : [APP.cid], args));
+    setAcc(me); await loadNational();
     render(); refreshSheet();
-    if (r.nat && r.nat.error) toast("우리 반 시트에는 저장했어요. 전국 현황에는 조금 뒤 반영돼요");
-    else if (okMsg) toast(okMsg);
+    if (okMsg) toast(okMsg);
     return true;
   } catch (e) {
-    if (/로그인/.test(e.message)) { APP.token = ""; store.del("dys_token|" + APP.shellUrl); render(); }
+    if (/로그인이 필요/.test(e.message)) { signOut(); render(); }
     toast(e.message); return false;
   } finally { APP.busy = false; document.body.classList.remove("busy"); }
 }
@@ -1020,35 +1067,48 @@ document.addEventListener("click", e => {
   if (d.chart) { chartMode = d.chart; render(); return; }
   if (t.closest("[data-opzone]")) return;
   if (t.hasAttribute("data-login")) { doLogin(); return; }
-  if (t.hasAttribute("data-logout")) { rpc("logout", [APP.token]).catch(() => {}); APP.token = ""; store.del("dys_token|" + APP.shellUrl); render(); toast("로그아웃했어요"); return; }
+  if (t.hasAttribute("data-signup")) { doSignup(); return; }
+  if (d.auth) { APP.authView = d.auth; render(); return; }
+  if (d.copy) { const v = d.copy; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast("주소를 복사했어요"), () => toast(v)); return; }
+  if (t.hasAttribute("data-logout")) { rpc("logout", [APP.token]).catch(() => {}); signOut("로그아웃했어요"); render(); return; }
+  if (d.cid) { APP.cid = d.cid; store.set("dys_cid", APP.cid); setMe(APP.acc.classes.find(c => c.cid === APP.cid)); render(); toast(`${ME.name}(으)로 바꿨어요`); return; }
+  if (t.hasAttribute("data-addclass")) {
+    const name = $("#newCls").value.trim(), region = $("#newRegion").value;
+    if (!name || !region) { toast("새 반 이름과 지역을 정해 주세요"); return; }
+    act("addClass", [name, region], null, "반을 만들었어요", true); return;
+  }
   if (t.hasAttribute("data-save")) {
     const name = $("#meName").value.trim(), region = $("#meRegion").value;
     if (!name || !region) { toast("반 이름과 지역을 모두 정해 주세요"); return; }
-    act("saveSettings", [name, region], null, "우리 반 정보를 저장했어요"); return;
+    act("editClass", [name, region], null, "반 정보를 고쳤어요"); return;
   }
   if (t.hasAttribute("data-pw")) {
-    const v = $("#newPw").value.trim(); if (v.length < 4) { toast("비밀번호는 4자 이상으로 정해 주세요"); return; }
-    rpc("changePassword", [APP.token, v]).then(r => { toast(r.ok ? "비밀번호를 바꿨어요" : r.message); $("#newPw").value = ""; }).catch(err => toast(err.message)); return;
+    const o = $("#oldPw").value, v = $("#newPw").value;
+    if (v.length < 6) { toast("새 비밀번호는 6자 이상으로 정해 주세요"); return; }
+    rpc("changePw", [APP.token, o, v]).then(r => { toast(r.ok ? "비밀번호를 바꿨어요" : r.message); if (r.ok) { $("#oldPw").value = ""; $("#newPw").value = ""; } }).catch(err => toast(err.message)); return;
   }
-  if (t.hasAttribute("data-resend")) { act("resend", [], null, "전국으로 다시 보냈어요"); return; }
   if (!needTeacher()) return;
   if (d.stamp) { const id = +d.stamp, had = ME.stamps.has(id), s = songById(id);
     act("toggleStamp", [id, s ? s.title : ""], () => { had ? ME.stamps.delete(id) : ME.stamps.add(id); }, had ? "도장을 지웠어요" : `도장 쾅! ${ME.region} 점수가 1 올랐어요`); return; }
   if (d.vote) { const id = +d.vote, s = songById(id);
     act("vote", [id, s ? s.title : ""], () => { ME.vote = { month: MONTH, song: id }; }, `「${s ? s.title : ""}」에 투표했어요`); return; }
-  if (d.relay !== undefined) { act("joinRelay", [APP.relay.id, APP.relay.song], () => { ME.relays.add(APP.relay.id); }, "릴레이를 이어받았어요. 다음 반을 기다려요"); return; }
+  if (d.relay !== undefined) { act("joinRelay", [APP.relay.id], () => { ME.relays.add(APP.relay.id); }, "릴레이를 이어받았어요. 다음 반을 기다려요"); return; }
   if (d.like) { const k = d.like; act("toggleLike", [k], () => { ME.likes.has(k) ? ME.likes.delete(k) : ME.likes.add(k); }); return; }
   if (d.addvar) { const id = +d.addvar, txt = $("#vText").value.trim(), s = songById(id);
     if (!txt) { toast("가사를 먼저 적어 주세요"); $("#vText").focus(); return; }
-    act("addLyric", [id, s ? s.title : "", txt], () => { ME.lyrics.push({ id: "me-" + Date.now(), songId: id, text: txt }); }, APP.live ? "올렸어요. 운영진이 확인하면 전국에 보여요" : "우리 반 가사를 올렸어요"); return; }
+    act("addLyric", [id, txt], () => { ME.lyrics.push({ id: "me-" + Date.now(), songId: id, text: txt }); }, APP.live ? "올렸어요. 운영진이 확인하면 전국에 보여요" : "우리 반 가사를 올렸어요"); return; }
   if (d.themeF) { filter.theme = filter.theme === d.themeF ? null : d.themeF; render(); return; }
   if (d.gradeF) { filter.grade = filter.grade === d.gradeF ? null : d.gradeF; render(); return; }
   if (d.mode) { filter.mode = d.mode; render(); return; }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape") $("#sheetHost").innerHTML = ""; });
+document.addEventListener("change", e => {
+  if (!e.target.matches(".cls-pick") || !APP.acc) return;
+  APP.cid = e.target.value; store.set("dys_cid", APP.cid); setMe(APP.acc.classes.find(c => c.cid === APP.cid)); render(); toast(`${ME.name}(으)로 바꿨어요`);
+});
 
 /* ---------- 운영진 메뉴 (수집기 시트를 화면에서 관리) ---------- */
-const OP = { token: store.get("dys_op", ""), data: null, sub: "songs", lf: "", demo: false, url: "" };
+const OP = { token: store.get("dys_op", ""), data: null, sub: "accounts", lf: "", af: "", demo: false, url: "" };
 function opDemoData() {
   const lyrics = [];
   Object.entries(DEMO_VARIANTS).forEach(([sid, arr]) => arr.forEach((v, i) => lyrics.push({ id: "d" + sid + "-" + i, songId: +sid, text: v.text, cls: v.cls, region: v.region, at: "2026-10-14 13:20", status: "O" })));
@@ -1058,7 +1118,13 @@ function opDemoData() {
     songs: SONGS.map(s => { const m = /^작사·작곡 (.+)$/.exec(s.lyric), a = /작사 ([^·]+)/.exec(s.lyric), c = /작곡 (.+)$/.exec(s.lyric);
       return { ...s, lyricist: m ? m[1] : a ? a[1].trim() : "", composer: m ? m[1] : c ? c[1].trim() : "", themes: s.themes.join(", "), year: String(s.year || ""), hidden: false }; }),
     lyrics, relay: { ...APP.relay },
-    classes: DEMO_CLASSES.slice(0, 14).map((c, i) => ({ pid: "c" + i, name: c.name, region: c.region, stamps: c.sung.length, last: "2026-10-1" + (i % 6) + " 10:00", hidden: false })) };
+    classes: DEMO_CLASSES.slice(0, 14).map((c, i) => ({ pid: "c" + i, owner: "teacher" + (i % 5), name: c.name, region: c.region, stamps: c.sung.length, last: "2026-10-1" + (i % 6) + " 10:00", hidden: false })),
+    accounts: [
+      { id: "haessal_kim", name: "김햇살", school: "햇살초등학교", region: "경기", at: "2026-10-16 09:40", last: "", status: "" },
+      { id: "baram_lee", name: "이바람", school: "바람초등학교", region: "충남", at: "2026-10-16 08:15", last: "", status: "" },
+      { id: "solbit_park", name: "박솔빛", school: "솔빛초등학교", region: "전북", at: "2026-10-12 14:02", last: "2026-10-16 08:55", status: "O" },
+      { id: "eunha_choi", name: "최은하", school: "은하초등학교", region: "부산", at: "2026-10-11 10:20", last: "2026-10-15 13:10", status: "O" }],
+    contact: "" };
 }
 function opApplySongs() {
   if (!OP.data) return;
@@ -1072,6 +1138,9 @@ function opDemo(fn, args) {
   if (fn === "opLyric") { const l = d.lyrics.find(x => x.id === args[0]); if (l) l.status = args[1]; }
   if (fn === "opRelay") d.relay = { id: args[0], song: +args[1] };
   if (fn === "opClass") { const c = d.classes.find(x => x.pid === args[0]); if (c) c.hidden = args[1]; }
+  if (fn === "opAccount") { const c = d.accounts.find(x => x.id === args[0]); if (c) c.status = args[1]; }
+  if (fn === "opResetPw") { d.tempPw = { id: args[0], pw: "a7k3m9xq" }; }
+  if (fn === "opContact") d.contact = args[0];
   opApplySongs(); return d;
 }
 function opPost(fn, args) {
@@ -1114,7 +1183,8 @@ function renderOp(v) {
   }
   if (!OP.data) { v.innerHTML = `<section data-opzone><div class="empty">운영진 자료를 불러오는 중이에요</div></section>`; opEnsure(); return; }
   const d = OP.data, pend = d.lyrics.filter(l => !l.status).length;
-  const subs = [["songs", `곡 관리 ${d.songs.length}`], ["lyrics", `가사 확인${pend ? " " + pend : ""}`], ["relay", "릴레이"], ["classes", `참여 반 ${d.classes.length}`]];
+  const waiting = (d.accounts || []).filter(x => !x.status).length;
+  const subs = [["accounts", `계정${waiting ? " 승인 " + waiting : ""}`], ["songs", `곡 관리 ${d.songs.length}`], ["lyrics", `가사 확인${pend ? " " + pend : ""}`], ["relay", "릴레이"], ["classes", `참여 반 ${d.classes.length}`]];
   const title = id => { const s = d.songs.find(x => x.id === id); return s ? s.title : "곡 " + id; };
   let body = "";
   if (OP.sub === "songs") {
@@ -1144,11 +1214,25 @@ function renderOp(v) {
       <p class="meta" style="margin:0">이름을 바꾸면 새 릴레이가 첫 줄부터 다시 시작돼요. 곡만 바꾸면 이어 온 반은 그대로 두고 가사 줄만 바뀌어요. 지금 ${chain.length}개 반이 이어받았어요.</p>
       <div class="btns"><button class="btn" data-oprelay>저장</button></div></div>`;
   }
+  if (OP.sub === "accounts") {
+    const acc = d.accounts || [], cnt = { "": acc.filter(x => !x.status).length, O: acc.filter(x => x.status === "O").length, X: acc.filter(x => x.status === "X").length };
+    const list = acc.filter(x => x.status === OP.af).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    const nCls = id => (d.classes || []).filter(c => c.owner === id).length;
+    body = `${d.tempPw ? `<div class="card temp"><span class="eyebrow">임시 비밀번호</span><p style="margin:0">${esc(d.tempPw.id)} 선생님의 임시 비밀번호는 <b class="tpw">${esc(d.tempPw.pw)}</b> 예요. 선생님께 알려 드리고, 로그인 뒤 선생님 메뉴에서 바꾸시라고 안내해 주세요. 이 창을 닫으면 다시 볼 수 없어요.</p><div class="btns"><button class="btn ghost" data-copy="${esc(d.tempPw.pw)}">복사</button></div></div>` : ""}
+      <div class="chips">${[["", "승인 기다림"], ["O", "승인됨"], ["X", "거절"]].map(([k, n]) => `<button class="chip" data-opaf="${k}" aria-pressed="${OP.af === k}">${n} ${cnt[k]}</button>`).join("")}</div>
+      ${list.length ? `<div class="list">${list.map(x => `<div class="oprow acc"><span class="key">${esc(x.region)}</span>
+        <span class="min"><b>${esc(x.name)} 선생님 · ${esc(x.school)}</b><small class="meta">아이디 ${esc(x.id)} · 신청 ${esc(x.at)}${x.last ? " · 마지막 로그인 " + esc(x.last) : ""}${x.status === "O" ? " · 반 " + nCls(x.id) + "개" : ""}</small></span>
+        <span class="btns">${x.status !== "O" ? `<button class="vote on" data-opacc="${esc(x.id)}" data-st="O">승인</button>` : ""}${x.status !== "X" ? `<button class="vote" data-opacc="${esc(x.id)}" data-st="X">${x.status === "O" ? "막기" : "거절"}</button>` : ""}${x.status === "O" ? `<button class="vote" data-oppw2="${esc(x.id)}">임시 비밀번호</button>` : ""}${x.status === "X" ? `<button class="vote" data-opacc="${esc(x.id)}" data-st="">다시 검토</button>` : ""}</span></div>`).join("")}</div>`
+        : `<div class="empty">${OP.af === "" ? "승인을 기다리는 신청이 없어요" : "여기에 해당하는 계정이 없어요"}</div>`}
+      <div class="card"><span class="label">비밀번호 문의 이메일</span>
+        <p class="meta" style="margin:0">로그인 화면에 "비밀번호를 잊었다면 이 주소로 요청해 주세요"라고 보여요.</p>
+        <div class="form2"><input type="text" id="opMail" value="${esc(d.contact || "")}" placeholder="예: dongyosaem@example.com" aria-label="문의 이메일"><button class="btn" data-opmail>저장</button></div></div>`;
+  }
   if (OP.sub === "classes") {
     const list = d.classes.slice().sort((a, b) => String(b.last).localeCompare(String(a.last)));
     body = `<p class="meta" style="margin:0">노래상자를 쓰는 반이에요. 장난으로 만든 반이나 이름이 알맞지 않은 반은 숨기면 전국 무대에서 빠져요.</p>
       ${list.length ? `<div class="list">${list.map(c => `<div class="oprow${c.hidden ? " off" : ""}"><span class="key">${esc(c.region)}</span>
-        <span class="min"><b>${esc(c.name)}</b><small class="meta">도장 ${c.stamps}개 · 마지막 ${esc(c.last)}${c.hidden ? " · 숨김" : ""}</small></span>
+        <span class="min"><b>${esc(c.name)}</b><small class="meta">${c.owner ? esc(c.owner) + " · " : ""}도장 ${c.stamps}개 · 마지막 ${esc(c.last)}${c.hidden ? " · 숨김" : ""}</small></span>
         <button class="vote" data-opclass="${esc(c.pid)}" data-h="${c.hidden ? "" : "1"}">${c.hidden ? "보이기" : "숨기기"}</button></div>`).join("")}</div>`
         : `<div class="empty">아직 참여한 반이 없어요</div>`}`;
   }
@@ -1219,22 +1303,26 @@ document.addEventListener("click", e => {
   if (d.oplyric !== undefined) { opCall("opLyric", [d.oplyric, d.st], d.st === "O" ? "가사를 공개했어요" : d.st === "X" ? "가사를 숨겼어요" : "확인 전으로 돌렸어요"); return; }
   if (t.hasAttribute("data-oprelay")) { const n = $("#rName").value.trim(); if (!n) { toast("릴레이 이름을 적어 주세요"); return; } opCall("opRelay", [n, +$("#rSong").value], "릴레이를 저장했어요"); return; }
   if (d.opclass) { opCall("opClass", [d.opclass, !!d.h], d.h ? "그 반을 숨겼어요" : "그 반을 다시 보이게 했어요"); return; }
+  if (d.opaf !== undefined) { OP.af = d.opaf; if (OP.data) delete OP.data.tempPw; render(); return; }
+  if (d.opacc) { opCall("opAccount", [d.opacc, d.st], d.st === "O" ? "승인했어요" : d.st === "X" ? "거절했어요" : "다시 검토로 돌렸어요"); return; }
+  if (d.oppw2) { opCall("opResetPw", [d.oppw2], "임시 비밀번호를 만들었어요"); return; }
+  if (t.hasAttribute("data-opmail")) { opCall("opContact", [$("#opMail").value.trim()], "문의 이메일을 저장했어요"); return; }
+  if (d.copy) { const v = d.copy; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast("복사했어요"), () => toast(v)); return; }
 });
 
 /* ---------- 시작 ---------- */
 (async function start() {
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
-  ME = APP.live ? blankMe() : demoMeLoad();
-  NAT = localNational(!APP.live);
+  ME = demoMeLoad(); NAT = localNational(true);
   render();
   try { const j = await fetch("national.json", { cache: "no-store" }).then(r => r.json()); if (/^https:\/\/script\.google\.com\//.test(j.collector || "")) OP.url = j.collector; } catch (e) {}
   APP.cfgLoaded = true;
-  if (tab === "op") { OP.demo = !OP.url; OP.data = null; render(); }
-  if (!APP.live) return;
-  APP.collector = OP.url;
-  const [st] = await Promise.all([rpc("getState").catch(e => ({ error: e.message })), loadNational()]);
-  if (st.error) toast("우리 반 시트를 열지 못했어요: " + st.error); else setMe(st);
-  if (!APP.collector) NAT = localNational(false);
+  if (OP.url && APP.q.demo === undefined) { APP.live = true; APP.server = OP.url; setMe(null); }
+  if (tab === "op") { OP.demo = !OP.url; OP.data = null; }
+  if (!APP.live) { render(); return; }
+  const tasks = [loadNational()];
+  if (APP.token) tasks.push(rpc("me", [APP.token]).then(setAcc).catch(e => { signOut(/로그인이 필요/.test(e.message) ? "로그인이 끝났어요. 다시 로그인해 주세요" : ""); }));
+  await Promise.all(tasks);
   render();
 })();
 
