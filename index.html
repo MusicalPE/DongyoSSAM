@@ -167,6 +167,11 @@ textarea{min-height:110px;resize:vertical;font-family:var(--hand);font-size:19px
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 18px;border-radius:999px;font-family:var(--display);font-size:15px;z-index:30;max-width:90%}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}
   .stamp.on{animation:press .3s ease-out}@keyframes press{from{transform:scale(1.35) rotate(-8deg)}}}
+.status{display:inline-block;margin-top:8px;font-family:var(--display);font-size:13px;color:var(--muted);border:2px dashed var(--line);border-radius:999px;padding:2px 12px}
+.status.on{color:var(--ink);border-style:solid;border-color:var(--c3);background:var(--c3-soft)}
+a.btn{text-decoration:none;display:inline-block}
+input[type=password]{font:inherit;width:100%;padding:9px 12px;border-radius:14px;border:2px solid var(--line);background:var(--paper);color:var(--ink)}
+body.busy{cursor:progress}body.busy .btn,body.busy .stamp,body.busy .vote{pointer-events:none;opacity:.7}
 </style>
 </head>
 <body style="margin:0">
@@ -191,7 +196,8 @@ textarea{min-height:110px;resize:vertical;font-family:var(--hand);font-size:19px
   <div class="title"><h1>동요샘 <span class="r0">노</span><span class="r1">래</span><span class="r2">상</span><span class="r3">자</span></h1><p>온 나라 교실이 함께 부르는 동요</p></div>
 </div>
 <div class="wrap">
-  <p class="example">곡·가사·지은이·학교 기록은 모두 화면 확인용 예시예요. 내 반이 누른 도장·투표·가사는 이 기기에만 저장돼요.</p>
+  <div id="statusHost"></div>
+  <p class="example" id="exampleNote"></p>
   <nav role="tablist" id="tabs">
     <button role="tab" data-tab="today" aria-selected="true">오늘의 동요</button>
     <button role="tab" data-tab="songs" aria-selected="false">노래 찾기</button>
@@ -205,49 +211,61 @@ textarea{min-height:110px;resize:vertical;font-family:var(--hand);font-size:19px
 <div id="toastHost"></div>
 
 <script>
-/* ---------- 곡 (예시) ---------- */
-const SONGS=[
- {id:1,title:"운동장 한 바퀴",lyric:"작사·작곡 예시 회원 A",concert:3,year:2026,grade:"1~2학년",themes:["학교생활","몸놀이"],season:"가을",key:"D",beat:"2/4",range:"레~레",
+/* 동요샘 노래상자 화면 — 껍데기(?s=학교 시트 주소)가 있으면 우리 반 시트·전국 수집기와 연결, 없으면 체험 모드 */
+const APP = { version: '0.4', q: {}, live: false, shellUrl: '', collector: '', token: '', relay: { id: '예시 릴레이', song: 3 }, busy: false };
+new URLSearchParams(location.search).forEach(function (v, k) { APP.q[k] = v; });
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d } catch (e) { return d } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch (e) {} }, del(k) { try { localStorage.removeItem(k) } catch (e) {} } };
+(function () {
+  let s = APP.q.s || '';
+  if (s) store.set('dys_shell', s); else s = store.get('dys_shell', '');
+  if (APP.q.demo !== undefined) s = '';
+  APP.shellUrl = s; APP.live = /^https:\/\/script\.google\.com\//.test(s);
+  if (APP.live) APP.token = store.get('dys_token|' + s, '');
+})();
+
+/* ---------- 예시 곡 (곡 목록이 수집기에서 오기 전·체험 모드용) ---------- */
+const DEMO_SONGS = [
+ {id:1,title:"운동장 한 바퀴",lyric:"작사·작곡 예시 회원 A",concert:"제3회 동요샘 창작동요 발표회",year:2026,grade:"1~2학년",themes:["학교생활","몸놀이"],season:"가을",key:"D",beat:"2/4",range:"레~레",
   lyrics:"운동장 한 바퀴 뛰어 볼까\n발소리 콩콩 바람도 콩콩\n숨이 차도 괜찮아\n친구 손 잡고 또 한 바퀴",
   intro:"아이들이 달리기 전에 부르며 몸을 깨우는 곡입니다. 짧고 박자가 또렷해 처음 듣는 1학년도 금방 따라 부릅니다.",
   tip:"'콩콩'에서 제자리 뛰기, '한 바퀴'에서 짝과 손잡고 한 바퀴 돌기. 체육 준비운동으로 바로 쓸 수 있습니다."},
- {id:2,title:"은행잎 편지",lyric:"작사 예시 회원 B · 작곡 예시 회원 C",concert:3,year:2026,grade:"3~4학년",themes:["계절","자연"],season:"가을",key:"F",beat:"3/4",range:"도~레",
+ {id:2,title:"은행잎 편지",lyric:"작사 예시 회원 B · 작곡 예시 회원 C",concert:"제3회 동요샘 창작동요 발표회",year:2026,grade:"3~4학년",themes:["계절","자연"],season:"가을",key:"F",beat:"3/4",range:"도~레",
   lyrics:"노란 은행잎에 편지를 써요\n바람아 바람아 전해 주렴\n멀리 사는 할머니께\n가을이 왔다고",
   intro:"가을 길을 걸으며 떠오른 이야기를 담은 3박자 노래입니다. 잔잔한 선율이라 돌림노래로도 잘 어울립니다.",
   tip:"국어 '마음을 전하는 글' 단원과 엮어 은행잎 모양 카드에 짧은 편지 쓰기."},
- {id:3,title:"우리 반 무지개",lyric:"작사·작곡 예시 회원 D",concert:2,year:2025,grade:"전 학년",themes:["친구","학교생활"],season:"봄",key:"G",beat:"4/4",range:"레~미",
+ {id:3,title:"우리 반 무지개",lyric:"작사·작곡 예시 회원 D",concert:"제2회 동요샘 창작동요 발표회",year:2025,grade:"전 학년",themes:["친구","학교생활"],season:"봄",key:"G",beat:"4/4",range:"레~미",
   lyrics:"빨간 마음 주황 웃음\n노란 목소리 모여서\n우리 반은 무지개\n하나하나 달라서 예뻐",
   intro:"3월 첫 주 학급 세우기에 많이 쓰인 곡입니다. 서로 다른 친구들이 함께 모여 반이 된다는 이야기를 담았습니다.",
   tip:"일곱 색 모둠으로 나누어 한 소절씩 이어 부르기. 학급 약속 만들기 시간에 함께 활용."},
- {id:4,title:"할머니 손 칼국수",lyric:"작사 예시 회원 E · 작곡 예시 회원 A",concert:2,year:2025,grade:"3~4학년",themes:["가족"],season:"겨울",key:"C",beat:"6/8",range:"도~도",
+ {id:4,title:"할머니 손 칼국수",lyric:"작사 예시 회원 E · 작곡 예시 회원 A",concert:"제2회 동요샘 창작동요 발표회",year:2025,grade:"3~4학년",themes:["가족"],season:"겨울",key:"C",beat:"6/8",range:"도~도",
   lyrics:"쓱쓱 밀고 톡톡 썰고\n할머니 손은 마술 손\n김이 모락모락\n우리 집이 따뜻해져요",
   intro:"6/8박자의 흔들리는 느낌이 부엌 소리와 잘 어울리는 곡입니다. 흉내말이 많아 저학년 말놀이로도 좋습니다.",
   tip:"흉내말(쓱쓱, 톡톡, 모락모락)에 맞춰 몸짓 만들기. 5월 가족의 달 행사곡으로 추천."},
- {id:5,title:"빗방울 합창단",lyric:"작사·작곡 예시 회원 F",concert:1,year:2024,grade:"1~2학년",themes:["자연","계절"],season:"여름",key:"F",beat:"2/4",range:"도~라",
+ {id:5,title:"빗방울 합창단",lyric:"작사·작곡 예시 회원 F",concert:"제1회 동요샘 창작동요 발표회",year:2024,grade:"1~2학년",themes:["자연","계절"],season:"여름",key:"F",beat:"2/4",range:"도~라",
   lyrics:"똑 똑 똑 지붕 위에서\n또 똑 똑 창문 위에서\n빗방울 합창단이\n여름 노래 불러요",
   intro:"음역이 좁아 노래가 어려운 아이도 편하게 부를 수 있습니다. 장마철 실내 수업에 반응이 좋았던 곡입니다.",
   tip:"리듬 막대나 컵으로 '똑 똑 똑' 리듬 치기. 강약을 바꿔 소나기와 가랑비 표현하기."},
- {id:6,title:"내일의 나에게",lyric:"작사 예시 회원 G · 작곡 예시 회원 D",concert:1,year:2024,grade:"5~6학년",themes:["꿈","감정"],season:"겨울",key:"A♭",beat:"4/4",range:"시~파",
+ {id:6,title:"내일의 나에게",lyric:"작사 예시 회원 G · 작곡 예시 회원 D",concert:"제1회 동요샘 창작동요 발표회",year:2024,grade:"5~6학년",themes:["꿈","감정"],season:"겨울",key:"A♭",beat:"4/4",range:"시~파",
   lyrics:"오늘 넘어진 나를 안아 줘\n괜찮다고 말해 줘\n내일의 나에게 보내는\n작은 노래 하나",
   intro:"졸업을 앞둔 6학년을 생각하며 만든 곡입니다. 고학년 변성기 아이들도 부를 수 있도록 음역을 낮췄습니다.",
   tip:"졸업식 합창곡이나 진로 수업 마무리 곡. 가사 바꿔 쓰기로 '나에게 쓰는 노래' 만들기."},
- {id:7,title:"줄넘기 리듬송",lyric:"작사·작곡 예시 회원 A",concert:3,year:2026,grade:"3~4학년",themes:["몸놀이","학교생활"],season:"봄",key:"E",beat:"2/4",range:"미~미",
+ {id:7,title:"줄넘기 리듬송",lyric:"작사·작곡 예시 회원 A",concert:"제3회 동요샘 창작동요 발표회",year:2026,grade:"3~4학년",themes:["몸놀이","학교생활"],season:"봄",key:"E",beat:"2/4",range:"미~미",
   lyrics:"하나 둘 넘고 셋 넷 넘고\n줄이 돌면 나도 돌아\n걸려도 다시 하나부터\n우리 같이 뛰어 보자",
   intro:"줄넘기 속도에 맞춘 빠르기(약 120)로 만들어 노래하며 뛰기 좋은 곡입니다.",
   tip:"긴 줄넘기 들어가기 연습에 맞춰 부르기. 빠르기를 단계별로 올리며 도전 활동으로."},
- {id:8,title:"별에게 물어봐",lyric:"작사 예시 회원 H · 작곡 예시 회원 F",concert:2,year:2025,grade:"5~6학년",themes:["자연","꿈"],season:"여름",key:"D",beat:"3/4",range:"라~레",
+ {id:8,title:"별에게 물어봐",lyric:"작사 예시 회원 H · 작곡 예시 회원 F",concert:"제2회 동요샘 창작동요 발표회",year:2025,grade:"5~6학년",themes:["자연","꿈"],season:"여름",key:"D",beat:"3/4",range:"라~레",
   lyrics:"밤하늘 별에게 물어봐\n너는 얼마나 멀리서 왔니\n반짝이는 대답 대신\n가만히 나를 비춰 줘",
   intro:"과학 '태양계와 별' 단원과 연결해 쓰려고 만든 곡입니다. 2부 합창 편곡이 함께 있습니다.",
   tip:"과학 별자리 관찰 활동 뒤에 감상곡으로. 2부 합창으로 화음 쌓기 경험."}
 ];
-const CONCERTS={1:"제1회 동요샘 창작동요 발표회",2:"제2회 동요샘 창작동요 발표회",3:"제3회 동요샘 창작동요 발표회"};
-const THEMES=["학교생활","친구","가족","자연","계절","몸놀이","꿈","감정"];
-const GRADES=["1~2학년","3~4학년","5~6학년","전 학년"];
-const SEASON_OF_MONTH=m=>m<=1||m===11?"겨울":m<=4?"봄":m<=7?"여름":"가을";
-const songById=id=>SONGS.find(s=>s.id===id);
+let SONGS = DEMO_SONGS.slice();
+const THEMES = ["학교생활","친구","가족","자연","계절","몸놀이","꿈","감정"];
+const GRADES = ["1~2학년","3~4학년","5~6학년","전 학년"];
+const SEASON_OF_MONTH = m => m <= 1 || m === 11 ? "겨울" : m <= 4 ? "봄" : m <= 7 ? "여름" : "가을";
+const songById = id => SONGS.find(s => s.id === id);
 
 /* ---------- 시도 타일 지도 (대략적 위치) ---------- */
-const REGIONS=[
+const REGIONS = [
  ["인천",0,0],["서울",1,0],["경기",2,0],["강원",3,0],
  ["충남",0,1],["세종",1,1],["충북",2,1],["경북",3,1],
  ["전북",0,2],["대전",1,2],["대구",2,2],["울산",3,2],
@@ -255,260 +273,407 @@ const REGIONS=[
  ["제주",0,4]
 ];
 
-/* ---------- 예시 기록 만들기 (지어낸 학교) ---------- */
+/* ---------- 체험 모드 예시 기록 (지어낸 학교) ---------- */
 function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-const R=rng(20261016);
-const SCHOOL_NAMES=["햇살","바람","은하","솔빛","푸른숲","별무리","하늘","새싹","무지개","시냇물","꽃길","들꽃","노을","구름","달빛","소나무","보리","한빛","다솜","아람"];
-const CLASS_COUNT={서울:9,경기:14,전북:11,경남:7,부산:6,충남:5,광주:4,대구:4,전남:5,경북:3,강원:3,충북:3,대전:2,인천:3,울산:2,세종:1,제주:2};
-const DEMO_CLASSES=[];
-Object.entries(CLASS_COUNT).forEach(([region,n])=>{for(let i=0;i<n;i++){
-  const name=SCHOOL_NAMES[Math.floor(R()*SCHOOL_NAMES.length)]+"초 "+(1+Math.floor(R()*6))+"-"+(1+Math.floor(R()*4));
-  const sung=new Set();const k=1+Math.floor(R()*6);while(sung.size<k)sung.add(1+Math.floor(R()*SONGS.length));
-  DEMO_CLASSES.push({name,region,sung:[...sung]});
+const R = rng(20261016);
+const SCHOOL_NAMES = ["햇살","바람","은하","솔빛","푸른숲","별무리","하늘","새싹","무지개","시냇물","꽃길","들꽃","노을","구름","달빛","소나무","보리","한빛","다솜","아람"];
+const CLASS_COUNT = {서울:9,경기:14,전북:11,경남:7,부산:6,충남:5,광주:4,대구:4,전남:5,경북:3,강원:3,충북:3,대전:2,인천:3,울산:2,세종:1,제주:2};
+const DEMO_CLASSES = [];
+Object.entries(CLASS_COUNT).forEach(([region, n]) => { for (let i = 0; i < n; i++) {
+  const name = SCHOOL_NAMES[Math.floor(R()*SCHOOL_NAMES.length)] + "초 " + (1+Math.floor(R()*6)) + "-" + (1+Math.floor(R()*4));
+  const sung = new Set(); const k = 1 + Math.floor(R()*6); while (sung.size < k) sung.add(1 + Math.floor(R()*DEMO_SONGS.length));
+  DEMO_CLASSES.push({ name, region, sung: [...sung] });
 }});
-const DEMO_VOTES={1:38,2:27,3:44,4:19,5:23,6:31,7:41,8:16};
-const RELAY_SONG=3;
-const DEMO_RELAY=[
+const DEMO_VOTES = {1:38,2:27,3:44,4:19,5:23,6:31,7:41,8:16};
+const DEMO_RELAY = [
  {cls:"햇살초 4-1",region:"경기"},{cls:"솔빛초 3-2",region:"전북"},{cls:"은하초 5-3",region:"부산"},
  {cls:"들꽃초 2-1",region:"강원"},{cls:"노을초 4-2",region:"광주"},{cls:"구름초 6-1",region:"서울"}
 ];
-const DEMO_VARIANTS={
+const DEMO_VARIANTS = {
  3:[{cls:"바람초 3-1",region:"충남",text:"파란 마음 초록 웃음\n하얀 목소리 모여서\n우리 반은 무지개\n스물두 명이라 예뻐",likes:21},
     {cls:"꽃길초 5-2",region:"대구",text:"축구하는 웃음 그림 그리는 마음\n노래하는 목소리 모여서\n우리 반은 무지개\n하나하나 달라서 예뻐",likes:14}],
  1:[{cls:"보리초 1-3",region:"전남",text:"강당 한 바퀴 뛰어 볼까\n발소리 쿵쿵 마음도 쿵쿵\n비 와도 괜찮아\n친구 손 잡고 또 한 바퀴",likes:9}]
 };
 
-/* ---------- 이 기기 저장 ---------- */
-const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const MONTH=(()=>{const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)})();
-const MONTH_LABEL=(()=>{const d=new Date();return d.getFullYear()+"년 "+(d.getMonth()+1)+"월"})();
-let me=store.get("dys-me",{name:"햇살초 5-1",region:"경기",example:true});
-let stamps=new Set(store.get("dys-stamps",[1,3]));
-let myVote=store.get("dys-vote",null); if(myVote&&myVote.month!==MONTH) myVote=null;
-let relayJoined=store.get("dys-relay",false);
-let myVariants=store.get("dys-variants",{});
-let liked=new Set(store.get("dys-liked",[]));
-function save(){store.set("dys-me",me);store.set("dys-stamps",[...stamps]);store.set("dys-vote",myVote);store.set("dys-relay",relayJoined);store.set("dys-variants",myVariants);store.set("dys-liked",[...liked])}
+/* ---------- 상태 ---------- */
+const now0 = new Date();
+let MONTH = now0.getFullYear() + "-" + String(now0.getMonth()+1).padStart(2, "0");
+const MONTH_LABEL = () => { const [y, m] = MONTH.split("-"); return y + "년 " + Number(m) + "월"; };
+let ME, NAT;
+function blankMe() { return { pid: "", name: "", region: "", configured: false, stamps: new Set(), vote: null, relays: new Set(), lyrics: [], likes: new Set(), loaded: false }; }
+function demoMeLoad() {
+  const d = store.get("dys-demo", null);
+  const m = blankMe();
+  m.pid = "me"; m.name = d ? d.name : "햇살초 5-1"; m.region = d ? d.region : "경기"; m.configured = true; m.loaded = true; m.example = !d;
+  m.stamps = new Set(d ? d.stamps : [1, 3]); m.vote = d && d.vote && d.vote.month === MONTH ? d.vote : null;
+  m.relays = new Set(d ? d.relays : []); m.lyrics = d ? d.lyrics : []; m.likes = new Set(d ? d.likes : []);
+  return m;
+}
+function demoMeSave() { store.set("dys-demo", { name: ME.name, region: ME.region, stamps: [...ME.stamps], vote: ME.vote, relays: [...ME.relays], lyrics: ME.lyrics, likes: [...ME.likes] }); }
+function setMe(st) {
+  const m = blankMe();
+  m.pid = st.pid; m.name = st.name; m.region = st.region; m.configured = st.configured; m.loaded = true;
+  m.stamps = new Set(st.stamps); m.vote = st.vote; m.relays = new Set(st.relays); m.lyrics = st.lyrics || []; m.likes = new Set(st.likes);
+  if (st.month) MONTH = st.month;
+  ME = m;
+}
+function emptyRegions() { const r = {}; REGIONS.forEach(([n]) => r[n] = { stamps: 0, classes: 0 }); return r; }
+/* 체험 모드(예시 학교 포함) 또는 수집기가 아직 없을 때(우리 반만)의 전국 현황 */
+function localNational(withDemo) {
+  const regions = emptyRegions(), songClasses = {}, votes = withDemo ? { ...DEMO_VOTES } : {}, lyrics = {};
+  const add = (region, list) => { if (!list.length || !regions[region]) return; regions[region].stamps += list.length; regions[region].classes++; list.forEach(id => songClasses[id] = (songClasses[id] || 0) + 1); };
+  if (withDemo) DEMO_CLASSES.forEach(c => add(c.region, c.sung));
+  if (ME.configured) add(ME.region, [...ME.stamps]);
+  if (ME.vote && ME.vote.month === MONTH) votes[ME.vote.song] = (votes[ME.vote.song] || 0) + 1;
+  const chain = (withDemo ? DEMO_RELAY.map(x => ({ pid: "demo", ...x })) : []).concat(ME.relays.has(APP.relay.id) ? [{ pid: ME.pid, cls: ME.name, region: ME.region }] : []);
+  if (withDemo) Object.entries(DEMO_VARIANTS).forEach(([sid, arr]) => lyrics[sid] = arr.map((v, i) => ({ key: "d" + sid + "-" + i, pid: "demo", cls: v.cls, region: v.region, text: v.text, likes: v.likes + (ME.likes.has("d" + sid + "-" + i) ? 1 : 0) })));
+  if (!APP.live) ME.lyrics.forEach(l => (lyrics[l.songId] = lyrics[l.songId] || []).push({ key: l.id, pid: ME.pid, cls: ME.name, region: ME.region, text: l.text, likes: 0 }));
+  return { regions, songClasses, votes, relays: { [APP.relay.id]: chain }, lyrics, local: true };
+}
+function songsFromCollector(list) {
+  return list.map(s => ({ id: s.id, title: s.title,
+    lyric: s.lyricist && s.lyricist === s.composer ? "작사·작곡 " + s.lyricist : [s.lyricist && "작사 " + s.lyricist, s.composer && "작곡 " + s.composer].filter(Boolean).join(" · "),
+    concert: s.concert || "발표회 미정", year: s.year || "", grade: s.grade || "전 학년", themes: s.themes || [], season: s.season || "", key: s.key || "♪", beat: s.beat || "", range: s.range || "",
+    lyrics: s.lyrics || "", intro: s.intro || "", tip: s.tip || "", video: s.video || "", score: s.score || "" }));
+}
 
-let filter={q:"",theme:null,grade:null,mode:"concert"};
-let tab="today";
-const $=s=>document.querySelector(s);
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-function toast(msg){$("#toastHost").innerHTML=`<div class="toast" role="status">${esc(msg)}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>$("#toastHost").innerHTML="",2200)}
+/* ---------- 껍데기·수집기와 주고받기 ---------- */
+function rpc(fn, args, retried) {
+  return fetch(APP.shellUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ fn: fn, args: args || [] }), redirect: "follow" })
+    .then(r => { if (!r.ok) { const e = new Error("학교 시트 응답 오류 (" + r.status + ")"); e.retry = true; throw e; } return r.json(); }, err => { err.retry = true; throw err; })
+    .then(j => { if (!j.ok) throw new Error(j.error || "요청 실패"); return j.result; })
+    .catch(err => { if (!err.retry || retried) throw err; return new Promise(ok => setTimeout(ok, 1500)).then(() => rpc(fn, args, true)); });
+}
+function loadNational() {
+  if (!APP.collector) { NAT = localNational(!APP.live); return Promise.resolve(); }
+  return fetch(APP.collector + "?api=board", { cache: "no-store" }).then(r => r.json()).then(j => {
+    if (!j.ok) throw new Error(j.error);
+    const b = j.result;
+    if (b.songs && b.songs.length) SONGS = songsFromCollector(b.songs);
+    if (b.relay && b.relay.id) APP.relay = b.relay;
+    if (b.month) MONTH = b.month;
+    NAT = { regions: Object.assign(emptyRegions(), b.regions || {}), songClasses: b.songClasses || {}, votes: b.votes || {}, relays: b.relays || {}, lyrics: b.lyrics || {}, total: b.classes, updated: b.updated };
+  }).catch(() => { NAT = localNational(!APP.live); NAT.failed = true; });
+}
 
 /* ---------- 계산 ---------- */
-function regionScores(){
-  const sc={};REGIONS.forEach(([r])=>sc[r]={stamps:0,classes:0});
-  DEMO_CLASSES.forEach(c=>{sc[c.region].stamps+=c.sung.length;sc[c.region].classes++});
-  if(stamps.size){sc[me.region].stamps+=stamps.size;sc[me.region].classes++}
-  return sc;
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function toast(msg) { $("#toastHost").innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => $("#toastHost").innerHTML = "", 2600); }
+const classesSung = id => NAT.songClasses[id] || 0;
+const votesFor = id => NAT.votes[id] || 0;
+const myVoteSong = () => ME.vote && ME.vote.month === MONTH ? ME.vote.song : 0;
+function variantsFor(id) {
+  const pub = (NAT.lyrics[id] || []).slice();
+  if (APP.live) ME.lyrics.filter(l => l.songId === id && !pub.some(p => p.key === l.id)).forEach(l => pub.push({ key: l.id, pid: ME.pid, cls: ME.name, region: ME.region, text: l.text, likes: 0, pending: true }));
+  return pub.sort((a, b) => (b.pending ? 1 : 0) - (a.pending ? 1 : 0) || b.likes - a.likes);
 }
-function classesSung(id){return DEMO_CLASSES.filter(c=>c.sung.includes(id)).length+(stamps.has(id)?1:0)}
-function votesFor(id){return DEMO_VOTES[id]+(myVote&&myVote.song===id?1:0)}
-function variantsFor(id){
-  const demo=(DEMO_VARIANTS[id]||[]).map((v,i)=>({...v,key:"d"+id+"-"+i}));
-  const mine=(myVariants[id]||[]).map((v,i)=>({...v,key:"m"+id+"-"+i,mine:true}));
-  return [...mine,...demo].map(v=>({...v,likes:v.likes+(liked.has(v.key)?1:0)})).sort((a,b)=>b.likes-a.likes);
-}
-const LEVELS=[[0,"노래 씨앗"],[1,"첫 소리"],[3,"작은 합창단"],[5,"노래하는 반"],[8,"동요샘 명예반"]];
-function levelOf(n){let cur=LEVELS[0],next=null;for(const l of LEVELS){if(n>=l[0])cur=l;else{next=l;break}}return{cur,next}}
-function quests(){
-  const autumn=SONGS.filter(s=>s.season===SEASON_OF_MONTH(new Date().getMonth()));
-  const latest=Math.max(...Object.keys(CONCERTS).map(Number));
-  const c3=SONGS.filter(s=>s.concert===latest);
-  const themes=new Set();SONGS.filter(s=>stamps.has(s.id)).forEach(s=>s.themes.forEach(t=>themes.add(t)));
-  const variantCount=Object.values(myVariants).reduce((a,v)=>a+v.length,0);
+const LEVELS = [[0,"노래 씨앗"],[1,"첫 소리"],[3,"작은 합창단"],[5,"노래하는 반"],[8,"동요샘 명예반"],[15,"온 나라 합창단"],[30,"노래 나무"]];
+function levelOf(n) { let cur = LEVELS[0], next = null; for (const l of LEVELS) { if (n >= l[0]) cur = l; else { next = l; break } } return { cur, next } }
+function latestConcert() { const s = SONGS.slice().sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0))[0]; return s ? s.concert : ""; }
+function quests() {
+  const season = SEASON_OF_MONTH(new Date().getMonth());
+  const ss = SONGS.filter(s => s.season === season), lc = latestConcert(), c3 = SONGS.filter(s => s.concert === lc);
+  const themes = new Set(); SONGS.filter(s => ME.stamps.has(s.id)).forEach(s => s.themes.forEach(t => themes.add(t)));
   return [
-   {name:`${SEASON_OF_MONTH(new Date().getMonth())} 노래 모두 부르기`,have:autumn.filter(s=>stamps.has(s.id)).length,need:autumn.length},
-   {name:`제${latest}회 발표곡 모두 부르기`,have:c3.filter(s=>stamps.has(s.id)).length,need:c3.length},
-   {name:"주제 다섯 가지 맛보기",have:Math.min(themes.size,5),need:5},
-   {name:"이어 부르기 릴레이 참여",have:relayJoined?1:0,need:1},
-   {name:"우리 반 가사 올리기",have:Math.min(variantCount,1),need:1}
+   { name: `${season} 노래 모두 부르기`, have: ss.filter(s => ME.stamps.has(s.id)).length, need: Math.max(ss.length, 1) },
+   { name: `${lc || "최근 발표회"} 곡 모두 부르기`, have: c3.filter(s => ME.stamps.has(s.id)).length, need: Math.max(c3.length, 1) },
+   { name: "주제 다섯 가지 맛보기", have: Math.min(themes.size, 5), need: 5 },
+   { name: "이어 부르기 릴레이 참여", have: ME.relays.size ? 1 : 0, need: 1 },
+   { name: "우리 반 가사 올리기", have: ME.lyrics.length ? 1 : 0, need: 1 }
   ];
 }
 
 /* ---------- 화면 조각 ---------- */
-function songRow(s,side){
-  return `<button class="song" data-open="${s.id}" style="--c:var(--c${s.id%6});--cs:var(--c${s.id%6}-soft)"><span class="key${stamps.has(s.id)?" stamped":""}">${esc(s.key)}</span>
+let filter = { q: "", theme: null, grade: null, mode: "concert" };
+let tab = APP.q.tab || "today";
+function songRow(s) {
+  const c = s.id % 6;
+  return `<button class="song" data-open="${s.id}" style="--c:var(--c${c});--cs:var(--c${c}-soft)"><span class="key${ME.stamps.has(s.id) ? " stamped" : ""}">${esc(s.key)}</span>
   <span class="min"><b>${esc(s.title)}</b><small>${esc(s.grade)} · ${s.themes.map(esc).join(", ")}</small></span>
-  <span class="side">${side!==undefined?side:classesSung(s.id)+"개 반"}</span></button>`;
+  <span class="side">${classesSung(s.id)}개 반</span></button>`;
 }
-function pickToday(){
-  const d=new Date();const season=SEASON_OF_MONTH(d.getMonth());
-  const pool=SONGS.filter(s=>s.season===season);const list=pool.length?pool:SONGS;
-  return{song:list[Math.floor(d.getTime()/86400000)%list.length],season};
+function pickToday() {
+  const d = new Date(), season = SEASON_OF_MONTH(d.getMonth());
+  const pool = SONGS.filter(s => s.season === season), list = pool.length ? pool : SONGS;
+  return { song: list[Math.floor(d.getTime() / 86400000) % list.length], season };
+}
+function stampBtn(id) { return ME.stamps.has(id) ? `<button class="btn done" data-stamp="${id}">불렀어요 도장 찍음</button>` : `<button class="btn ghost" data-stamp="${id}">우리 반이 불렀어요</button>`; }
+function ranked() { return Object.entries(NAT.regions).sort((a, b) => b[1].stamps - a[1].stamps); }
+function statusLine() {
+  if (!APP.live) return `<span class="status">체험 모드 · 예시 학교 기록</span>`;
+  const who = ME.loaded ? (ME.configured ? esc(ME.name) + " · " + esc(ME.region) : "반 이름을 정해 주세요") : "우리 반 시트 여는 중";
+  const nat = !APP.collector ? " · 전국 수집기 준비 중" : NAT.failed ? " · 전국 현황을 못 불러옴" : "";
+  return `<span class="status on">${who}${APP.token ? " · 선생님" : ""}${nat}</span>`;
 }
 
-function render(){
-  const v=$("#view");
-  if(tab==="today"){
-    const {song:s,season}=pickToday();
-    const sc=regionScores();const ranked=Object.entries(sc).sort((a,b)=>b[1].stamps-a[1].stamps);
-    const myRank=ranked.findIndex(([r])=>r===me.region)+1;
-    const others=SONGS.filter(x=>x.season===season&&x.id!==s.id);
-    v.innerHTML=`<section>
+function render() {
+  const v = $("#view");
+  $("#statusHost").innerHTML = statusLine();
+  $("#exampleNote").textContent = APP.live
+    ? "곡 목록은 동요샘 운영진이 관리해요. 바꾼 가사는 운영진이 확인한 뒤 전국에 보여요."
+    : "체험 모드예요. 곡·가사·지은이·학교 기록은 모두 예시이고, 누른 도장·투표·가사는 이 기기에만 저장돼요.";
+  if (!SONGS.length) { v.innerHTML = `<section><div class="empty">곡 목록이 비어 있어요. 운영진이 곡을 올리면 여기에 보여요.</div></section>`; return; }
+  if (tab === "today") {
+    const { song: s, season } = pickToday();
+    const rk = ranked(), myRank = ME.region ? rk.findIndex(([r]) => r === ME.region) + 1 : 0;
+    const others = SONGS.filter(x => x.season === season && x.id !== s.id);
+    v.innerHTML = `<section>
       <div class="card today">
-        <span class="eyebrow">${season}에 부르기 좋은 노래</span>
+        <span class="eyebrow">${season ? season + "에 부르기 좋은 노래" : "오늘의 동요"}</span>
         <h3>${esc(s.title)}</h3>
-        <span class="meta">${esc(s.lyric)} · ${CONCERTS[s.concert]}</span>
-        <blockquote>${esc(s.lyrics.split("\n").slice(0,2).join("\n"))} …</blockquote>
+        <span class="meta">${esc(s.lyric)} · ${esc(s.concert)}</span>
+        <blockquote>${esc(s.lyrics.split("\n").slice(0, 2).join("\n"))} …</blockquote>
         <p style="margin:0">${esc(s.intro)}</p>
         <span class="meta">전국 ${classesSung(s.id)}개 반이 불렀어요</span>
-        <div class="btns"><button class="btn" data-open="${s.id}">가사와 수업 활용 보기</button>
-        ${stampBtn(s.id)}</div>
+        <div class="btns"><button class="btn" data-open="${s.id}">가사와 수업 활용 보기</button>${stampBtn(s.id)}</div>
       </div>
       <div class="card">
-        <span class="eyebrow">${MONTH_LABEL} 전국 무대</span>
-        <div class="level"><b>${esc(me.region)} ${myRank}위</b><span class="meta">1위 ${ranked[0][0]} · 도장 ${ranked[0][1].stamps}개</span></div>
-        <span class="meta">${esc(me.name)} 도장 ${stamps.size}개가 ${esc(me.region)} 점수에 들어가 있어요.</span>
-        <div class="btns"><button class="btn ghost" data-tab="stage">지역 순위 보기</button></div>
+        <span class="eyebrow">${MONTH_LABEL()} 전국 무대</span>
+        ${ME.configured ? `<div class="level"><b>${esc(ME.region)} ${myRank}위</b><span class="meta">1위 ${rk[0][0]} · 도장 ${rk[0][1].stamps}개</span></div>
+        <span class="meta">${esc(ME.name)} 도장 ${ME.stamps.size}개가 ${esc(ME.region)} 점수에 들어가요.</span>`
+        : `<span class="meta">우리 반 이름과 지역을 정하면 전국 무대에 함께 올라가요.</span>`}
+        <div class="btns"><button class="btn ghost" data-tab="stage">지역 순위 보기</button>${ME.configured ? "" : `<button class="btn ghost" data-tab="mine">우리 반 정하기</button>`}</div>
       </div>
-      ${others.length?`<h2>같은 계절 노래</h2><div class="list">${others.map(x=>songRow(x)).join("")}</div>`:""}
+      ${others.length ? `<h2>같은 계절 노래</h2><div class="list">${others.map(songRow).join("")}</div>` : ""}
     </section>`;
   }
-  if(tab==="songs"){
-    const q=filter.q.trim();
-    const match=s=>(!filter.theme||s.themes.includes(filter.theme))&&(!filter.grade||s.grade===filter.grade||s.grade==="전 학년")&&(!q||(s.title+s.lyrics+s.intro+s.lyric).includes(q));
-    const res=SONGS.filter(match);
-    const byConcert=Object.keys(CONCERTS).sort((a,b)=>b-a).map(c=>{const list=res.filter(s=>s.concert==c);if(!list.length)return"";
-      return `<div class="concert"><h3>${CONCERTS[c]}</h3><span class="meta">${list[0].year}년 · ${list.length}곡</span><div class="list">${list.map(x=>songRow(x)).join("")}</div></div>`}).join("");
-    v.innerHTML=`<section>
+  if (tab === "songs") {
+    const q = filter.q.trim();
+    const match = s => (!filter.theme || s.themes.includes(filter.theme)) && (!filter.grade || s.grade === filter.grade || s.grade === "전 학년") && (!q || (s.title + s.lyrics + s.intro + s.lyric).includes(q));
+    const res = SONGS.filter(match);
+    const groups = {}; res.forEach(s => (groups[s.concert] = groups[s.concert] || []).push(s));
+    const order = Object.keys(groups).sort((a, b) => Math.max(...groups[b].map(s => Number(s.year) || 0)) - Math.max(...groups[a].map(s => Number(s.year) || 0)));
+    const byConcert = order.map(c => `<div class="concert"><h3>${esc(c)}</h3><span class="meta">${groups[c][0].year ? groups[c][0].year + "년 · " : ""}${groups[c].length}곡</span><div class="list">${groups[c].map(songRow).join("")}</div></div>`).join("");
+    v.innerHTML = `<section>
       <input type="search" id="q" placeholder="곡 제목, 가사, 지은이로 찾기" value="${esc(filter.q)}">
-      <span class="label">주제</span><div class="chips">${THEMES.map(t=>`<button class="chip" data-theme-f="${t}" aria-pressed="${filter.theme===t}">${t}</button>`).join("")}</div>
-      <span class="label">학년군</span><div class="chips">${GRADES.map(g=>`<button class="chip" data-grade-f="${g}" aria-pressed="${filter.grade===g}">${g}</button>`).join("")}</div>
-      <div class="chips"><button class="chip" data-mode="concert" aria-pressed="${filter.mode==="concert"}">발표회별로 보기</button><button class="chip" data-mode="all" aria-pressed="${filter.mode==="all"}">많이 부른 순</button></div>
+      <span class="label">주제</span><div class="chips">${THEMES.map(t => `<button class="chip" data-theme-f="${t}" aria-pressed="${filter.theme === t}">${t}</button>`).join("")}</div>
+      <span class="label">학년군</span><div class="chips">${GRADES.map(g => `<button class="chip" data-grade-f="${g}" aria-pressed="${filter.grade === g}">${g}</button>`).join("")}</div>
+      <div class="chips"><button class="chip" data-mode="concert" aria-pressed="${filter.mode === "concert"}">발표회별로 보기</button><button class="chip" data-mode="all" aria-pressed="${filter.mode === "all"}">많이 부른 순</button></div>
       <h2>${res.length}곡</h2>
-      ${!res.length?`<div class="empty">조건에 맞는 곡이 없습니다. 주제나 학년군 선택을 하나 풀어 보세요.</div>`
-        :filter.mode==="concert"?byConcert:`<div class="list">${res.slice().sort((a,b)=>classesSung(b.id)-classesSung(a.id)).map(x=>songRow(x)).join("")}</div>`}
+      ${!res.length ? `<div class="empty">조건에 맞는 곡이 없어요. 주제나 학년군 선택을 하나 풀어 보세요.</div>`
+        : filter.mode === "concert" ? byConcert : `<div class="list">${res.slice().sort((a, b) => classesSung(b.id) - classesSung(a.id)).map(songRow).join("")}</div>`}
     </section>`;
-    $("#q").addEventListener("input",e=>{filter.q=e.target.value;const pos=e.target.selectionStart;render();const n=$("#q");n.focus();n.setSelectionRange(pos,pos)});
+    $("#q").addEventListener("input", e => { filter.q = e.target.value; const pos = e.target.selectionStart; render(); const n = $("#q"); n.focus(); n.setSelectionRange(pos, pos); });
   }
-  if(tab==="stage"){
-    const sc=regionScores();const vals=Object.values(sc).map(x=>x.stamps);const max=Math.max(...vals);
-    const heat=n=>n===0?0:Math.min(4,1+Math.floor(n/max*3.99));
-    const ranked=Object.entries(sc).sort((a,b)=>b[1].stamps-a[1].stamps);
-    const total=vals.reduce((a,b)=>a+b,0);const classes=Object.values(sc).reduce((a,b)=>a+b.classes,0);
-    const rs=songById(RELAY_SONG);const lines=rs.lyrics.split("\n");
-    const chain=[...DEMO_RELAY,...(relayJoined?[{cls:me.name,region:me.region,mine:true}]:[])];
-    const nextLine=lines[chain.length%lines.length];
-    v.innerHTML=`<section>
-      <h2>전국 무대</h2><p class="sub">${MONTH_LABEL} · ${classes}개 반이 도장 ${total}개를 모았어요. 반이 노래를 부르고 도장을 찍으면 지역 점수가 올라갑니다.</p>
+  if (tab === "stage") {
+    const vals = Object.values(NAT.regions).map(x => x.stamps), max = Math.max(1, ...vals);
+    const heat = n => n === 0 ? 0 : Math.min(4, 1 + Math.floor(n / max * 3.99));
+    const rk = ranked();
+    const total = vals.reduce((a, b) => a + b, 0), classes = Object.values(NAT.regions).reduce((a, b) => a + b.classes, 0);
+    const rs = songById(APP.relay.song) || SONGS[0], lines = rs.lyrics.split("\n").filter(Boolean);
+    const chain = NAT.relays[APP.relay.id] || [], joined = ME.relays.has(APP.relay.id);
+    const nextLine = lines.length ? lines[chain.length % lines.length] : "";
+    v.innerHTML = `<section>
+      <h2>전국 무대</h2><p class="sub">${MONTH_LABEL()} · ${classes}개 반이 도장 ${total}개를 모았어요. 반이 노래를 부르고 도장을 찍으면 지역 점수가 올라가요.</p>
       <div class="card">
         <div class="tilemap" role="img" aria-label="시도별 도장 수 지도">
-          ${Array.from({length:20},(_,i)=>{const r=REGIONS.find(x=>x[1]+x[2]*4===i);if(!r)return"<span></span>";
-            const n=sc[r[0]].stamps;const h=heat(n);
-            return `<div class="tile${h>=3?" hot":""}${r[0]===me.region?" mine":""}" style="background:var(--heat${h})"><b>${r[0]}</b><span class="num">${n}</span></div>`}).join("")}
+          ${Array.from({ length: 20 }, (_, i) => { const r = REGIONS.find(x => x[1] + x[2] * 4 === i); if (!r) return "<span></span>";
+            const n = NAT.regions[r[0]].stamps, h = heat(n);
+            return `<div class="tile${h >= 3 ? " hot" : ""}${r[0] === ME.region ? " mine" : ""}" style="background:var(--heat${h})"><b>${r[0]}</b><span class="num">${n}</span></div>` }).join("")}
         </div>
-        <div class="legend">적음 <i style="background:var(--heat1)"></i><i style="background:var(--heat2)"></i><i style="background:var(--heat3)"></i><i style="background:var(--heat4)"></i> 많음 · 노란 테두리가 우리 지역</div>
+        <div class="legend">적음 <i style="background:var(--heat1)"></i><i style="background:var(--heat2)"></i><i style="background:var(--heat3)"></i><i style="background:var(--heat4)"></i> 많음 · 점선 테두리가 우리 지역</div>
       </div>
       <h2>지역 순위</h2>
       <div class="card rank">
-        ${ranked.map(([r,x],i)=>`<div class="rrow${i<3?" top":""}"><span class="n">${i+1}</span><span>${r}${r===me.region?" ·나":""}</span><span class="bar"><span style="width:${x.stamps/max*100}%"></span></span><span class="num">${x.stamps}</span></div>`).join("")}
+        ${rk.map(([r, x], i) => `<div class="rrow${i < 3 && x.stamps ? " top" : ""}"><span class="n">${i + 1}</span><span>${r}${r === ME.region ? " ·우리" : ""}</span><span class="bar"><span style="width:${x.stamps / max * 100}%"></span></span><span class="num">${x.stamps}</span></div>`).join("")}
       </div>
       <h2>이어 부르기 릴레이</h2>
-      <p class="sub">이번 릴레이 곡은 「${esc(rs.title)}」입니다. 반마다 한 줄씩 이어 불러 한 곡을 전국으로 돌려요.</p>
+      <p class="sub">${esc(APP.relay.id)} 곡은 「${esc(rs.title)}」이에요. 반마다 한 줄씩 이어 불러 한 곡을 온 나라로 돌려요.</p>
       <div class="card relay">
-        ${chain.map((c,i)=>`<div class="rstep"><span class="dot"></span><p>${esc(lines[i%lines.length])}<br><small>${esc(c.cls)} · ${esc(c.region)}${c.mine?" (우리 반)":""}</small></p></div>`).join("")}
-        <div class="rstep next"><span class="dot"></span><p>${esc(nextLine)}<br><small>다음 차례를 기다리는 줄</small></p></div>
-        <div class="btns">${relayJoined?`<button class="btn done" disabled>우리 반 참여 완료</button>`:`<button class="btn" data-relay>우리 반이 이어받기</button>`}</div>
+        ${chain.length ? "" : `<p class="meta" style="margin:0 0 8px">아직 아무 반도 시작하지 않았어요. 첫 줄을 불러 주세요.</p>`}
+        ${chain.map((c, i) => `<div class="rstep"><span class="dot"></span><p>${esc(lines[i % lines.length])}<br><small>${esc(c.cls)} · ${esc(c.region)}${c.pid === ME.pid ? " (우리 반)" : ""}</small></p></div>`).join("")}
+        ${joined ? "" : `<div class="rstep next"><span class="dot"></span><p>${esc(nextLine)}<br><small>다음 차례를 기다리는 줄</small></p></div>`}
+        <div class="btns">${joined ? `<button class="btn done" disabled>우리 반 참여 완료</button>` : `<button class="btn" data-relay>우리 반이 이어받기</button>`}</div>
       </div>
     </section>`;
   }
-  if(tab==="chart"){
-    const ranked=SONGS.slice().sort((a,b)=>votesFor(b.id)-votesFor(a.id));
-    v.innerHTML=`<section>
-      <h2>${MONTH_LABEL} 동요샘 차트</h2>
-      <p class="sub">반마다 한 달에 한 곡씩 투표할 수 있어요. 매달 1일에 새로 시작합니다.</p>
-      <div class="list">${ranked.map((s,i)=>{const on=myVote&&myVote.song===s.id;
-        return `<div class="crow p${i+1}"><span class="n">${i+1}</span><span class="min"><b data-open="${s.id}">${esc(s.title)}</b><br><small class="meta">${esc(s.lyric)} · ${votesFor(s.id)}표</small></span>
-        <button class="vote${on?" on":""}" data-vote="${s.id}">${on?"투표함":"투표"}</button></div>`}).join("")}</div>
-      <p class="meta">${myVote?"이번 달 투표를 했어요. 다른 곡을 누르면 투표가 옮겨집니다.":"아직 이번 달 투표를 하지 않았어요."}</p>
+  if (tab === "chart") {
+    const list = SONGS.slice().sort((a, b) => votesFor(b.id) - votesFor(a.id)), mv = myVoteSong();
+    v.innerHTML = `<section>
+      <h2>${MONTH_LABEL()} 동요샘 차트</h2>
+      <p class="sub">반마다 한 달에 한 곡씩 투표할 수 있어요. 매달 1일에 새로 시작해요.</p>
+      <div class="list">${list.map((s, i) => { const on = mv === s.id;
+        return `<div class="crow p${i + 1}"><span class="n">${i + 1}</span><span class="min"><b data-open="${s.id}">${esc(s.title)}</b><br><small class="meta">${esc(s.lyric)} · ${votesFor(s.id)}표</small></span>
+        <button class="vote${on ? " on" : ""}" data-vote="${s.id}">${on ? "투표함" : "투표"}</button></div>` }).join("")}</div>
+      <p class="meta">${mv ? "이번 달 투표를 했어요. 다른 곡을 누르면 투표가 옮겨져요." : "아직 이번 달 투표를 하지 않았어요."}</p>
     </section>`;
   }
-  if(tab==="mine"){
-    const {cur,next}=levelOf(stamps.size);
-    const pct=next?Math.round((stamps.size-cur[0])/(next[0]-cur[0])*100):100;
-    const qs=quests();
-    v.innerHTML=`<section>
-      <div class="card">
-        <span class="label">우리 반 정보${me.example?" (예시로 채워 둠)":""}</span>
-        <div class="form2">
-          <input type="text" id="meName" value="${esc(me.name)}" placeholder="예: 햇살초 5-1" aria-label="학교와 반">
-          <select id="meRegion" aria-label="지역">${REGIONS.map(([r])=>`<option${r===me.region?" selected":""}>${r}</option>`).join("")}</select>
-        </div>
+  if (tab === "mine") renderMine(v);
+}
+
+function renderMine(v) {
+  const { cur, next } = levelOf(ME.stamps.size);
+  const pct = next ? Math.round((ME.stamps.size - cur[0]) / (next[0] - cur[0]) * 100) : 100;
+  const regionOpts = sel => `<option value="">지역 고르기</option>` + REGIONS.map(([r]) => `<option${r === sel ? " selected" : ""}>${r}</option>`).join("");
+  let top = "";
+  if (!APP.live) {
+    top = `<div class="card">
+        <span class="label">우리 반 정보${ME.example ? " (예시로 채워 둠)" : ""}</span>
+        <div class="form2"><input type="text" id="meName" value="${esc(ME.name)}" placeholder="예: 서울햇살초 5-1" aria-label="학교와 반"><select id="meRegion" aria-label="지역">${regionOpts(ME.region)}</select></div>
       </div>
+      <div class="card"><span class="eyebrow">우리 학교 시트에 연결하기</span>
+        <p style="margin:0">학교 구글 시트에 껍데기를 설치하면 우리 반 기록이 시트에 쌓이고, 전국 무대·차트·릴레이에 실제로 올라가요. 껍데기 설치 확인 화면의 '노래상자 열기'로 들어오면 연결돼요.</p></div>`;
+  } else if (!APP.token) {
+    top = `<div class="card"><span class="eyebrow">선생님 로그인</span>
+        <p class="meta" style="margin:0">도장·투표·릴레이·가사 올리기는 선생님이 로그인한 뒤에 눌러요. 처음 비밀번호는 1234예요.</p>
+        <div class="form2"><input type="password" id="pw" placeholder="비밀번호" aria-label="선생님 비밀번호" autocomplete="current-password"><button class="btn" data-login>로그인</button></div></div>`;
+  } else {
+    top = `<div class="card">
+        <span class="label">우리 반 정보</span>
+        <div class="form2"><input type="text" id="meName" value="${esc(ME.name)}" placeholder="예: 서울햇살초 5-1" aria-label="학교와 반"><select id="meRegion" aria-label="지역">${regionOpts(ME.region)}</select></div>
+        <p class="meta" style="margin:0">전국 무대에 보이는 이름이에요. 지역 두 글자와 학교 이름, 반을 함께 적어 주세요.</p>
+        <div class="btns"><button class="btn" data-save>저장</button></div>
+      </div>`;
+  }
+  const mineLyrics = ME.lyrics.map(l => { const s = songById(l.songId), pub = Object.values(NAT.lyrics).some(a => a.some(x => x.key === l.id));
+    return `<div class="quest${pub ? " cleared" : ""}"><span class="ok"></span><span>${esc(s ? s.title : "곡 " + l.songId)} · ${esc(l.text.split("\n")[0])}</span><span class="meta">${APP.live ? (pub ? "공개됨" : "확인 중") : "체험"}</span></div>`; }).join("");
+  v.innerHTML = `<section>
+      ${top}
       <div class="card">
-        <div class="level"><b>${cur[1]}</b><span class="meta">도장 ${stamps.size}개${next?` · ${next[0]-stamps.size}개 더 모으면 ${next[1]}`:" · 최고 단계"}</span></div>
+        <div class="level"><b>${cur[1]}</b><span class="meta">도장 ${ME.stamps.size}개${next ? ` · ${next[0] - ME.stamps.size}개 더 모으면 ${next[1]}` : " · 최고 단계"}</span></div>
         <div class="prog"><span style="width:${pct}%"></span></div>
       </div>
-      <h2>노래 도장판</h2><p class="sub">반이 함께 부른 곡에 도장을 찍어요. 다시 누르면 지워집니다.</p>
-      <div class="stampbook">${SONGS.map(s=>`<button class="stamp${stamps.has(s.id)?" on":""}" style="--c:var(--c${s.id%6})" data-stamp="${s.id}" aria-pressed="${stamps.has(s.id)}">${stamps.has(s.id)?`<b>${esc(s.title)}</b>불렀어요`:esc(s.title)}</button>`).join("")}</div>
+      <h2>노래 도장판</h2><p class="sub">반이 함께 부른 곡에 도장을 찍어요. 다시 누르면 지워져요.</p>
+      <div class="stampbook">${SONGS.map(s => `<button class="stamp${ME.stamps.has(s.id) ? " on" : ""}" style="--c:var(--c${s.id % 6})" data-stamp="${s.id}" aria-pressed="${ME.stamps.has(s.id)}">${ME.stamps.has(s.id) ? `<b>${esc(s.title)}</b>불렀어요` : esc(s.title)}</button>`).join("")}</div>
       <h2>도전 과제</h2>
-      <div class="card">${qs.map(q=>`<div class="quest${q.have>=q.need?" cleared":""}"><span class="ok"></span><span>${esc(q.name)}</span><span class="meta num">${q.have}/${q.need}</span></div>`).join("")}</div>
+      <div class="card">${quests().map(q => `<div class="quest${q.have >= q.need ? " cleared" : ""}"><span class="ok"></span><span>${esc(q.name)}</span><span class="meta num">${q.have}/${q.need}</span></div>`).join("")}</div>
+      ${mineLyrics ? `<h2>우리 반이 올린 가사</h2><div class="card">${mineLyrics}</div>` : ""}
+      ${APP.live && APP.token ? `<h2>선생님 메뉴</h2><div class="card">
+        <span class="label">비밀번호 바꾸기</span>
+        <div class="form2"><input type="password" id="newPw" placeholder="새 비밀번호 (4자 이상)" aria-label="새 비밀번호" autocomplete="new-password"><button class="btn ghost" data-pw>바꾸기</button></div>
+        <div class="btns"><button class="btn ghost" data-resend>전국으로 다시 보내기</button><button class="btn ghost" data-logout>로그아웃</button></div>
+      </div>` : ""}
     </section>`;
-    const upd=()=>{me={name:$("#meName").value.trim()||"우리 반",region:$("#meRegion").value,example:false};save()};
-    $("#meName").addEventListener("change",()=>{upd();toast("우리 반 이름을 바꿨어요")});
-    $("#meRegion").addEventListener("change",()=>{upd();toast(`지역을 ${me.region}(으)로 바꿨어요`)});
+  if (!APP.live) {
+    const upd = () => { ME.name = $("#meName").value.trim() || "우리 반"; ME.region = $("#meRegion").value || "경기"; ME.example = false; demoMeSave(); NAT = localNational(true); };
+    $("#meName").addEventListener("change", () => { upd(); toast("우리 반 이름을 바꿨어요"); });
+    $("#meRegion").addEventListener("change", () => { upd(); toast(`지역을 ${ME.region}(으)로 바꿨어요`); render(); });
   }
+  const pw = $("#pw"); if (pw) pw.addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
 }
-function stampBtn(id){return stamps.has(id)?`<button class="btn done" data-stamp="${id}">불렀어요 도장 찍음</button>`:`<button class="btn ghost" data-stamp="${id}">우리 반이 불렀어요</button>`}
 
-function openSong(id){
-  const s=songById(id);if(!s)return;
-  const vs=variantsFor(id);const on=myVote&&myVote.song===id;
-  $("#sheetHost").innerHTML=`<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(s.title)}"><div class="in">
+function openSong(id) {
+  const s = songById(id); if (!s) return;
+  const vs = variantsFor(id), on = myVoteSong() === id;
+  const keep = $(".sheet") ? $(".sheet").scrollTop : 0;
+  $("#sheetHost").innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(s.title)}" data-song="${id}"><div class="in">
     <button class="btn ghost close" data-close>닫기</button>
     <div><h3>${esc(s.title)}</h3><span class="meta">${esc(s.lyric)}</span></div>
-    <div class="chips">${s.themes.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}<span class="tag">${esc(s.season)}</span></div>
+    <div class="chips">${s.themes.map(t => `<span class="tag">${esc(t)}</span>`).join("")}${s.season ? `<span class="tag">${esc(s.season)}</span>` : ""}</div>
     <p style="margin:0">${esc(s.intro)}</p>
     <div class="lyrics">${esc(s.lyrics)}</div>
     <dl class="facts">
-      <div><dt>발표</dt><dd>${CONCERTS[s.concert].replace(" 동요샘 창작동요","")} (${s.year})</dd></div>
+      <div><dt>발표</dt><dd>${esc(s.concert.replace(" 동요샘 창작동요", ""))}${s.year ? " (" + esc(s.year) + ")" : ""}</dd></div>
       <div><dt>추천 학년군</dt><dd>${esc(s.grade)}</dd></div>
-      <div><dt>조성 · 박자</dt><dd>${esc(s.key)}장조 · ${esc(s.beat)}</dd></div>
-      <div><dt>음역</dt><dd>${esc(s.range)}</dd></div>
+      ${s.key || s.beat ? `<div><dt>조성 · 박자</dt><dd>${esc(s.key)}${/^[A-G]/.test(s.key) ? "장조" : ""}${s.beat ? " · " + esc(s.beat) : ""}</dd></div>` : ""}
+      ${s.range ? `<div><dt>음역</dt><dd>${esc(s.range)}</dd></div>` : ""}
       <div><dt>전국에서 부른 반</dt><dd class="num">${classesSung(id)}개 반</dd></div>
-      <div><dt>${MONTH_LABEL} 투표</dt><dd class="num">${votesFor(id)}표</dd></div>
+      <div><dt>${MONTH_LABEL()} 투표</dt><dd class="num">${votesFor(id)}표</dd></div>
     </dl>
-    <div class="tip"><span class="label">수업 활용</span><p style="margin:4px 0 0">${esc(s.tip)}</p></div>
+    ${s.tip ? `<div class="tip"><span class="label">수업 활용</span><p style="margin:4px 0 0">${esc(s.tip)}</p></div>` : ""}
     <div class="btns">
       ${stampBtn(id)}
-      <button class="btn ghost" data-vote="${id}">${on?"이달의 노래로 투표함":"이달의 노래로 투표"}</button>
-      <button class="btn ghost" disabled>영상 (주소 넣을 자리)</button>
-      <button class="btn ghost" disabled>악보 (파일 넣을 자리)</button>
+      <button class="btn ghost" data-vote="${id}">${on ? "이달의 노래로 투표함" : "이달의 노래로 투표"}</button>
+      ${s.video ? `<a class="btn ghost" href="${esc(s.video)}" target="_blank" rel="noopener">영상 보기</a>` : `<button class="btn ghost" disabled>영상 준비 중</button>`}
+      ${s.score ? `<a class="btn ghost" href="${esc(s.score)}" target="_blank" rel="noopener">악보 보기</a>` : `<button class="btn ghost" disabled>악보 준비 중</button>`}
     </div>
     <h4>우리 반 가사 바꾸기</h4>
-    <span class="meta">원래 가락에 우리 반 이야기를 넣어 바꿔 부른 가사입니다. 좋아요가 많은 순서로 보여요.</span>
-    ${vs.length?vs.map(x=>`<div class="variant"><div class="v">${esc(x.text)}</div><footer><span>${esc(x.cls)} · ${esc(x.region)}${x.mine?" (우리 반)":""}</span>
-      <button class="vote${liked.has(x.key)?" on":""}" data-like="${x.key}" data-song="${id}">좋아요 ${x.likes}</button></footer></div>`).join(""):`<div class="empty">아직 올라온 가사가 없어요. 첫 번째 반이 되어 보세요.</div>`}
-    <label class="label" for="vText">${esc(me.name)} 가사 올리기</label>
+    <span class="meta">원래 가락에 우리 반 이야기를 넣어 바꿔 부른 가사예요. 좋아요가 많은 순서로 보여요.${APP.live ? " 새 가사는 운영진이 확인한 뒤 전국에 공개돼요." : ""}</span>
+    ${vs.length ? vs.map(x => { const mine = x.pid === ME.pid; return `<div class="variant"><div class="v">${esc(x.text)}</div><footer><span>${esc(x.cls)} · ${esc(x.region)}${mine ? " (우리 반)" : ""}${x.pending ? " · 운영진 확인 중" : ""}</span>
+      ${mine ? `<span>좋아요 ${x.likes}</span>` : `<button class="vote${ME.likes.has(x.key) ? " on" : ""}" data-like="${esc(x.key)}">좋아요 ${x.likes}</button>`}</footer></div>`; }).join("")
+      : `<div class="empty">아직 올라온 가사가 없어요. 첫 번째 반이 되어 보세요.</div>`}
+    <label class="label" for="vText">${esc(ME.name || "우리 반")} 가사 올리기</label>
     <textarea id="vText" placeholder="${esc(s.lyrics)}"></textarea>
     <div class="btns"><button class="btn" data-addvar="${id}">가사 올리기</button></div>
   </div></div>`;
+  $(".sheet").scrollTop = keep;
 }
-function refresh(){render();const open=$(".sheet");if(open){const id=+open.dataset.id;}}
+function refreshSheet() { const sh = $(".sheet"); if (sh) openSong(+sh.dataset.song); }
 
-document.addEventListener("click",e=>{
-  const t=e.target.closest("button,[data-close],[data-open]");if(!t)return;
-  const d=t.dataset;
-  if(d.tab){tab=d.tab;$("#sheetHost").innerHTML="";document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));render();window.scrollTo(0,0);return}
-  if(t.hasAttribute("data-close")){$("#sheetHost").innerHTML="";return}
-  if(d.open){openSong(+d.open);return}
-  const sheetId=$(".sheet")?+($(".sheet [data-addvar]")||{}).dataset?.addvar:null;
-  const after=()=>{render();if(sheetId){const y=$(".sheet").scrollTop;openSong(sheetId);$(".sheet").scrollTop=y}};
-  if(d.stamp){const id=+d.stamp;const had=stamps.has(id);had?stamps.delete(id):stamps.add(id);save();
-    toast(had?"도장을 지웠어요":`도장 쾅! ${me.region} 점수가 1 올랐어요`);after();return}
-  if(d.vote){const id=+d.vote;myVote={month:MONTH,song:id};save();toast(`「${songById(id).title}」에 투표했어요`);after();return}
-  if(d.relay!==undefined){relayJoined=true;save();toast("릴레이를 이어받았어요. 다음 반을 기다려요");render();return}
-  if(d.like){liked.has(d.like)?liked.delete(d.like):liked.add(d.like);save();after();return}
-  if(d.addvar){const id=+d.addvar;const txt=$("#vText").value.trim();if(!txt){toast("가사를 먼저 적어 주세요");$("#vText").focus();return}
-    (myVariants[id]=myVariants[id]||[]).push({cls:me.name,region:me.region,text:txt,likes:0});save();toast("우리 반 가사를 올렸어요");after();return}
-  if(d.themeF){filter.theme=filter.theme===d.themeF?null:d.themeF;render();return}
-  if(d.gradeF){filter.grade=filter.grade===d.gradeF?null:d.gradeF;render();return}
-  if(d.mode){filter.mode=d.mode;render();return}
+/* ---------- 누르기 ---------- */
+async function doLogin() {
+  const pw = $("#pw"); if (!pw || !pw.value) { toast("비밀번호를 적어 주세요"); return; }
+  try { const r = await rpc("login", [pw.value]);
+    if (!r.ok) { toast(r.message); return; }
+    APP.token = r.token; store.set("dys_token|" + APP.shellUrl, r.token);
+    toast(r.defaultPw ? "로그인했어요. 처음 비밀번호이니 꼭 바꿔 주세요" : "로그인했어요"); render();
+  } catch (e) { toast(e.message); }
+}
+function needTeacher() {
+  if (!APP.live) return true;
+  if (!APP.token) { toast("선생님 로그인 후 누를 수 있어요"); goTab("mine"); return false; }
+  if (!ME.configured) { toast("우리 반 이름과 지역을 먼저 정해 주세요"); goTab("mine"); return false; }
+  return true;
+}
+/* 체험 모드는 이 기기에, 연결 모드는 우리 반 시트에 저장한 뒤 전국 현황을 다시 읽음 */
+async function act(fn, args, demo, okMsg) {
+  if (!APP.live) { demo(); demoMeSave(); NAT = localNational(true); render(); refreshSheet(); if (okMsg) toast(okMsg); return true; }
+  if (APP.busy) return false;
+  APP.busy = true; document.body.classList.add("busy");
+  try {
+    const r = await rpc(fn, [APP.token].concat(args));
+    setMe(r.state);
+    if (r.nat && r.nat.ok) await loadNational(); else NAT = APP.collector ? NAT : localNational(false);
+    render(); refreshSheet();
+    if (r.nat && r.nat.error) toast("우리 반 시트에는 저장했어요. 전국 현황에는 조금 뒤 반영돼요");
+    else if (okMsg) toast(okMsg);
+    return true;
+  } catch (e) {
+    if (/로그인/.test(e.message)) { APP.token = ""; store.del("dys_token|" + APP.shellUrl); render(); }
+    toast(e.message); return false;
+  } finally { APP.busy = false; document.body.classList.remove("busy"); }
+}
+function goTab(t) { tab = t; $("#sheetHost").innerHTML = ""; document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab)); render(); window.scrollTo(0, 0); }
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("button,[data-close],[data-open]"); if (!t) return;
+  const d = t.dataset;
+  if (d.tab) { goTab(d.tab); return; }
+  if (t.hasAttribute("data-close")) { $("#sheetHost").innerHTML = ""; return; }
+  if (d.open) { openSong(+d.open); return; }
+  if (t.hasAttribute("data-login")) { doLogin(); return; }
+  if (t.hasAttribute("data-logout")) { rpc("logout", [APP.token]).catch(() => {}); APP.token = ""; store.del("dys_token|" + APP.shellUrl); render(); toast("로그아웃했어요"); return; }
+  if (t.hasAttribute("data-save")) {
+    const name = $("#meName").value.trim(), region = $("#meRegion").value;
+    if (!name || !region) { toast("반 이름과 지역을 모두 정해 주세요"); return; }
+    act("saveSettings", [name, region], null, "우리 반 정보를 저장했어요"); return;
+  }
+  if (t.hasAttribute("data-pw")) {
+    const v = $("#newPw").value.trim(); if (v.length < 4) { toast("비밀번호는 4자 이상으로 정해 주세요"); return; }
+    rpc("changePassword", [APP.token, v]).then(r => { toast(r.ok ? "비밀번호를 바꿨어요" : r.message); $("#newPw").value = ""; }).catch(err => toast(err.message)); return;
+  }
+  if (t.hasAttribute("data-resend")) { act("resend", [], null, "전국으로 다시 보냈어요"); return; }
+  if (!needTeacher()) return;
+  if (d.stamp) { const id = +d.stamp, had = ME.stamps.has(id), s = songById(id);
+    act("toggleStamp", [id, s ? s.title : ""], () => { had ? ME.stamps.delete(id) : ME.stamps.add(id); }, had ? "도장을 지웠어요" : `도장 쾅! ${ME.region} 점수가 1 올랐어요`); return; }
+  if (d.vote) { const id = +d.vote, s = songById(id);
+    act("vote", [id, s ? s.title : ""], () => { ME.vote = { month: MONTH, song: id }; }, `「${s ? s.title : ""}」에 투표했어요`); return; }
+  if (d.relay !== undefined) { act("joinRelay", [APP.relay.id, APP.relay.song], () => { ME.relays.add(APP.relay.id); }, "릴레이를 이어받았어요. 다음 반을 기다려요"); return; }
+  if (d.like) { const k = d.like; act("toggleLike", [k], () => { ME.likes.has(k) ? ME.likes.delete(k) : ME.likes.add(k); }); return; }
+  if (d.addvar) { const id = +d.addvar, txt = $("#vText").value.trim(), s = songById(id);
+    if (!txt) { toast("가사를 먼저 적어 주세요"); $("#vText").focus(); return; }
+    act("addLyric", [id, s ? s.title : "", txt], () => { ME.lyrics.push({ id: "me-" + Date.now(), songId: id, text: txt }); }, APP.live ? "올렸어요. 운영진이 확인하면 전국에 보여요" : "우리 반 가사를 올렸어요"); return; }
+  if (d.themeF) { filter.theme = filter.theme === d.themeF ? null : d.themeF; render(); return; }
+  if (d.gradeF) { filter.grade = filter.grade === d.gradeF ? null : d.gradeF; render(); return; }
+  if (d.mode) { filter.mode = d.mode; render(); return; }
 });
-document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#sheetHost").innerHTML=""});
-render();
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("#sheetHost").innerHTML = ""; });
+
+/* ---------- 시작 ---------- */
+(async function start() {
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
+  ME = APP.live ? blankMe() : demoMeLoad();
+  NAT = localNational(!APP.live);
+  render();
+  if (!APP.live) return;
+  try { const j = await fetch("national.json", { cache: "no-store" }).then(r => r.json()); if (/^https:\/\/script\.google\.com\//.test(j.collector || "")) APP.collector = j.collector; } catch (e) {}
+  const [st] = await Promise.all([rpc("getState").catch(e => ({ error: e.message })), loadNational()]);
+  if (st.error) toast("우리 반 시트를 열지 못했어요: " + st.error); else setMe(st);
+  if (!APP.collector) NAT = localNational(false);
+  render();
+})();
+
 </script>
 </body>
 </html>
