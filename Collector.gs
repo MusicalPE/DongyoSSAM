@@ -17,7 +17,7 @@
  * 시트에서 직접 고쳐도 됩니다. 고친 내용은 2분 안에 화면에 반영됩니다.
  *************************************************************/
 
-const SERVER_VERSION = 3;   // 3: 한 시트 방식 — 가입·승인·로그인, 계정 하나에 여러 반
+const SERVER_VERSION = 4;   // 4: 곡 지우기·예시 곡 한꺼번에 지우기  3: 한 시트 방식 — 가입·승인·로그인, 계정 하나에 여러 반
 const TZ_ = 'Asia/Seoul';
 const BOARD_CACHE_SEC = 120;
 const TOKEN_SEC = 21600;    // 로그인 유지 6시간
@@ -369,6 +369,24 @@ function opSaveSong_(token, s) {
     bust_(); return opData_(token);
   });
 }
+function opDeleteSong_(token, id) {
+  opNeed_(token);
+  const n = num_(id); if (!n) throw new Error('곡을 찾지 못했어요.');
+  return withLock_(function () {
+    const sh = sheet_(SH_SONGS), v = sh.getDataRange().getValues();
+    for (let i = v.length - 1; i >= 1; i--) if (num_(v[i][0]) === n) { sh.deleteRow(i + 1); bust_(); return opData_(token); }
+    throw new Error('곡을 찾지 못했어요.');
+  });
+}
+// 처음 설치 때 들어간 예시 곡(작사·작곡이 "예시"로 시작)만 지움
+function opClearExamples_(token) {
+  opNeed_(token);
+  return withLock_(function () {
+    const sh = sheet_(SH_SONGS), v = sh.getDataRange().getValues();
+    for (let i = v.length - 1; i >= 1; i--) if (/^예시/.test(String(v[i][2])) || /^예시/.test(String(v[i][3]))) sh.deleteRow(i + 1);
+    bust_(); return opData_(token);
+  });
+}
 function opLyric_(token, id, status) {
   opNeed_(token);
   const sh = sheet_(SH_LYRICS), v = sh.getDataRange().getValues();
@@ -401,7 +419,8 @@ const FN_ = {
   addClass: addClass_, editClass: editClass_,
   toggleStamp: toggleStamp_, vote: vote_, joinRelay: joinRelay_, addLyric: addLyric_, toggleLike: toggleLike_,
   opLogin: opLogin_, opLogout: opLogout_, opData: opData_, opSaveSong: opSaveSong_, opLyric: opLyric_, opRelay: opRelay_,
-  opClass: opClass_, opAccount: opAccount_, opResetPw: opResetPw_, opContact: opContact_
+  opClass: opClass_, opAccount: opAccount_, opResetPw: opResetPw_, opContact: opContact_,
+  opDeleteSong: opDeleteSong_, opClearExamples: opClearExamples_
 };
 
 /************ 곡 목록 예시 (처음 한 번) ************/

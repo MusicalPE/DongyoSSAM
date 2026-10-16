@@ -477,6 +477,8 @@ body{padding-bottom:0!important}
 .oprow.acc .btns{grid-column:1/-1;justify-content:flex-end}
 .card.temp{border:2px solid var(--c2)!important;background:var(--c2-soft)}
 .tpw{font-family:ui-monospace,Menlo,monospace;font-size:18px;letter-spacing:.08em;background:var(--paper);padding:2px 8px;border-radius:8px}
+.btn.danger{background:var(--c0);color:#fff;border-color:var(--c0)}
+.del-zone{display:inline-flex;gap:8px}
 </style>
 </head>
 <body style="margin:0">
@@ -693,7 +695,7 @@ function loadNational() {
   return fetch(APP.server + "?api=board", { cache: "no-store" }).then(r => r.json()).then(j => {
     if (!j.ok) throw new Error(j.error);
     const b = j.result;
-    if (b.songs && b.songs.length) SONGS = songsFromCollector(b.songs);
+    SONGS = songsFromCollector(b.songs || []);
     if (b.relay && b.relay.id) APP.relay = b.relay;
     if (b.month) MONTH = b.month;
     APP.contact = b.contact || "";
@@ -1133,6 +1135,8 @@ function opApplySongs() {
 }
 function opDemo(fn, args) {
   const d = OP.data;
+  if (fn === "opDeleteSong") { d.songs = d.songs.filter(x => x.id !== +args[0]); }
+  if (fn === "opClearExamples") { d.songs = d.songs.filter(x => !(/^예시/.test(String(x.lyricist || "")) || /^예시/.test(String(x.composer || "")))); }
   if (fn === "opSaveSong") { const s = args[0], id = +s.id || Math.max(0, ...d.songs.map(x => x.id)) + 1, i = d.songs.findIndex(x => x.id === id);
     const row = { ...s, id }; if (i >= 0) d.songs[i] = row; else d.songs.push(row); }
   if (fn === "opLyric") { const l = d.lyrics.find(x => x.id === args[0]); if (l) l.status = args[1]; }
@@ -1189,7 +1193,11 @@ function renderOp(v) {
   let body = "";
   if (OP.sub === "songs") {
     const list = d.songs.slice().sort((a, b) => b.id - a.id);
-    body = `<div class="btns"><button class="btn" data-opedit="0">새 곡 올리기</button></div>
+    const ex = d.songs.filter(x => /^예시/.test(String(x.lyricist || "")) || /^예시/.test(String(x.composer || "")));
+    body = `${ex.length ? `<div class="card temp"><span class="eyebrow">예시 곡 ${ex.length}개가 남아 있어요</span>
+        <p style="margin:0">처음 설치할 때 들어간 예시 곡이에요. 하나씩 '고치기'로 실제 동요샘 곡으로 바꾸거나, 한꺼번에 지울 수 있어요. 지운 곡은 되돌릴 수 없어요.</p>
+        <div class="btns">${OP.confirmEx ? `<button class="btn" data-opclearex>예, 예시 곡 ${ex.length}개 모두 지우기</button><button class="btn ghost" data-opconfirm="">그만두기</button>` : `<button class="btn ghost" data-opconfirm="ex">예시 곡 모두 지우기</button>`}</div></div>` : ""}
+      <div class="btns"><button class="btn" data-opedit="0">새 곡 올리기</button></div>
       <div class="list">${list.map(s => `<div class="oprow${s.hidden ? " off" : ""}"><span class="key" style="--c:var(--c${s.id % 6});--cs:var(--c${s.id % 6}-soft)">${s.id}</span>
         <span class="min"><b>${esc(s.title)}</b><small class="meta">${esc(s.concert || "발표회 미정")}${s.year ? " · " + esc(s.year) : ""}${s.hidden ? " · 숨김" : ""}${s.video ? " · 영상" : ""}${s.score ? " · 악보" : ""}</small></span>
         <button class="vote" data-opedit="${s.id}">고치기</button></div>`).join("")}</div>`;
@@ -1270,7 +1278,9 @@ function openSongEditor(id) {
     ${f("f_video", "영상 주소 (https://로 시작)", s.video, "https://youtu.be/…")}
     ${f("f_score", "악보 주소 (https://로 시작)", s.score, "https://drive.google.com/…")}
     <label class="check"><input type="checkbox" id="f_hidden"${s.hidden ? " checked" : ""}> 화면에서 숨기기</label>
-    <div class="btns"><button class="btn" data-opsave="${s.id}">${s.id ? "고친 내용 저장" : "곡 올리기"}</button></div>
+    <div class="btns"><button class="btn" data-opsave="${s.id}">${s.id ? "고친 내용 저장" : "곡 올리기"}</button>
+      ${s.id ? `<span class="del-zone"><button class="btn ghost" data-opdelask="${s.id}">이 곡 지우기</button><button class="btn danger" data-opdel="${s.id}" hidden>정말 지우기 (되돌릴 수 없어요)</button></span>` : ""}</div>
+    <p class="meta" style="margin:0">숨기기는 화면에서만 빼고 기록은 남겨 둬요. 지우기는 곡 목록에서 아예 없애요.</p>
   </div></div>`;
 }
 async function opLogin() {
@@ -1303,6 +1313,10 @@ document.addEventListener("click", e => {
   if (d.oplyric !== undefined) { opCall("opLyric", [d.oplyric, d.st], d.st === "O" ? "가사를 공개했어요" : d.st === "X" ? "가사를 숨겼어요" : "확인 전으로 돌렸어요"); return; }
   if (t.hasAttribute("data-oprelay")) { const n = $("#rName").value.trim(); if (!n) { toast("릴레이 이름을 적어 주세요"); return; } opCall("opRelay", [n, +$("#rSong").value], "릴레이를 저장했어요"); return; }
   if (d.opclass) { opCall("opClass", [d.opclass, !!d.h], d.h ? "그 반을 숨겼어요" : "그 반을 다시 보이게 했어요"); return; }
+  if (d.opconfirm !== undefined) { OP.confirmEx = d.opconfirm === "ex"; render(); return; }
+  if (t.hasAttribute("data-opclearex")) { OP.confirmEx = false; opCall("opClearExamples", [], "예시 곡을 모두 지웠어요"); return; }
+  if (d.opdelask) { const z = t.closest(".del-zone"); t.hidden = true; z.querySelector("[data-opdel]").hidden = false; return; }
+  if (d.opdel) { opCall("opDeleteSong", [+d.opdel], "곡을 지웠어요").then(ok => { if (ok) $("#sheetHost").innerHTML = ""; }); return; }
   if (d.opaf !== undefined) { OP.af = d.opaf; if (OP.data) delete OP.data.tempPw; render(); return; }
   if (d.opacc) { opCall("opAccount", [d.opacc, d.st], d.st === "O" ? "승인했어요" : d.st === "X" ? "거절했어요" : "다시 검토로 돌렸어요"); return; }
   if (d.oppw2) { opCall("opResetPw", [d.oppw2], "임시 비밀번호를 만들었어요"); return; }
