@@ -265,6 +265,23 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
 .scene .logo{height:84px}
 .scene .h1t{font-size:38px}
 @media (min-width:1000px){.scene .title{top:22px}.scene .logo{height:120px}.scene .h1t{font-size:58px;-webkit-text-stroke:2.5px currentColor}}
+.mini{gap:6px;padding:14px 16px}
+.mini-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px}
+.more{font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);background:none;border:none;cursor:pointer;padding:2px 4px}
+.more:hover{color:var(--ink);text-decoration:underline}
+.mrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:none;border-top:1px dashed var(--line);padding:8px 2px;cursor:pointer}
+.mrow:first-of-type{border-top:none}
+.mrow:hover b{color:var(--accent)}
+.mrow b{font-family:var(--display);font-weight:400;font-size:16px;display:block;line-height:1.3}
+.mrow small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .key{width:34px;height:30px;font-size:13px}.mrow .key::after{height:17px;bottom:15px}
+.medal{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;background:var(--heat0);color:var(--muted)}
+.medal.m1{background:var(--c2);color:#3A2A00}.medal.m2{background:var(--line);color:var(--ink)}.medal.m3{background:var(--c1-soft);color:var(--c1)}
+.mini-title{font-family:var(--display);font-weight:400;font-size:18px}
+.next-line{display:grid;gap:2px;background:var(--c4-soft);border-radius:12px;padding:8px 12px;font-weight:500}
+.lyr{display:grid;gap:4px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:10px 12px}
+.lyr:hover{border-color:var(--c3)}
+.lyr .v{white-space:pre-line;line-height:1.6}
 </style>
 </head>
 <body style="margin:0">
@@ -543,6 +560,12 @@ function render() {
     const { song: s, season } = pickToday();
     const rk = ranked(), myRank = ME.region ? rk.findIndex(([r]) => r === ME.region) + 1 : 0;
     const others = SONGS.filter(x => x.season === season && x.id !== s.id);
+    const top3 = SONGS.slice().sort((a, b) => votesFor(b.id) - votesFor(a.id)).slice(0, 3);
+    const lc = latestConcert(), newSongs = SONGS.filter(x => x.concert === lc).slice(0, 4);
+    const rs = songById(APP.relay.song) || SONGS[0], rlines = rs.lyrics.split("\n").filter(Boolean), chain = NAT.relays[APP.relay.id] || [];
+    const pop = Object.values(NAT.lyrics).flat().sort((a, b) => b.likes - a.likes).slice(0, 2);
+    const findSong = key => { for (const [sid, arr] of Object.entries(NAT.lyrics)) if (arr.some(x => x.key === key)) return +sid; return 0; };
+    const head = (t, tabName) => `<div class="mini-head"><span class="eyebrow">${t}</span>${tabName ? `<button class="more" data-tab="${tabName}">더 보기</button>` : ""}</div>`;
     v.innerHTML = `<section class="split"><div class="col">
       <figure class="hero"><img src="img/kids.jpg" alt="마이크를 들고 함께 동요를 부르는 아이들 그림" width="1200" height="737"><figcaption>온 나라 교실이 함께 부르는 동요</figcaption></figure>
       <div class="card today">
@@ -553,7 +576,10 @@ function render() {
         <p style="margin:0">${esc(s.intro)}</p>
         <span class="meta">전국 ${classesSung(s.id)}개 반이 불렀어요</span>
         <div class="btns"><button class="btn" data-open="${s.id}">가사와 수업 활용 보기</button>${stampBtn(s.id)}</div>
-      </div></div>
+      </div>
+      ${newSongs.length ? `<div class="card mini">${head(esc(lc) + " 노래", "songs")}
+        ${newSongs.map(x => `<button class="mrow" data-open="${x.id}"><span class="key" style="--c:var(--c${x.id % 6});--cs:var(--c${x.id % 6}-soft)">${esc(x.key)}</span><span class="min"><b>${esc(x.title)}</b><small class="meta">${esc(x.grade)} · ${esc(x.lyric)}</small></span><span class="meta">${classesSung(x.id)}개 반</span></button>`).join("")}</div>` : ""}
+      </div>
       <div class="col"><a class="cafe" href="https://cafe.daum.net/jbdongyo" target="_blank" rel="noopener">
         <span class="cafe-notes" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="min"><b>동요샘 카페</b><small>선생님들의 노래 이야기와 발표회 소식을 만나요</small></span>
@@ -566,6 +592,15 @@ function render() {
         : `<span class="meta">우리 반 이름과 지역을 정하면 전국 무대에 함께 올라가요.</span>`}
         <div class="btns"><button class="btn ghost" data-tab="stage">지역 순위 보기</button>${ME.configured ? "" : `<button class="btn ghost" data-tab="mine">우리 반 정하기</button>`}</div>
       </div>
+      <div class="card mini">${head(MONTH_LABEL() + " 동요샘 차트", "chart")}
+        ${top3.map((x, i) => `<button class="mrow" data-open="${x.id}"><span class="medal m${i + 1}">${i + 1}</span><span class="min"><b>${esc(x.title)}</b><small class="meta">${esc(x.lyric)}</small></span><span class="meta">${votesFor(x.id)}표</span></button>`).join("")}</div>
+      <div class="card mini">${head("이어 부르기 릴레이", "stage")}
+        <b class="mini-title">「${esc(rs.title)}」</b>
+        <span class="meta">${chain.length ? `${chain.length}개 반이 이어받았어요. 마지막은 ${esc(chain[chain.length - 1].cls)}(${esc(chain[chain.length - 1].region)})` : "아직 시작 전이에요. 첫 줄을 불러 주세요."}</span>
+        ${rlines.length ? `<div class="next-line"><small class="meta">다음 차례 줄</small>${esc(rlines[chain.length % rlines.length])}</div>` : ""}
+      </div>
+      ${pop.length ? `<div class="card mini">${head("인기 바꾼 가사", "")}
+        ${pop.map(x => { const sid = findSong(x.key), so = songById(sid); return `<button class="lyr" data-open="${sid}"><span class="label">「${esc(so ? so.title : "")}」</span><span class="v">${esc(x.text.split("\n").slice(0, 2).join("\n"))}</span><small class="meta">${esc(x.cls)} · ${esc(x.region)} · 좋아요 ${x.likes}</small></button>`; }).join("")}</div>` : ""}
       ${others.length ? `<h2>같은 계절 노래</h2><div class="list">${others.map(songRow).join("")}</div>` : ""}
     </div></section>`;
   }
