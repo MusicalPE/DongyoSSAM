@@ -14,7 +14,8 @@
  *  - 바꾼 가사 탭: '공개' 칸에 O 를 적은 가사만 전국에 보입니다
  *  - 반 탭: '숨김' 칸에 O 를 적으면 그 반 기록을 전국 무대에서 뺍니다
  *  위 일은 모두 노래상자 화면 맨 아래 '운영진' 메뉴에서도 할 수 있습니다.
- *  처음 운영진 비밀번호: 1234 (운영진 메뉴에서 꼭 바꿔 주세요)
+ *  운영진 비밀번호 정하기: 이 편집기에서 맨 아래 setOperatorPassword 의 "새비밀번호"를 바꾸고
+ *  함수 목록에서 setOperatorPassword 를 골라 한 번 실행하세요. (정하기 전에는 1234)
  *************************************************************/
 
 const COLLECTOR_VERSION = 2;   // 2: 운영진 메뉴(곡 관리·가사 확인·릴레이·참여 반)
@@ -212,7 +213,7 @@ function seedSongs_(sh) {
 
 /************ 운영진 메뉴 (노래상자 화면에서 운영진 비밀번호로) ************/
 const OP_TTL_SEC = 21600;
-const OP_FN_ = { opLogin: opLogin_, opLogout: opLogout_, opData: opData_, opSaveSong: opSaveSong_, opLyric: opLyric_, opRelay: opRelay_, opClass: opClass_, opPassword: opPassword_ };
+const OP_FN_ = { opLogin: opLogin_, opLogout: opLogout_, opData: opData_, opSaveSong: opSaveSong_, opLyric: opLyric_, opRelay: opRelay_, opClass: opClass_ };
 function opHash_() { return PropertiesService.getScriptProperties().getProperty('OP_HASH') || hash_('1234'); }
 function opLogin_(pw) {
   if (hash_(String(pw || '')) !== opHash_()) return { ok: false, message: '운영진 비밀번호가 맞지 않아요.' };
@@ -222,15 +223,8 @@ function opLogin_(pw) {
 }
 function opLogout_(token) { if (token) CacheService.getScriptCache().remove('OP_' + token); return { ok: true }; }
 function opNeed_(token) { if (!token || !CacheService.getScriptCache().get('OP_' + token)) throw new Error('운영진 로그인이 필요해요. 다시 로그인해 주세요.'); }
-function opPassword_(token, pw) {
-  opNeed_(token);
-  const v = String(pw || '').trim();
-  if (v.length < 6) return { ok: false, message: '운영진 비밀번호는 6자 이상으로 정해 주세요.' };
-  PropertiesService.getScriptProperties().setProperty('OP_HASH', hash_(v));
-  return { ok: true };
-}
-// (선택) 편집기에서 직접 정할 때: setOperatorPassword("새비밀번호")
-function setOperatorPassword(pw) { PropertiesService.getScriptProperties().setProperty('OP_HASH', hash_(String(pw))); }
+// 운영진 비밀번호 정하기: 아래 "새비밀번호"를 바꾸고 이 함수를 한 번 실행하세요
+function setOperatorPassword() { PropertiesService.getScriptProperties().setProperty('OP_HASH', hash_('새비밀번호')); }
 
 function opData_(token) {
   opNeed_(token);

@@ -699,7 +699,6 @@ function opDemo(fn, args) {
   if (fn === "opLyric") { const l = d.lyrics.find(x => x.id === args[0]); if (l) l.status = args[1]; }
   if (fn === "opRelay") d.relay = { id: args[0], song: +args[1] };
   if (fn === "opClass") { const c = d.classes.find(x => x.pid === args[0]); if (c) c.hidden = args[1]; }
-  if (fn === "opPassword") return { ok: true };
   opApplySongs(); return d;
 }
 function opPost(fn, args) {
@@ -712,8 +711,7 @@ async function opCall(fn, args, okMsg) {
   APP.busy = true; document.body.classList.add("busy");
   try {
     const r = OP.demo ? opDemo(fn, args) : await opPost(fn, [OP.token].concat(args));
-    if (fn === "opPassword") { toast(r.ok ? "운영진 비밀번호를 바꿨어요" : r.message); if (r.ok && OP.data) OP.data.defaultPw = false; }
-    else { OP.data = r; if (!OP.demo) { opApplySongs(); if (APP.live) await loadNational(); } else NAT = localNational(!APP.live); if (okMsg) toast(okMsg); }
+    { OP.data = r; if (!OP.demo) { opApplySongs(); if (APP.live) await loadNational(); } else NAT = localNational(!APP.live); if (okMsg) toast(okMsg); }
     render(); return true;
   } catch (e) {
     if (/로그인/.test(e.message)) { OP.token = ""; OP.data = null; store.del("dys_op"); render(); }
@@ -743,7 +741,7 @@ function renderOp(v) {
   }
   if (!OP.data) { v.innerHTML = `<section data-opzone><div class="empty">운영진 자료를 불러오는 중이에요</div></section>`; opEnsure(); return; }
   const d = OP.data, pend = d.lyrics.filter(l => !l.status).length;
-  const subs = [["songs", `곡 관리 ${d.songs.length}`], ["lyrics", `가사 확인${pend ? " " + pend : ""}`], ["relay", "릴레이"], ["classes", `참여 반 ${d.classes.length}`], ["account", "비밀번호"]];
+  const subs = [["songs", `곡 관리 ${d.songs.length}`], ["lyrics", `가사 확인${pend ? " " + pend : ""}`], ["relay", "릴레이"], ["classes", `참여 반 ${d.classes.length}`]];
   const title = id => { const s = d.songs.find(x => x.id === id); return s ? s.title : "곡 " + id; };
   let body = "";
   if (OP.sub === "songs") {
@@ -781,20 +779,13 @@ function renderOp(v) {
         <button class="vote" data-opclass="${esc(c.pid)}" data-h="${c.hidden ? "" : "1"}">${c.hidden ? "보이기" : "숨기기"}</button></div>`).join("")}</div>`
         : `<div class="empty">아직 참여한 반이 없어요</div>`}`;
   }
-  if (OP.sub === "account") {
-    body = `<div class="card"><span class="label">운영진 비밀번호 바꾸기</span>
-      <div class="form2"><input type="password" id="opNew" placeholder="새 비밀번호 (6자 이상)" aria-label="새 운영진 비밀번호" autocomplete="new-password"><button class="btn" data-oppw>바꾸기</button></div>
-      <p class="meta" style="margin:0">바꾼 비밀번호를 운영진끼리만 나눠 주세요.</p>
-      <div class="btns">${OP.demo ? "" : `<button class="btn ghost" data-oplogout>로그아웃</button>`}</div></div>`;
-  }
   v.innerHTML = `<section data-opzone>
     <div class="card"><span class="eyebrow">동요샘 운영진 메뉴</span>
       ${OP.demo ? `<p class="meta" style="margin:0">체험 모드예요. 수집기가 연결되지 않아 바꾼 내용은 이 화면에서만 보이고 저장되지 않아요.</p>` : ""}
-      ${d.defaultPw ? `<p class="warn">처음 비밀번호(1234)를 쓰고 있어요. 비밀번호 칸에서 꼭 바꿔 주세요.</p>` : ""}
       <div class="chips">${subs.map(([k, n]) => `<button class="chip" data-opsub="${k}" aria-pressed="${OP.sub === k}">${n}</button>`).join("")}</div>
     </div>
     ${body}
-    <div class="btns"><button class="btn ghost" data-tab="today">노래상자로 돌아가기</button></div>
+    <div class="btns"><button class="btn ghost" data-tab="today">노래상자로 돌아가기</button>${OP.demo ? "" : `<button class="btn ghost" data-oplogout>운영진 메뉴에서 나가기</button>`}</div>
   </section>`;
 }
 function openSongEditor(id) {
@@ -829,7 +820,7 @@ async function opLogin() {
   const pw = $("#opPw"); if (!pw || !pw.value) { toast("운영진 비밀번호를 적어 주세요"); return; }
   try { const r = await opPost("opLogin", [pw.value]);
     if (!r.ok) { toast(r.message); return; }
-    OP.token = r.token; store.set("dys_op", r.token); OP.data = null; toast(r.defaultPw ? "들어왔어요. 처음 비밀번호이니 꼭 바꿔 주세요" : "들어왔어요"); render(); opEnsure();
+    OP.token = r.token; store.set("dys_op", r.token); OP.data = null; toast("들어왔어요"); render(); opEnsure();
   } catch (e) { toast(e.message); }
 }
 document.addEventListener("click", e => {
@@ -855,7 +846,6 @@ document.addEventListener("click", e => {
   if (d.oplyric !== undefined) { opCall("opLyric", [d.oplyric, d.st], d.st === "O" ? "가사를 공개했어요" : d.st === "X" ? "가사를 숨겼어요" : "확인 전으로 돌렸어요"); return; }
   if (t.hasAttribute("data-oprelay")) { const n = $("#rName").value.trim(); if (!n) { toast("릴레이 이름을 적어 주세요"); return; } opCall("opRelay", [n, +$("#rSong").value], "릴레이를 저장했어요"); return; }
   if (d.opclass) { opCall("opClass", [d.opclass, !!d.h], d.h ? "그 반을 숨겼어요" : "그 반을 다시 보이게 했어요"); return; }
-  if (t.hasAttribute("data-oppw")) { const v = $("#opNew").value.trim(); if (v.length < 6) { toast("운영진 비밀번호는 6자 이상으로 정해 주세요"); return; } opCall("opPassword", [v]); $("#opNew").value = ""; return; }
 });
 
 /* ---------- 시작 ---------- */
