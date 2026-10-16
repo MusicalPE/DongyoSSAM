@@ -25,7 +25,8 @@
   --accent:#7FA8F5; --accent-soft:#22314A; --sun:#F2C55A; --sun-soft:#3A3120; --leaf:#5FC79A; --on-accent:#10182A;
   --heat0:#1F2836; --heat1:#253A5C; --heat2:#2F5590; --heat3:#4F7FCC; --heat4:#86ABF2; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;overflow-x:clip}
+main,section,.card,.list,.concert{min-width:0}
 .wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px}
 header{padding-block:22px 6px}
 .brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
@@ -53,7 +54,7 @@ h2{font-family:var(--display);font-weight:400;font-size:21px;margin:10px 0 0}
 .btn.done{background:var(--leaf);color:var(--on-accent)}
 .btn[disabled]{opacity:.55;cursor:default}
 .list{display:grid;gap:8px}
-.song{display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;font:inherit;color:inherit;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer}
+.song{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;width:100%;font:inherit;color:inherit;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer}
 .song:hover{border-color:var(--accent)}
 .key{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;font-family:var(--display);font-size:15px;background:var(--sun-soft);color:var(--ink)}
 .key.stamped{background:var(--leaf);color:var(--on-accent)}
@@ -72,15 +73,15 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .label{font-size:12px;letter-spacing:.06em;color:var(--muted)}
 .empty{color:var(--muted);background:var(--paper);border:1px dashed var(--line);border-radius:12px;padding:18px;text-align:center}
 /* 전국 무대 */
-.tilemap{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-width:420px}
-.tile{aspect-ratio:1.25;max-width:100%;border-radius:10px;display:grid;place-content:center;text-align:center;font-size:13px;line-height:1.25;color:var(--ink)}
+.tilemap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-width:420px}
+.tile{aspect-ratio:1.25;max-width:100%;min-width:0;overflow:hidden;border-radius:10px;display:grid;place-content:center;text-align:center;font-size:13px;line-height:1.25;color:var(--ink)}
 .tile b{font-family:var(--display);font-weight:400;font-size:15px;display:block}
 .tile.hot{color:var(--on-accent)}
 .tile.mine{outline:2px solid var(--sun);outline-offset:1px}
 .legend{display:flex;gap:4px;align-items:center;font-size:12px;color:var(--muted)}
 .legend i{width:18px;height:10px;border-radius:3px;display:inline-block}
 .rank{display:grid;gap:6px;counter-reset:r}
-.rrow{display:grid;grid-template-columns:28px 52px 1fr 48px;gap:8px;align-items:center;font-size:14px}
+.rrow{display:grid;grid-template-columns:28px 52px minmax(0,1fr) 44px;gap:8px;align-items:center;font-size:14px}
 .rrow .n{font-family:var(--display);color:var(--muted);text-align:center}
 .rrow.top .n{color:var(--sun)}
 .bar{height:10px;background:var(--heat0);border-radius:999px;overflow:hidden}
@@ -94,26 +95,28 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .rstep p{margin:0 0 10px}
 .rstep small{color:var(--muted)}
 /* 차트 */
-.crow{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.crow{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .crow .n{font-family:var(--display);font-size:20px;text-align:center;color:var(--muted)}
 .crow.p1 .n,.crow.p2 .n,.crow.p3 .n{color:var(--sun)}
 .crow b{font-family:var(--display);font-weight:400;font-size:16px;cursor:pointer}
 .vote{font:inherit;font-size:13px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer}
 .vote.on{background:var(--sun);border-color:var(--sun);color:#3A2A00}
 /* 우리 반 */
-.stampbook{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.stamp{aspect-ratio:1;max-width:100%;border-radius:50%;border:2px dashed var(--line);display:grid;place-content:center;text-align:center;font-size:11.5px;line-height:1.25;color:var(--muted);padding:4px;cursor:pointer;background:transparent;font-family:inherit}
+.stampbook{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:480px){.stampbook{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.stamp{aspect-ratio:1;width:100%;max-width:100%;min-width:0;min-height:0;overflow:hidden;overflow-wrap:anywhere;border-radius:50%;border:2px dashed var(--line);display:grid;place-content:center;text-align:center;font-size:11.5px;line-height:1.25;color:var(--muted);padding:4px;cursor:pointer;background:transparent;font-family:inherit}
 .stamp.on{border:2px solid var(--leaf);color:var(--leaf);background:var(--paper);transform:rotate(-6deg)}
 .stamp.on b{font-family:var(--display);font-weight:400;font-size:13px;display:block}
 .level{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
 .level b{font-family:var(--display);font-weight:400;font-size:22px}
 .prog{height:12px;background:var(--heat0);border-radius:999px;overflow:hidden}
 .prog span{display:block;height:100%;background:var(--leaf)}
-.quest{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;font-size:14px}
+.quest{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:14px}
 .quest .ok{width:18px;height:18px;border-radius:50%;border:2px solid var(--line)}
 .quest.cleared .ok{background:var(--leaf);border-color:var(--leaf)}
-.form2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media (max-width:420px){.form2{grid-template-columns:1fr}}
+.form2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.form2>*{min-width:0}
+@media (max-width:420px){.form2{grid-template-columns:minmax(0,1fr)}}
 /* 상세 시트 */
 .scrim{position:fixed;inset:0;background:rgba(10,16,28,.45);z-index:20}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:90%;overflow:auto;background:var(--paper);border-radius:18px 18px 0 0;
