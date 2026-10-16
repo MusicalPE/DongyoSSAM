@@ -1315,7 +1315,7 @@ document.addEventListener("click", e => {
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
   ME = demoMeLoad(); NAT = localNational(true);
   render();
-  try { const j = await fetch("national.json", { cache: "no-store" }).then(r => r.json()); if (/^https:\/\/script\.google\.com\//.test(j.collector || "")) OP.url = j.collector; } catch (e) {}
+  try { const j = await fetch("national.json", { cache: "no-store" }).then(r => r.json()); if (/^https:\/\/script\.google\.com\//.test(j.collector || "") && APP.q.demo === undefined) OP.url = j.collector; } catch (e) {}
   APP.cfgLoaded = true;
   if (OP.url && APP.q.demo === undefined) { APP.live = true; APP.server = OP.url; setMe(null); }
   if (tab === "op") { OP.demo = !OP.url; OP.data = null; }
