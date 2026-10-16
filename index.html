@@ -626,12 +626,10 @@ body.kara-on .mini-video{z-index:41;top:max(56px,env(safe-area-inset-top));botto
 .op-save.dirty{position:sticky;border-color:var(--c1);background:var(--c1-soft);color:var(--ink)}
 .op-save .btn[disabled]{opacity:.5;cursor:default}
 
-/* ===== 제목: 카톡 썸네일처럼 반듯한 색 글자 + 작은 설명 ===== */
-.scene .tbox{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
-.scene .h1t{-webkit-text-stroke:0!important;letter-spacing:0!important;line-height:1.05}
-.scene .h1t span{transform:none!important;text-shadow:3px 0 0 var(--paper),-3px 0 0 var(--paper),0 3px 0 var(--paper),0 -3px 0 var(--paper),2px 2px 0 var(--paper),-2px 2px 0 var(--paper),2px -2px 0 var(--paper),-2px -2px 0 var(--paper),0 5px 0 rgba(43,58,85,.18)!important}
-.scene .h1sub{font-family:var(--body);font-weight:700;font-size:13px;color:var(--ink);letter-spacing:-.01em;white-space:nowrap;text-shadow:0 0 6px var(--paper),0 0 2px var(--paper);margin-left:2px}
-@media (min-width:1000px){.scene .h1t{font-size:64px!important}.scene .h1sub{font-size:20px;margin-left:4px}.scene .tbox{gap:6px}}
+/* ===== 제목 아래 작은 설명 ===== */
+.scene .tbox{display:flex;flex-direction:column;align-items:center;gap:2px}
+.scene .h1sub{font-family:var(--body);font-weight:700;font-size:13px;color:var(--ink);letter-spacing:-.01em;white-space:nowrap;text-shadow:0 0 6px var(--paper),0 0 2px var(--paper)}
+@media (min-width:1000px){.scene .tbox{gap:8px}}
 @media (max-width:480px){.scene .h1sub{font-size:12px}}
 /* 앱 아이콘 만들기 버튼 (제목 칸 오른쪽 아래) */
 .app-install{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:12px;z-index:2;display:inline-flex;align-items:center;gap:6px;font:700 13px var(--body);color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:5px 12px 5px 9px;cursor:pointer;box-shadow:0 3px 0 var(--shadow)}
@@ -1856,6 +1854,16 @@ const INSTALL = { ev: null };
 try { if ("serviceWorker" in navigator && location.protocol === "https:" && !/claude|usercontent/.test(location.hostname)) navigator.serviceWorker.register("sw.js"); } catch (e) {}
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); INSTALL.ev = e; installUI(); });
 window.addEventListener("appinstalled", () => { INSTALL.ev = null; const b = $("#appInstall"); if (b) b.hidden = true; toast("앱 아이콘을 만들었어요. 바탕화면이나 홈 화면에서 '노래상자'를 찾아 보세요"); });
+/* 제목 아래 설명 글씨가 '노래상자' 글자 폭을 넘지 않게 크기 맞추기 */
+function fitTitleSub() {
+  const t = document.querySelector(".scene .h1t"), sub = document.querySelector(".scene .h1sub"); if (!t || !sub) return;
+  sub.style.fontSize = "40px";
+  const w = t.getBoundingClientRect().width, sw = sub.getBoundingClientRect().width;
+  if (w && sw) sub.style.fontSize = Math.max(9, Math.min(22, Math.floor(40 * w / sw * 10) / 10)) + "px";
+}
+fitTitleSub();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitleSub);
+window.addEventListener("resize", fitTitleSub);
 function installUI() {
   const b = $("#appInstall"); if (!b) return;
   const standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
