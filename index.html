@@ -481,7 +481,121 @@ body{padding-bottom:0!important}
 .del-zone{display:inline-flex;gap:8px}
 .vote.danger{background:var(--c0);border-color:var(--c0);color:#fff}
 .oprow .del-zone{flex-wrap:nowrap}
+/* ---- v0.6: 불러오는 중 ---- */
+.booting{display:grid;justify-items:center;gap:8px;padding:56px 16px;text-align:center}
+.booting b{font-family:var(--display);font-weight:400;font-size:24px}
+.bnotes{display:flex;gap:10px;font-size:30px;color:var(--c1)}
+.bnotes i{font-style:normal}
+.bnotes i:nth-child(2){color:var(--c4)}.bnotes i:nth-child(3){color:var(--c3)}
+@media (prefers-reduced-motion:no-preference){.bnotes i{animation:hop 1s ease-in-out infinite}.bnotes i:nth-child(2){animation-delay:.15s}.bnotes i:nth-child(3){animation-delay:.3s}@keyframes hop{50%{transform:translateY(-10px)}}}
+/* ---- 기간 고르기 · 한마디 ---- */
+.chips.period{margin:2px 0 8px}
+.op-note{margin:0;padding:8px 12px;background:var(--c2-soft);border-radius:12px;display:grid;gap:2px}
+/* ---- 영상 바로 재생 ---- */
+.vbox{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000;border:2px solid var(--pencil)}
+.vbox iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+/* ---- 노래방 화면 ---- */
+body.kara-on{overflow:hidden}
+.kara{position:fixed;inset:0;z-index:40;background:#141B33;color:#fff;display:grid;grid-template-rows:auto 1fr auto auto auto;padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));--ks:1}
+.kara .k-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-family:var(--display);font-size:22px;color:#FFD866}
+.kara .k-count{font-family:var(--body);font-size:15px;color:#A3B0C8}
+.kara .k-stage{display:grid;align-content:center;justify-items:center;gap:calc(18px*var(--ks));text-align:center;cursor:pointer;user-select:none;min-height:0;overflow:hidden}
+.kara .k-line{margin:0;font-family:var(--display);line-height:1.3;max-width:min(1200px,96vw);word-break:keep-all}
+.kara .k-line.now{font-size:calc(clamp(34px,7vw,92px)*var(--ks));color:#fff;text-shadow:0 4px 0 #2B3A55}
+.kara .k-line.prev,.kara .k-line.next{font-size:calc(clamp(18px,3.2vw,40px)*var(--ks));color:#7E8BA8;min-height:1.3em}
+.kara .k-line.next{color:#B9C6E0}
+@media (prefers-reduced-motion:no-preference){.kara .k-line.now{animation:kin .25s ease-out}@keyframes kin{from{transform:translateY(16px);opacity:.3}}}
+.kara .k-dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.kara .k-dots i{width:10px;height:10px;border-radius:50%;background:#34426A}
+.kara .k-dots i.past{background:#7FD694}.kara .k-dots i.on{background:#FFD866;transform:scale(1.3)}
+.kara .k-bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.kara .k-bar button{font:700 16px var(--body);color:#fff;background:#2A3557;border:2px solid #4A5880;border-radius:14px;padding:9px 16px;cursor:pointer}
+.kara .k-bar .k-main{background:#4A8FE0;border-color:#82B4F5}
+.kara .k-bar [aria-pressed="true"]{background:#3FA25E;border-color:#7FD694}
+.kara .k-help{margin:8px 0 0;text-align:center;color:#7E8BA8;font-size:13px}
+@media (max-width:600px){.kara .k-help{display:none}.kara .k-bar button{padding:8px 11px;font-size:14.5px}}
+/* ---- 운영진 메뉴: 점퍼스 관리자 메뉴처럼 왼쪽 탭 ---- */
+.opwrap{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.opwrap>*{min-width:0}
+.op-top{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.op-top .eyebrow{font-size:16px}
+.admin-layout{display:flex;gap:18px;align-items:flex-start;min-width:0}
+.admin-nav{flex:none;width:200px;position:sticky;top:16px;background:var(--paper);border:2px solid var(--line);border-radius:var(--wob);padding:8px;display:flex;flex-direction:column;gap:2px}
+.admin-nav button{font:700 15px var(--body);background:transparent;color:var(--muted);border:0;text-align:left;padding:10px 12px;border-radius:12px;display:flex;align-items:center;gap:9px;width:100%;cursor:pointer}
+.admin-nav button .ico{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+.admin-nav button:hover{background:var(--sky);color:var(--ink)}
+.admin-nav button.on{background:var(--c4-soft);color:var(--ink)}
+.admin-nav button.on .ico{background:var(--c4);box-shadow:0 0 0 3px var(--c4-soft),0 0 0 4px var(--c4)}
+.admin-nav .cnt{margin-left:auto;background:var(--c0);color:#fff;font-size:12px;border-radius:999px;padding:1px 7px;min-width:20px;text-align:center}
+.admin-nav .new-dot{margin-left:auto;background:var(--c2);color:#3A2A00;font-size:10.5px;border-radius:999px;padding:1px 6px}
+.admin-nav .cnt+.new-dot{margin-left:4px}
+.admin-nav .nav-sep{height:2px;background:var(--line);margin:6px 4px;border-radius:2px}
+.admin-nav button.nav-link{font-size:14px;color:var(--muted);padding:8px 12px}
+.admin-content{flex:1;min-width:0;display:grid;gap:12px}
+.admin-content .op-title{margin:0}
+.admin-content > .sub{margin:-6px 0 0}
+@media (max-width:760px){
+  .admin-layout{flex-direction:column;gap:12px}
+  .admin-nav{width:100%;max-width:100%;min-width:0;box-sizing:border-box;position:static;flex-direction:row;overflow-x:auto;gap:4px;padding:6px;align-items:center;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .admin-nav::-webkit-scrollbar{display:none}
+  .admin-nav button{white-space:nowrap;width:auto;flex:none;padding:8px 12px}
+  .admin-nav .nav-sep{width:2px;height:22px;margin:0 2px;flex:none}
+}
+.op-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.op-tiles.two{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.op-tile{font:inherit;text-align:left;background:var(--paper);color:var(--ink);border:2px solid var(--line);border-radius:var(--wob);padding:14px;display:grid;gap:4px;cursor:pointer;box-shadow:2px 3px 0 var(--shadow)}
+.op-tile b{font-family:var(--display);font-weight:400;font-size:30px;line-height:1;color:var(--c4)}
+.op-tiles.two .op-tile b{font-size:22px}
+.op-tile span{font-weight:700}
+.op-tile.warn{border-color:var(--c0);background:var(--c0-soft)}
+.op-tile.warn b{color:var(--c0)}
+.op-tile:hover{transform:translateY(-1px)}
+.op-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;text-align:center}
+.op-stats span{display:grid;font-size:13.5px;color:var(--muted)}
+.op-stats b{font-family:var(--display);font-weight:400;font-size:26px;color:var(--ink)}
+@media (max-width:480px){.op-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.logrow{display:grid;grid-template-columns:130px 90px minmax(0,1fr);gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14.5px;align-items:baseline}
+.logrow:last-of-type{border-bottom:0}
+@media (max-width:600px){.logrow{grid-template-columns:minmax(0,1fr) auto}.logrow>span:last-child{grid-column:1/-1}}
+.badge{font-family:var(--body);font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px;vertical-align:2px}
+.badge.warn{background:var(--c0-soft);color:var(--c0);border:1.5px solid var(--c0)}
+.check.consent{align-items:flex-start;background:var(--c2-soft);border-radius:12px;padding:10px 12px}
+.check.consent input{margin-top:4px}
+.op-login{max-width:620px}
+body.op-on .playerbar{display:none!important}
+/* 오늘의 동요 달력 */
+.cal-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cal-head b{font-family:var(--display);font-weight:400;font-size:24px;white-space:nowrap}
+@media (max-width:560px){.cal-head .hide-s{display:none}.cal-head .vote{padding:3px 14px;font-size:18px}}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.cal-w{text-align:center;font-size:13px;font-weight:700;color:var(--muted)}
+.cal-w.sun,.cal-d.sun .n{color:var(--c0)}.cal-w.sat,.cal-d.sat .n{color:var(--c4)}
+.cal-d{font:inherit;position:relative;min-height:66px;display:grid;align-content:start;gap:2px;text-align:left;background:var(--paper);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:5px 6px;cursor:pointer;min-width:0}
+.cal-d .n{font-weight:700;font-size:13.5px}
+.cal-d .t{font-size:12.5px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:keep-all}
+.cal-d.set{background:var(--cs);border-color:var(--c)}
+.cal-d.past{opacity:.5}
+.cal-d.is-today{box-shadow:0 0 0 3px var(--c1)}
+.cal-d.sel{border-color:var(--pencil);border-width:3px;padding:4px 5px}
+.cal-d .has-note{position:absolute;right:5px;top:6px;width:7px;height:7px;border-radius:50%;background:var(--c1)}
+@media (max-width:560px){.cal-d{min-height:52px;padding:4px}.cal-d .t{font-size:11px;-webkit-line-clamp:2}.cal-grid{gap:3px}}
+.op-save{position:static;bottom:12px;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:10px 14px;font-weight:700;color:var(--muted)}
+.op-save.dirty{position:sticky;border-color:var(--c1);background:var(--c1-soft);color:var(--ink)}
+.op-save .btn[disabled]{opacity:.5;cursor:default}
 </style>
+<meta name="description" content="동요샘 선생님들이 지은 창작동요를 온 나라 교실이 함께 불러요. 노래 도장, 전국 무대, 동요샘 차트, 이어 부르기 릴레이.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="동요샘 노래상자">
+<meta property="og:title" content="동요샘 노래상자">
+<meta property="og:description" content="선생님이 지은 동요를 온 나라 교실이 함께 불러요. 노래 도장, 전국 무대, 동요샘 차트, 이어 부르기 릴레이.">
+<meta property="og:url" content="https://musicalpe.github.io/DongyoSSAM/">
+<meta property="og:image" content="https://musicalpe.github.io/DongyoSSAM/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#DDF0FF">
+<link rel="icon" href="img/logo.png">
 </head>
 <body style="margin:0">
 
@@ -554,9 +668,10 @@ body{padding-bottom:0!important}
 
 <script>
 /* 동요샘 노래상자 화면 — 서버(national.json 의 collector)가 있으면 로그인해서 반별로 기록, 없으면 체험 모드 */
-const APP = { version: '0.5', q: {}, live: false, server: '', token: '', acc: null, cid: '', contact: '', relay: { id: '예시 릴레이', song: 3 }, busy: false, authView: 'login' };
+const APP = { version: '0.6', q: {}, live: false, server: '', token: '', acc: null, cid: '', contact: '', relay: { id: '예시 릴레이', song: 3 }, busy: false, authView: 'login', booting: true, todaySong: null, today: '', yearStart: '' };
 new URLSearchParams(location.search).forEach(function (v, k) { APP.q[k] = v; });
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d } catch (e) { return d } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch (e) {} }, del(k) { try { localStorage.removeItem(k) } catch (e) {} } };
+let PERIOD = store.get("dys-period", "month") === "year" ? "year" : "month";
 function soundOn() { return store.get("dys-sound", true); }
 APP.token = store.get("dys_user", ""); APP.cid = store.get("dys_cid", "");
 
@@ -636,6 +751,10 @@ const DEMO_VARIANTS = {
 const now0 = new Date();
 let MONTH = now0.getFullYear() + "-" + String(now0.getMonth()+1).padStart(2, "0");
 const MONTH_LABEL = () => { const [y, m] = MONTH.split("-"); return y + "년 " + Number(m) + "월"; };
+function localDay(d) { d = d || new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function schoolYear() { const t = APP.yearStart || (() => { const d = new Date(), y = d.getFullYear(); return (d.getMonth() >= 2 ? y : y - 1) + "-03-01"; })(); return Number(t.slice(0, 4)); }
+const PERIOD_LABEL = () => PERIOD === "year" ? schoolYear() + "학년도" : MONTH_LABEL();
+const periodChips = () => `<div class="chips period"><button class="chip" data-period="month" aria-pressed="${PERIOD === "month"}">이번 달</button><button class="chip" data-period="year" aria-pressed="${PERIOD === "year"}">올해 (${schoolYear()}학년도)</button></div>`;
 let ME, NAT;
 function blankMe() { return { pid: "", name: "", region: "", configured: false, stamps: new Set(), vote: null, relays: new Set(), lyrics: [], likes: new Set(), loaded: false }; }
 function demoMeLoad() {
@@ -676,7 +795,10 @@ function localNational(withDemo) {
   const chain = (withDemo ? DEMO_RELAY.map(x => ({ pid: "demo", ...x })) : []).concat(ME.relays.has(APP.relay.id) ? [{ pid: ME.pid, cls: ME.name, region: ME.region }] : []);
   if (withDemo) Object.entries(DEMO_VARIANTS).forEach(([sid, arr]) => lyrics[sid] = arr.map((v, i) => ({ key: "d" + sid + "-" + i, pid: "demo", cls: v.cls, region: v.region, text: v.text, likes: v.likes + (ME.likes.has("d" + sid + "-" + i) ? 1 : 0) })));
   if (!APP.live) ME.lyrics.forEach(l => (lyrics[l.songId] = lyrics[l.songId] || []).push({ key: l.id, pid: ME.pid, cls: ME.name, region: ME.region, text: l.text, likes: 0 }));
-  return { regions, songClasses, votes, relays: { [APP.relay.id]: chain }, lyrics, local: true };
+  const grow = n => n ? n + Math.round(n * 1.7) : 0;
+  const regionsYear = {}; Object.entries(regions).forEach(([r, x]) => regionsYear[r] = withDemo ? { stamps: grow(x.stamps), classes: x.classes } : { ...x });
+  const songYear = {}; Object.entries(songClasses).forEach(([k, n]) => songYear[k] = withDemo ? grow(n) : n);
+  return { regions, regionsYear, songClasses: songYear, songMonth: songClasses, songYear, votes, relays: { [APP.relay.id]: chain }, lyrics, local: true };
 }
 function songsFromCollector(list) {
   return list.map(s => ({ id: s.id, title: s.title,
@@ -700,8 +822,9 @@ function loadNational() {
     SONGS = songsFromCollector(b.songs || []);
     if (b.relay && b.relay.id) APP.relay = b.relay;
     if (b.month) MONTH = b.month;
-    APP.contact = b.contact || "";
-    NAT = { regions: Object.assign(emptyRegions(), b.regions || {}), songClasses: b.songClasses || {}, votes: b.votes || {}, relays: b.relays || {}, lyrics: b.lyrics || {}, total: b.classes, updated: b.updated };
+    APP.contact = b.contact || ""; APP.todaySong = b.todaySong || null; APP.today = b.today || ""; APP.yearStart = b.yearStart || "";
+    NAT = { regions: Object.assign(emptyRegions(), b.regions || {}), regionsYear: Object.assign(emptyRegions(), b.regionsYear || b.regions || {}), songClasses: b.songClasses || {}, songMonth: b.songMonth || {}, songYear: b.songYear || b.songClasses || {},
+      votes: b.votes || {}, relays: b.relays || {}, lyrics: b.lyrics || {}, total: b.classes, totalYear: b.classesYear, updated: b.updated };
   }).catch(() => { NAT = localNational(false); NAT.failed = true; });
 }
 
@@ -710,6 +833,8 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 function toast(msg) { $("#toastHost").innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => $("#toastHost").innerHTML = "", 2600); }
 const classesSung = id => NAT.songClasses[id] || 0;
+const sungIn = id => ((PERIOD === "year" ? NAT.songYear : NAT.songMonth) || {})[id] || 0;
+const regionsNow = () => (PERIOD === "year" ? NAT.regionsYear : NAT.regions) || NAT.regions;
 const votesFor = id => NAT.votes[id] || 0;
 const myVoteSong = () => ME.vote && ME.vote.month === MONTH ? ME.vote.song : 0;
 function variantsFor(id) {
@@ -745,12 +870,15 @@ function songRow(s) {
 }
 function pickToday() {
   const d = new Date(), season = SEASON_OF_MONTH(d.getMonth());
+  const fixed = APP.live ? APP.todaySong : ((OP.data && OP.data.schedule) || store.get("dys-demo-today", {}))[localDay()];
+  if (fixed && songById(fixed.song)) return { song: songById(fixed.song), season, note: fixed.note || "", fixed: true };
   const pool = SONGS.filter(s => s.season === season), list = pool.length ? pool : SONGS;
   return { song: list[Math.floor(d.getTime() / 86400000) % list.length], season };
 }
 function stampBtn(id) { return ME.stamps.has(id) ? `<button class="btn done" data-stamp="${id}">불렀어요 도장 찍음</button>` : `<button class="btn ghost" data-stamp="${id}">우리 반이 불렀어요</button>`; }
-function ranked() { return Object.entries(NAT.regions).sort((a, b) => b[1].stamps - a[1].stamps); }
+function ranked() { return Object.entries(regionsNow()).sort((a, b) => b[1].stamps - a[1].stamps); }
 function statusLine() {
+  if (APP.booting) return `<span class="status">노래상자를 여는 중</span>`;
   if (!APP.live) return `<span class="status">체험 모드 · 예시 학교 기록</span>`;
   const nat = NAT.failed ? " · 전국 현황을 못 불러옴" : "";
   if (!APP.token) return `<span class="status">로그인하면 우리 반 기록을 남길 수 있어요${nat}</span>`;
@@ -760,6 +888,7 @@ function statusLine() {
 
 function renderSide() {
   const host = $("#sideExtra"); if (!host) return;
+  if (APP.booting) { host.innerHTML = ""; return; }
   const { cur, next } = levelOf(ME.stamps.size);
   const pct = next ? Math.round((ME.stamps.size - cur[0]) / (next[0] - cur[0]) * 100) : 100;
   host.innerHTML = `<div class="card side-card">
@@ -776,15 +905,17 @@ function renderSide() {
     </a>`;
 }
 function render() {
+  document.body.classList.toggle("op-on", tab === "op");
   renderSide();
   const v = $("#view");
   $("#statusHost").innerHTML = statusLine();
   $("#exampleNote").textContent = APP.live
     ? "곡 목록은 동요샘 운영진이 관리해요. 동요샘 선생님은 가입 신청 후 승인을 받으면 반별로 기록을 남길 수 있어요."
     : "체험 모드예요. 곡·가사·지은이·학교 기록은 모두 예시이고, 누른 도장·투표·가사는 이 기기에만 저장돼요.";
+  if (APP.booting) { $("#exampleNote").textContent = ""; v.innerHTML = `<section><div class="booting" role="status"><span class="bnotes" aria-hidden="true"><i>♪</i><i>♫</i><i>♪</i></span><b>노래상자를 여는 중이에요</b><span class="meta">전국 교실의 노래 기록을 불러오고 있어요</span></div></section>`; return; }
   if (!SONGS.length && tab !== "op") { v.innerHTML = `<section><div class="empty">곡 목록이 비어 있어요. 운영진이 곡을 올리면 여기에 보여요.</div></section>`; return; }
   if (tab === "today") {
-    const { song: s, season } = pickToday();
+    const { song: s, season, note, fixed } = pickToday();
     const rk = ranked(), myRank = ME.region ? rk.findIndex(([r]) => r === ME.region) + 1 : 0;
     const others = SONGS.filter(x => x.season === season && x.id !== s.id);
     const top3 = SONGS.slice().sort((a, b) => votesFor(b.id) - votesFor(a.id)).slice(0, 3);
@@ -796,10 +927,11 @@ function render() {
     v.innerHTML = `<section class="split"><div class="col">
       <figure class="hero"><img src="img/kids.jpg" alt="마이크를 들고 함께 동요를 부르는 아이들 그림" width="1200" height="737"><figcaption>온 나라 교실이 함께 부르는 동요</figcaption></figure>
       <div class="card today">
-        <span class="eyebrow">${season ? season + "에 부르기 좋은 노래" : "오늘의 동요"}</span>
+        <span class="eyebrow">${fixed ? "오늘의 동요" : season ? season + "에 부르기 좋은 노래" : "오늘의 동요"}</span>
         <h3>${esc(s.title)}</h3>
         <span class="meta">${esc(s.lyric)} · ${esc(s.concert)}</span>
         <blockquote>${esc(s.lyrics.split("\n").slice(0, 2).join("\n"))} …</blockquote>
+        ${note ? `<p class="op-note"><span class="label">운영진 한마디</span>${esc(note)}</p>` : ""}
         <p style="margin:0">${esc(s.intro)}</p>
         <span class="meta">전국 ${classesSung(s.id)}개 반이 불렀어요</span>
         <div class="btns"><button class="btn" data-open="${s.id}">가사와 수업 활용 보기</button>${stampBtn(s.id)}</div>
@@ -813,7 +945,7 @@ function render() {
         <span class="cafe-go">놀러 가기</span>
       </a>
       <div class="card">
-        <span class="eyebrow">${MONTH_LABEL()} 전국 무대</span>
+        <span class="eyebrow">${PERIOD_LABEL()} 전국 무대</span>
         ${ME.configured ? `<div class="level"><b>${esc(ME.region)} ${myRank}위</b><span class="meta">1위 ${rk[0][0]} · 도장 ${rk[0][1].stamps}개</span></div>
         <span class="meta">${esc(ME.name)} 도장 ${ME.stamps.size}개가 ${esc(ME.region)} 점수에 들어가요.</span>`
         : `<span class="meta">우리 반 이름과 지역을 정하면 전국 무대에 함께 올라가요.</span>`}
@@ -851,19 +983,19 @@ function render() {
     $("#q").addEventListener("input", e => { filter.q = e.target.value; const pos = e.target.selectionStart; render(); const n = $("#q"); n.focus(); n.setSelectionRange(pos, pos); });
   }
   if (tab === "stage") {
-    const vals = Object.values(NAT.regions).map(x => x.stamps), max = Math.max(1, ...vals);
+    const RG = regionsNow(), vals = Object.values(RG).map(x => x.stamps), max = Math.max(1, ...vals);
     const heat = n => n === 0 ? 0 : Math.min(4, 1 + Math.floor(n / max * 3.99));
     const rk = ranked();
-    const total = vals.reduce((a, b) => a + b, 0), classes = Object.values(NAT.regions).reduce((a, b) => a + b.classes, 0);
+    const total = vals.reduce((a, b) => a + b, 0), classes = Object.values(RG).reduce((a, b) => a + b.classes, 0);
     const rs = songById(APP.relay.song) || SONGS[0], lines = rs.lyrics.split("\n").filter(Boolean);
     const chain = NAT.relays[APP.relay.id] || [], joined = ME.relays.has(APP.relay.id);
     const nextLine = lines.length ? lines[chain.length % lines.length] : "";
     v.innerHTML = `<section class="split"><div class="col">
-      <h2>전국 무대</h2><p class="sub">${MONTH_LABEL()} · ${classes}개 반이 도장 ${total}개를 모았어요. 반이 노래를 부르고 도장을 찍으면 지역 점수가 올라가요.</p>
+      <h2>전국 무대</h2>${periodChips()}<p class="sub">${PERIOD_LABEL()} · ${classes}개 반이 도장 ${total}개를 모았어요. ${PERIOD === "year" ? "3월부터 쌓인 기록이에요. 내년 3월 1일에 새로 시작해요." : "이번 달에 찍은 도장만 세요. 매달 1일에 새로 시작해요."}</p>
       <div class="card">
         <div class="tilemap" role="img" aria-label="시도별 도장 수 지도">
           ${Array.from({ length: 20 }, (_, i) => { const r = REGIONS.find(x => x[1] + x[2] * 4 === i); if (!r) return "<span></span>";
-            const n = NAT.regions[r[0]].stamps, h = heat(n);
+            const n = RG[r[0]].stamps, h = heat(n);
             return `<div class="tile${h >= 3 ? " hot" : ""}${r[0] === ME.region ? " mine" : ""}" style="background:var(--heat${h})"><b>${r[0]}</b><span class="num">${n}</span></div>` }).join("")}
         </div>
         <div class="legend">적음 <i style="background:var(--heat1)"></i><i style="background:var(--heat2)"></i><i style="background:var(--heat3)"></i><i style="background:var(--heat4)"></i> 많음 · 주황 테두리가 우리 지역</div>
@@ -886,19 +1018,20 @@ function render() {
   if (tab === "chart") {
     const mv = myVoteSong(), sung = chartMode === "sung";
     const byVote = SONGS.slice().sort((a, b) => votesFor(b.id) - votesFor(a.id));
-    const bySung = SONGS.slice().sort((a, b) => classesSung(b.id) - classesSung(a.id));
+    const bySung = SONGS.slice().sort((a, b) => sungIn(b.id) - sungIn(a.id));
     const topV = byVote[0], topS = bySung[0], list = sung ? bySung : byVote;
     v.innerHTML = `<section class="split"><div class="col">
       <h2>동요샘 차트</h2>
       <div class="tops">
         <button class="topcard" data-open="${topV.id}"><span class="eyebrow">이달 투표 1위</span><b>${esc(topV.title)}</b><small class="meta">${votesFor(topV.id)}표</small></button>
-        <button class="topcard sung" data-open="${topS.id}"><span class="eyebrow">가장 많이 불린 곡</span><b>${esc(topS.title)}</b><small class="meta">${classesSung(topS.id)}개 반이 불렀어요</small></button>
+        <button class="topcard sung" data-open="${topS.id}"><span class="eyebrow">${PERIOD === "year" ? "올해" : "이번 달"} 가장 많이 불린 곡</span><b>${esc(topS.title)}</b><small class="meta">${sungIn(topS.id)}개 반이 불렀어요</small></button>
       </div>
       <div class="chips"><button class="chip" data-chart="vote" aria-pressed="${!sung}">투표 순위</button><button class="chip" data-chart="sung" aria-pressed="${sung}">많이 불린 순위</button></div>
-      <p class="sub" style="margin:0">${sung ? "반이 함께 부르고 도장을 찍은 곡을 셌어요. 지금까지 쌓인 기록이에요." : "반마다 한 달에 한 곡씩 투표할 수 있어요. 매달 1일에 새로 시작해요."}</p>
+      ${sung ? periodChips() : ""}
+      <p class="sub" style="margin:0">${sung ? (PERIOD === "year" ? "반이 함께 부르고 도장을 찍은 곡을 셌어요. 3월부터 쌓인 기록이에요." : "이번 달에 도장을 찍은 반을 셌어요. 매달 1일에 새로 시작해요.") : "반마다 한 달에 한 곡씩 투표할 수 있어요. 매달 1일에 새로 시작해요."}</p>
       </div><div class="col">
       <div class="list">${list.map((s, i) => { const on = mv === s.id;
-        return `<div class="crow p${i + 1}"><span class="n">${i + 1}</span><span class="min"><b data-open="${s.id}">${esc(s.title)}</b><br><small class="meta">${sung ? classesSung(s.id) + "개 반" : votesFor(s.id) + "표"} · ${esc(s.lyric)}</small></span>
+        return `<div class="crow p${i + 1}"><span class="n">${i + 1}</span><span class="min"><b data-open="${s.id}">${esc(s.title)}</b><br><small class="meta">${sung ? sungIn(s.id) + "개 반" : votesFor(s.id) + "표"} · ${esc(s.lyric)}</small></span>
         ${sung ? (ME.stamps.has(s.id) ? `<span class="done-chip">우리 반<br>불렀어요</span>` : `<button class="vote" data-open="${s.id}">들어 보기</button>`) : `<button class="vote${on ? " on" : ""}" data-vote="${s.id}">${on ? "투표함" : "투표"}</button>`}</div>` }).join("")}</div>
       ${sung ? "" : `<p class="meta">${mv ? "이번 달 투표를 했어요. 다른 곡을 누르면 투표가 옮겨져요." : "아직 이번 달 투표를 하지 않았어요."}</p>`}
     </div></section>`;
@@ -933,6 +1066,7 @@ function renderMine(v) {
         <p class="meta" style="margin:0">로그인하면 우리 반 도장, 투표, 릴레이, 가사 올리기를 할 수 있어요.</p>
         <label class="fld"><span class="label">아이디</span><input type="text" id="liId" autocomplete="username" autocapitalize="off"></label>
         <label class="fld"><span class="label">비밀번호</span><input type="password" id="liPw" autocomplete="current-password"></label>
+        <label class="check"><input type="checkbox" id="liKeep"${store.get("dys-keep", true) ? " checked" : ""}> 이 기기에서 30일 동안 로그인 유지 <small class="meta">(여럿이 함께 쓰는 컴퓨터라면 끄세요)</small></label>
         <div class="btns"><button class="btn" data-login>로그인</button><button class="btn ghost" data-auth="signup">처음이에요 · 가입 신청</button></div>
         <p class="meta" style="margin:0">비밀번호를 잊었다면 ${contact}${APP.contact ? "로" : "에게"} 아이디를 적어 요청해 주세요. 임시 비밀번호를 보내 드려요.${APP.contact ? ` <button class="more" data-copy="${esc(APP.contact)}">주소 복사</button>` : ""}</p></div>`;
   } else {
@@ -977,14 +1111,22 @@ function renderMine(v) {
   const pw = $("#liPw"); if (pw) pw.addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
 }
 
-function openSong(id) {
+/* 유튜브 주소에서 영상 번호 꺼내기 */
+function ytId(u) {
+  const m = /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/))([A-Za-z0-9_-]{11})/.exec(String(u || ""));
+  return m ? m[1] : "";
+}
+function videoBox(s) { const y = ytId(s.video); return y ? `<div class="vbox"><iframe src="https://www.youtube-nocookie.com/embed/${y}?rel=0&autoplay=1&playsinline=1" title="${esc(s.title)} 영상" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>` : ""; }
+function openSong(id, o) {
   const s = songById(id); if (!s) return;
   const vs = variantsFor(id), on = myVoteSong() === id;
-  const keep = $(".sheet") ? $(".sheet").scrollTop : 0;
+  const prev = $(".sheet"), same = prev && +prev.dataset.song === id;
+  const keep = same ? prev.scrollTop : 0, vidOpen = (o && o.video) || (same && !!prev.querySelector(".vbox"));
   $("#sheetHost").innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(s.title)}" data-song="${id}"><div class="in">
     <button class="btn ghost close" data-close>닫기</button>
     <div><h3>${esc(s.title)}</h3><span class="meta">${esc(s.lyric)}</span></div>
     <div class="chips">${s.themes.map(t => `<span class="tag">${esc(t)}</span>`).join("")}${s.season ? `<span class="tag">${esc(s.season)}</span>` : ""}</div>
+    <div id="vHost">${vidOpen ? videoBox(s) : ""}</div>
     <p style="margin:0">${esc(s.intro)}</p>
     <div class="lyrics">${esc(s.lyrics)}</div>
     <dl class="facts">
@@ -999,7 +1141,8 @@ function openSong(id) {
     <div class="btns">
       ${stampBtn(id)}
       <button class="btn ghost" data-vote="${id}">${on ? "이달의 노래로 투표함" : "이달의 노래로 투표"}</button>
-      ${s.video ? `<a class="btn ghost" href="${esc(s.video)}" target="_blank" rel="noopener">영상 보기</a>` : `<button class="btn ghost" disabled>영상 준비 중</button>`}
+      <button class="btn ghost" data-karaoke="${id}">노래방 화면</button>
+      ${ytId(s.video) ? `<button class="btn ghost" data-video="${id}">${vidOpen ? "영상 닫기" : "영상 보기"}</button>` : s.video ? `<a class="btn ghost" href="${esc(s.video)}" target="_blank" rel="noopener">영상 보기</a>` : `<button class="btn ghost" disabled>영상 준비 중</button>`}
       ${s.score ? `<a class="btn ghost" href="${esc(s.score)}" target="_blank" rel="noopener">악보 보기</a>` : `<button class="btn ghost" disabled>악보 준비 중</button>`}
     </div>
     <h4>우리 반 가사 바꾸기</h4>
@@ -1013,6 +1156,63 @@ function openSong(id) {
   </div></div>`;
   $(".sheet").scrollTop = keep;
 }
+
+/* ---------- 노래방 화면: 가사를 한 줄씩 크게 ---------- */
+const KARA = { id: 0, i: 0, size: store.get("dys-kara-size", 1), auto: 0, t: 0 };
+function karaLines(s) { return String(s.lyrics || "").split("\n").map(x => x.trim()).filter(Boolean); }
+function openKaraoke(id) {
+  const s = songById(id); if (!s) return;
+  Object.assign(KARA, { id, i: 0 }); clearInterval(KARA.t); KARA.auto = 0;
+  document.body.insertAdjacentHTML("beforeend", `<div class="kara" role="dialog" aria-modal="true" aria-label="${esc(s.title)} 노래방 화면"></div>`);
+  document.body.classList.add("kara-on");
+  const k = $(".kara"); try { if (k.requestFullscreen && matchMedia("(min-width: 700px)").matches) k.requestFullscreen().catch(() => {}); } catch (e) {}
+  drawKaraoke();
+}
+function drawKaraoke() {
+  const k = $(".kara"), s = songById(KARA.id); if (!k || !s) return;
+  const L = karaLines(s), n = L.length, i = Math.min(KARA.i, Math.max(0, n - 1));
+  k.style.setProperty("--ks", KARA.size);
+  k.innerHTML = `<div class="k-top"><b>${esc(s.title)}</b><span class="k-count">${n ? (i + 1) + " / " + n : ""}</span></div>
+    <div class="k-stage" data-kzone>
+      <p class="k-line prev">${esc(L[i - 1] || "")}</p>
+      <p class="k-line now" aria-live="polite">${esc(L[i] || "가사가 아직 없어요")}</p>
+      <p class="k-line next">${esc(L[i + 1] || (i === n - 1 ? "끝" : ""))}</p>
+    </div>
+    <div class="k-dots" aria-hidden="true">${L.map((_, j) => `<i class="${j === i ? "on" : j < i ? "past" : ""}"></i>`).join("")}</div>
+    <div class="k-bar">
+      <button data-k="prev" aria-label="앞 줄">앞 줄</button>
+      <button data-k="next" class="k-main" aria-label="다음 줄">다음 줄</button>
+      <button data-k="small" aria-label="글자 작게">가-</button><button data-k="big" aria-label="글자 크게">가+</button>
+      <button data-k="auto" aria-pressed="${!!KARA.auto}">${KARA.auto ? "자동 " + KARA.auto + "초" : "자동 넘김"}</button>
+      <button data-k="start">처음부터</button>
+      <button data-k="close">닫기</button>
+    </div>
+    <p class="k-help">화면 오른쪽을 누르거나 스페이스·오른쪽 화살표로 다음 줄, 왼쪽은 앞 줄이에요.</p>`;
+}
+function karaStep(d) { const s = songById(KARA.id); if (!s) return; const n = karaLines(s).length; KARA.i = Math.max(0, Math.min(n - 1, KARA.i + d)); if (KARA.auto && KARA.i >= n - 1) { clearInterval(KARA.t); KARA.auto = 0; } drawKaraoke(); }
+function closeKaraoke() { clearInterval(KARA.t); KARA.auto = 0; const k = $(".kara"); if (k) k.remove(); document.body.classList.remove("kara-on"); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {} }
+document.addEventListener("click", e => {
+  const k = e.target.closest(".kara"); if (!k) return;
+  e.stopPropagation();
+  const b = e.target.closest("[data-k]");
+  if (!b) { if (e.target.closest("[data-kzone]")) karaStep(e.clientX < innerWidth / 3 ? -1 : 1); return; }
+  const a = b.dataset.k;
+  if (a === "prev") karaStep(-1);
+  if (a === "next") karaStep(1);
+  if (a === "start") { KARA.i = 0; drawKaraoke(); }
+  if (a === "big" || a === "small") { KARA.size = Math.max(.7, Math.min(1.8, Math.round((KARA.size + (a === "big" ? .15 : -.15)) * 100) / 100)); store.set("dys-kara-size", KARA.size); drawKaraoke(); }
+  if (a === "auto") { const seq = [0, 4, 6, 8, 3], nx = seq[(seq.indexOf(KARA.auto) + 1) % seq.length]; KARA.auto = nx; clearInterval(KARA.t); if (nx) KARA.t = setInterval(() => karaStep(1), nx * 1000); drawKaraoke(); }
+  if (a === "close") closeKaraoke();
+}, true);
+document.addEventListener("keydown", e => {
+  if (!$(".kara")) return;
+  if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown" || e.key === "Enter") { e.preventDefault(); karaStep(1); }
+  else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); karaStep(-1); }
+  else if (e.key === "Home") { KARA.i = 0; drawKaraoke(); }
+  else if (e.key === "+" || e.key === "=") { KARA.size = Math.min(1.8, KARA.size + .15); drawKaraoke(); }
+  else if (e.key === "-") { KARA.size = Math.max(.7, KARA.size - .15); drawKaraoke(); }
+  else if (e.key === "Escape") { e.stopImmediatePropagation(); closeKaraoke(); }
+}, true);
 function refreshSheet() { const sh = $(".sheet"); if (sh) openSong(+sh.dataset.song); }
 
 /* ---------- 누르기 ---------- */
@@ -1020,7 +1220,8 @@ async function doLogin() {
   const id = ($("#liId") || {}).value || "", pw = ($("#liPw") || {}).value || "";
   if (!id.trim() || !pw) { toast("아이디와 비밀번호를 적어 주세요"); return; }
   if (APP.busy) return; APP.busy = true; document.body.classList.add("busy");
-  try { const r = await rpc("login", [id.trim(), pw]);
+  const keep = !!($("#liKeep") && $("#liKeep").checked); store.set("dys-keep", keep);
+  try { const r = await rpc("login", [id.trim(), pw, keep]);
     if (!r.ok) { toast(r.message); return; }
     APP.token = r.token; store.set("dys_user", r.token); setAcc(r.me); await loadNational();
     toast(ME.configured ? "로그인했어요" : "로그인했어요. 우리 반을 먼저 만들어 주세요"); render();
@@ -1069,7 +1270,10 @@ document.addEventListener("click", e => {
   if (t.hasAttribute("data-close")) { $("#sheetHost").innerHTML = ""; return; }
   if (d.open) { openSong(+d.open); return; }
   if (d.chart) { chartMode = d.chart; render(); return; }
+  if (d.period) { PERIOD = d.period; store.set("dys-period", PERIOD); render(); return; }
   if (t.closest("[data-opzone]")) return;
+  if (d.karaoke) { openKaraoke(+d.karaoke); return; }
+  if (d.video) { const h = $("#vHost"), s = songById(+d.video); if (!h || !s) return; const open = !h.innerHTML.trim(); h.innerHTML = open ? videoBox(s) : ""; t.textContent = open ? "영상 닫기" : "영상 보기"; if (open) h.scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
   if (t.hasAttribute("data-login")) { doLogin(); return; }
   if (t.hasAttribute("data-signup")) { doSignup(); return; }
   if (d.auth) { APP.authView = d.auth; render(); return; }
@@ -1111,16 +1315,29 @@ document.addEventListener("change", e => {
   APP.cid = e.target.value; store.set("dys_cid", APP.cid); setMe(APP.acc.classes.find(c => c.cid === APP.cid)); render(); toast(`${ME.name}(으)로 바꿨어요`);
 });
 
-/* ---------- 운영진 메뉴 (수집기 시트를 화면에서 관리) ---------- */
-const OP = { token: store.get("dys_op", ""), data: null, sub: "accounts", lf: "", af: "", demo: false, url: "" };
+/* ---------- 운영진 메뉴 (점퍼스 관리자 메뉴처럼 왼쪽 탭, 좁은 화면에서는 위쪽 가로 탭) ---------- */
+const OP = { token: store.get("dys_op", ""), name: store.get("dys-opname", ""), data: null, sub: store.get("dys-opsub", "home"), lf: "", af: "", demo: false, url: "", tm: "", draft: null, dirty: false, day: "", weekend: store.get("dys-op-weekend", true) };
+const OP_SUBS = [
+  ["home", "한눈에 보기", "할 일과 오늘 상황을 한 번에 봐요."],
+  ["accounts", "계정 승인", "가입을 신청한 선생님을 확인하고 승인해요. 비밀번호를 잊은 선생님께는 임시 비밀번호를 만들어 드려요."],
+  ["songs", "곡 관리", "동요샘 회원 창작곡을 올리고 고쳐요. 작사·작곡 선생님께 공개 동의를 받은 곡만 올려 주세요."],
+  ["today", "오늘의 동요 달력", "날마다 첫 화면에 나올 곡을 한 달씩 미리 정해 둬요. 정하지 않은 날은 계절 노래 가운데서 자동으로 골라요."],
+  ["lyrics", "가사 확인", "반에서 올린 바꾼 가사를 보고 공개하거나 숨겨요."],
+  ["relay", "이어 부르기 릴레이", "지금 돌고 있는 릴레이의 이름과 곡을 정해요."],
+  ["classes", "참여 반", "노래상자를 쓰는 반이에요. 장난으로 만든 반은 숨기면 전국 무대에서 빠져요."],
+  ["export", "기록 내려받기", "반별·곡별 기록을 엑셀에서 열 수 있는 파일(CSV)로 내려받아요. 연구회 보고 자료에 쓸 수 있어요."],
+  ["mail", "메일 설정", "비밀번호 문의 주소와 운영진 알림 메일 주소를 정해요."],
+  ["log", "운영 기록", "어느 운영진이 언제 무엇을 했는지 남은 기록이에요. 최근 60개까지 보여요."]
+];
+const isExample = s => /^예시/.test(String(s.lyricist || "")) || /^예시/.test(String(s.composer || ""));
 function opDemoData() {
   const lyrics = [];
   Object.entries(DEMO_VARIANTS).forEach(([sid, arr]) => arr.forEach((v, i) => lyrics.push({ id: "d" + sid + "-" + i, songId: +sid, text: v.text, cls: v.cls, region: v.region, at: "2026-10-14 13:20", status: "O" })));
   lyrics.push({ id: "x1", songId: 2, text: "빨간 단풍잎에 편지를 써요\n바람아 바람아 전해 주렴\n전학 간 친구에게\n보고 싶다고", cls: "달빛초 4-3", region: "충북", at: "2026-10-16 09:12", status: "" });
   lyrics.push({ id: "x2", songId: 5, text: "톡 톡 톡 우산 위에서\n또 톡 톡 장화 위에서\n빗방울 합창단이\n우리 반 노래 불러요", cls: "시냇물초 2-1", region: "경남", at: "2026-10-16 10:05", status: "" });
-  return { demo: true, defaultPw: false,
+  return { demo: true, me: OP.name || "체험 운영진", today: localDay(), notify: "", schedule: store.get("dys-demo-today", {}),
     songs: SONGS.map(s => { const m = /^작사·작곡 (.+)$/.exec(s.lyric), a = /작사 ([^·]+)/.exec(s.lyric), c = /작곡 (.+)$/.exec(s.lyric);
-      return { ...s, lyricist: m ? m[1] : a ? a[1].trim() : "", composer: m ? m[1] : c ? c[1].trim() : "", themes: s.themes.join(", "), year: String(s.year || ""), hidden: false }; }),
+      return { ...s, lyricist: m ? m[1] : a ? a[1].trim() : "", composer: m ? m[1] : c ? c[1].trim() : "", themes: s.themes.join(", "), year: String(s.year || ""), hidden: false, consent: s.id <= 6 }; }),
     lyrics, relay: { ...APP.relay },
     classes: DEMO_CLASSES.slice(0, 14).map((c, i) => ({ pid: "c" + i, owner: "teacher" + (i % 5), name: c.name, region: c.region, stamps: c.sung.length, last: "2026-10-1" + (i % 6) + " 10:00", hidden: false })),
     accounts: [
@@ -1128,6 +1345,10 @@ function opDemoData() {
       { id: "baram_lee", name: "이바람", school: "바람초등학교", region: "충남", at: "2026-10-16 08:15", last: "", status: "" },
       { id: "solbit_park", name: "박솔빛", school: "솔빛초등학교", region: "전북", at: "2026-10-12 14:02", last: "2026-10-16 08:55", status: "O" },
       { id: "eunha_choi", name: "최은하", school: "은하초등학교", region: "부산", at: "2026-10-11 10:20", last: "2026-10-15 13:10", status: "O" }],
+    logs: [
+      { at: "2026-10-16 09:02", who: "운영진 A", what: "계정 승인", target: "solbit_park 박솔빛" },
+      { at: "2026-10-15 21:10", who: "운영진 B", what: "가사 공개", target: "별무리초 6-2 · 국수 가락 길게 길게" },
+      { at: "2026-10-15 20:41", who: "운영진 A", what: "오늘의 동요 달력 저장", target: "2026-11 · 20일" }],
     contact: "" };
 }
 function opApplySongs() {
@@ -1136,22 +1357,25 @@ function opApplySongs() {
   APP.relay = { ...OP.data.relay };
 }
 function opDemo(fn, args) {
-  const d = OP.data;
-  if (fn === "opDeleteSong") { d.songs = d.songs.filter(x => x.id !== +args[0]); }
-  if (fn === "opClearExamples") { d.songs = d.songs.filter(x => !(/^예시/.test(String(x.lyricist || "")) || /^예시/.test(String(x.composer || "")))); }
+  const d = OP.data, log = (what, target) => d.logs.unshift({ at: localDay() + " " + new Date().toTimeString().slice(0, 5), who: d.me, what, target: target || "" });
+  if (fn === "opDeleteSong") { const s = d.songs.find(x => x.id === +args[0]); d.songs = d.songs.filter(x => x.id !== +args[0]); log("곡 지움", s ? s.id + ". " + s.title : ""); }
+  if (fn === "opClearExamples") { d.songs = d.songs.filter(x => !isExample(x)); log("예시 곡 모두 지움"); }
   if (fn === "opSaveSong") { const s = args[0], id = +s.id || Math.max(0, ...d.songs.map(x => x.id)) + 1, i = d.songs.findIndex(x => x.id === id);
-    const row = { ...s, id }; if (i >= 0) d.songs[i] = row; else d.songs.push(row); }
-  if (fn === "opLyric") { const l = d.lyrics.find(x => x.id === args[0]); if (l) l.status = args[1]; }
-  if (fn === "opRelay") d.relay = { id: args[0], song: +args[1] };
-  if (fn === "opClass") { const c = d.classes.find(x => x.pid === args[0]); if (c) c.hidden = args[1]; }
-  if (fn === "opAccount") { const c = d.accounts.find(x => x.id === args[0]); if (c) c.status = args[1]; }
-  if (fn === "opResetPw") { d.tempPw = { id: args[0], pw: "a7k3m9xq" }; }
-  if (fn === "opContact") d.contact = args[0];
+    const row = { ...s, id }; if (i >= 0) d.songs[i] = row; else d.songs.push(row); log(i >= 0 ? "곡 고침" : "새 곡 올림", id + ". " + s.title); }
+  if (fn === "opLyric") { const l = d.lyrics.find(x => x.id === args[0]); if (l) l.status = args[1]; log(args[1] === "O" ? "가사 공개" : args[1] === "X" ? "가사 숨김" : "가사 확인 전으로", l ? l.cls : ""); }
+  if (fn === "opRelay") { d.relay = { id: args[0], song: +args[1] }; log("릴레이 정함", args[0]); }
+  if (fn === "opClass") { const c = d.classes.find(x => x.pid === args[0]); if (c) c.hidden = args[1]; log(args[1] ? "반 숨김" : "반 다시 보이기", c ? c.name : ""); }
+  if (fn === "opAccount") { const c = d.accounts.find(x => x.id === args[0]); if (c) c.status = args[1]; log(args[1] === "O" ? "계정 승인" : args[1] === "X" ? "계정 거절" : "계정 다시 검토", args[0]); }
+  if (fn === "opResetPw") { d.tempPw = { id: args[0], pw: "a7k3m9xq" }; log("임시 비밀번호 만듦", args[0]); }
+  if (fn === "opContact") { d.contact = args[0]; log("문의 이메일 바꿈", args[0]); }
+  if (fn === "opNotify") { d.notify = args[0]; log("알림 이메일 바꿈", args[0]); }
+  if (fn === "opToday") { const m = args[0], sc = {}; Object.entries(d.schedule || {}).forEach(([k, v]) => { if (k.slice(0, 7) !== m) sc[k] = v; });
+    args[1].forEach(e => sc[e.date] = { song: e.song, note: e.note || "" }); d.schedule = sc; store.set("dys-demo-today", sc); log("오늘의 동요 달력 저장", m + " · " + args[1].length + "일"); }
   opApplySongs(); return d;
 }
 function opPost(fn, args) {
   return fetch(OP.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ fn, args }), redirect: "follow" })
-    .then(r => { if (!r.ok) throw new Error("수집기 응답 오류 (" + r.status + ")"); return r.json(); })
+    .then(r => { if (!r.ok) throw new Error("서버 응답 오류 (" + r.status + ")"); return r.json(); })
     .then(j => { if (!j.ok) throw new Error(j.error || "요청 실패"); return j.result; });
 }
 async function opCall(fn, args, okMsg) {
@@ -1159,7 +1383,9 @@ async function opCall(fn, args, okMsg) {
   APP.busy = true; document.body.classList.add("busy");
   try {
     const r = OP.demo ? opDemo(fn, args) : await opPost(fn, [OP.token].concat(args));
-    { OP.data = r; if (!OP.demo) { opApplySongs(); if (APP.live) await loadNational(); } else NAT = localNational(!APP.live); if (okMsg) toast(okMsg); }
+    OP.data = r;
+    if (!OP.demo) { opApplySongs(); if (APP.live) await loadNational(); } else NAT = localNational(!APP.live);
+    if (okMsg) toast(okMsg);
     render(); return true;
   } catch (e) {
     if (/로그인/.test(e.message)) { OP.token = ""; OP.data = null; store.del("dys_op"); render(); }
@@ -1176,33 +1402,113 @@ async function opEnsure() {
   catch (e) { if (/로그인/.test(e.message)) { OP.token = ""; store.del("dys_op"); } toast(e.message); }
   finally { OP.loading = false; render(); }
 }
+
+/* 오늘의 동요 달력 도우미 */
+const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
+function monthAdd(m, n) { const [y, mo] = m.split("-").map(Number), d = new Date(y, mo - 1 + n, 1); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
+function monthDays(m) { const [y, mo] = m.split("-").map(Number), n = new Date(y, mo, 0).getDate(); return Array.from({ length: n }, (_, i) => m + "-" + String(i + 1).padStart(2, "0")); }
+function dayOfWeek(ds) { const [y, m, d] = ds.split("-").map(Number); return new Date(y, m - 1, d).getDay(); }
+function opDraftLoad(m) {
+  OP.tm = m; OP.dirty = false; OP.draft = {};
+  Object.entries((OP.data && OP.data.schedule) || {}).forEach(([k, v]) => { if (k.slice(0, 7) === m) OP.draft[k] = { song: +v.song, note: v.note || "" }; });
+  const today = (OP.data && OP.data.today) || localDay();
+  OP.day = monthDays(m).find(x => x >= today) || monthDays(m)[0];
+}
+function opAutoFill() {
+  const d = OP.data, today = d.today || localDay(), mo = Number(OP.tm.slice(5, 7)) - 1;
+  const live = d.songs.filter(s => !s.hidden), season = SEASON_OF_MONTH(mo);
+  const pool = live.filter(s => s.season === season), rest = live.filter(s => s.season !== season);
+  const order = pool.concat(rest); if (!order.length) { toast("먼저 곡을 올려 주세요"); return; }
+  let k = 0, n = 0;
+  monthDays(OP.tm).forEach(ds => {
+    if (ds < today || OP.draft[ds]) return;
+    const w = dayOfWeek(ds); if (OP.weekend && (w === 0 || w === 6)) return;
+    OP.draft[ds] = { song: order[k % (pool.length || order.length)].id, note: "" }; k++; n++;
+  });
+  OP.dirty = OP.dirty || n > 0; render();
+  toast(n ? `빈 날 ${n}일을 ${pool.length ? season + " 노래로" : "곡 목록 차례대로"} 채웠어요. 저장을 눌러야 반영돼요` : "채울 빈 날이 없어요");
+}
+
 function renderOp(v) {
   if (!APP.cfgLoaded) { v.innerHTML = `<section data-opzone><div class="empty">운영진 메뉴를 여는 중이에요</div></section>`; return; }
   if (!OP.url && !OP.demo) OP.demo = true;
   if (!OP.demo && !OP.token) {
-    v.innerHTML = `<section data-opzone><div class="card"><span class="eyebrow">운영진 로그인</span>
-      <p class="meta" style="margin:0">곡 등록, 바꾼 가사 공개, 릴레이, 참여 반을 관리하는 곳이에요. 운영진 비밀번호로 들어와요.</p>
-      <div class="form2"><input type="password" id="opPw" placeholder="운영진 비밀번호" aria-label="운영진 비밀번호" autocomplete="current-password"><button class="btn" data-oplogin>들어가기</button></div>
-      <div class="btns"><button class="btn ghost" data-tab="today">노래상자로 돌아가기</button></div></div></section>`;
-    $("#opPw").addEventListener("keydown", e => { if (e.key === "Enter") opLogin(); });
+    v.innerHTML = `<section data-opzone><div class="card op-login"><span class="eyebrow">운영진 로그인</span>
+      <p class="meta" style="margin:0">계정 승인, 곡 등록, 오늘의 동요, 가사 공개를 관리하는 곳이에요. 운영진 비밀번호는 함께 쓰고, 이름은 누가 처리했는지 기록에 남기려고 받아요.</p>
+      <div class="form2"><input type="text" id="opName" value="${esc(OP.name)}" placeholder="운영진 이름 (예: 김동요)" aria-label="운영진 이름" autocomplete="nickname"><input type="password" id="opPw" placeholder="운영진 비밀번호" aria-label="운영진 비밀번호" autocomplete="current-password"></div>
+      <div class="btns"><button class="btn" data-oplogin>들어가기</button><button class="btn ghost" data-tab="today">노래상자로 돌아가기</button></div></div></section>`;
+    ["#opPw", "#opName"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") opLogin(); }));
     return;
   }
   if (!OP.data) { v.innerHTML = `<section data-opzone><div class="empty">운영진 자료를 불러오는 중이에요</div></section>`; opEnsure(); return; }
-  const d = OP.data, pend = d.lyrics.filter(l => !l.status).length;
-  const waiting = (d.accounts || []).filter(x => !x.status).length;
-  const subs = [["accounts", `계정${waiting ? " 승인 " + waiting : ""}`], ["songs", `곡 관리 ${d.songs.length}`], ["lyrics", `가사 확인${pend ? " " + pend : ""}`], ["relay", "릴레이"], ["classes", `참여 반 ${d.classes.length}`]];
+  const d = OP.data;
+  if (!OP_SUBS.some(x => x[0] === OP.sub)) OP.sub = "home";
+  const pend = d.lyrics.filter(l => !l.status).length, waiting = (d.accounts || []).filter(x => !x.status).length;
+  const noConsent = d.songs.filter(s => !s.consent && !s.hidden).length;
+  const today = d.today || localDay(), sched = d.schedule || {};
+  const monthSet = monthDays(today.slice(0, 7)).filter(x => sched[x]).length;
+  const badge = { accounts: waiting, lyrics: pend, songs: noConsent };
   const title = id => { const s = d.songs.find(x => x.id === id); return s ? s.title : "곡 " + id; };
+  const sub = OP_SUBS.find(x => x[0] === OP.sub);
   let body = "";
+
+  if (OP.sub === "home") {
+    const ts = sched[today], todayTitle = ts ? title(ts.song) : (pickToday().song || {}).title || "";
+    const tile = (key, n, label, hint, warn) => `<button class="op-tile${warn && n ? " warn" : ""}" data-opsub="${key}"><b class="num">${n}</b><span>${label}</span><small class="meta">${hint}</small></button>`;
+    body = `<div class="op-tiles">
+        ${tile("accounts", waiting, "승인 기다리는 선생님", waiting ? "눌러서 확인해 주세요" : "모두 처리했어요", true)}
+        ${tile("lyrics", pend, "확인할 바꾼 가사", pend ? "공개 전에 한 번 읽어 주세요" : "모두 처리했어요", true)}
+        ${tile("songs", noConsent, "공개 동의 확인할 곡", noConsent ? "동의를 받았는지 확인해 주세요" : "모두 확인했어요", true)}
+        ${tile("today", monthSet, "이번 달 정해 둔 날", monthSet ? "나머지 날은 자동으로 골라요" : "아직 정한 날이 없어요")}
+      </div>
+      <div class="card"><span class="eyebrow">오늘의 동요</span><b class="mini-title">「${esc(todayTitle)}」</b>
+        <span class="meta">${ts ? "운영진이 정해 둔 곡이에요" + (ts.note ? " · 한마디: " + esc(ts.note) : "") : "정해 둔 곡이 없어 계절 노래 가운데서 자동으로 골랐어요"}</span>
+        <div class="btns"><button class="btn ghost" data-opsub="today">달력 열기</button><button class="btn ghost" data-opedit="0">새 곡 올리기</button></div></div>
+      <div class="card"><span class="eyebrow">숫자로 보기</span>
+        <div class="op-stats"><span><b class="num">${d.songs.filter(s => !s.hidden).length}</b>공개 곡</span><span><b class="num">${(d.accounts || []).filter(x => x.status === "O").length}</b>승인된 선생님</span><span><b class="num">${d.classes.filter(c => !c.hidden).length}</b>참여 반</span><span><b class="num">${d.lyrics.filter(l => l.status === "O").length}</b>공개된 가사</span></div></div>
+      ${(d.logs || []).length ? `<div class="card"><span class="eyebrow">최근 운영 기록</span>${d.logs.slice(0, 4).map(l => `<div class="logrow"><span class="meta">${esc(l.at)}</span><b>${esc(l.who)}</b><span>${esc(l.what)}${l.target ? " · " + esc(l.target) : ""}</span></div>`).join("")}
+        <div class="btns"><button class="btn ghost" data-opsub="log">모두 보기</button></div></div>` : ""}`;
+  }
   if (OP.sub === "songs") {
     const list = d.songs.slice().sort((a, b) => b.id - a.id);
-    const ex = d.songs.filter(x => /^예시/.test(String(x.lyricist || "")) || /^예시/.test(String(x.composer || "")));
+    const ex = d.songs.filter(isExample);
     body = `${ex.length ? `<div class="card temp"><span class="eyebrow">예시 곡 ${ex.length}개가 남아 있어요</span>
         <p style="margin:0">처음 설치할 때 들어간 예시 곡이에요. 하나씩 '고치기'로 실제 동요샘 곡으로 바꾸거나, 한꺼번에 지울 수 있어요. 지운 곡은 되돌릴 수 없어요.</p>
         <div class="btns">${OP.confirmEx ? `<button class="btn" data-opclearex>예, 예시 곡 ${ex.length}개 모두 지우기</button><button class="btn ghost" data-opconfirm="">그만두기</button>` : `<button class="btn ghost" data-opconfirm="ex">예시 곡 모두 지우기</button>`}</div></div>` : ""}
       <div class="btns"><button class="btn" data-opedit="0">새 곡 올리기</button></div>
       <div class="list">${list.map(s => `<div class="oprow${s.hidden ? " off" : ""}"><span class="key" style="--c:var(--c${s.id % 6});--cs:var(--c${s.id % 6}-soft)">${s.id}</span>
-        <span class="min"><b>${esc(s.title)}</b><small class="meta">${esc(s.concert || "발표회 미정")}${s.year ? " · " + esc(s.year) : ""}${s.hidden ? " · 숨김" : ""}${s.video ? " · 영상" : ""}${s.score ? " · 악보" : ""}</small></span>
+        <span class="min"><b>${esc(s.title)}${s.consent ? "" : ` <span class="badge warn">동의 확인 필요</span>`}</b><small class="meta">${esc(s.concert || "발표회 미정")}${s.year ? " · " + esc(s.year) : ""}${s.hidden ? " · 숨김" : ""}${s.video ? (ytId(s.video) ? " · 영상(바로 재생)" : " · 영상") : ""}${s.score ? " · 악보" : ""}</small></span>
         <span class="btns del-zone"><button class="vote" data-opedit="${s.id}">고치기</button><button class="vote" data-opdelask="${s.id}">지우기</button><button class="vote danger" data-opdel="${s.id}" hidden>정말 지우기</button></span></div>`).join("")}</div>`;
+  }
+  if (OP.sub === "today") {
+    if (!OP.draft || !OP.tm) opDraftLoad(today.slice(0, 7));
+    const days = monthDays(OP.tm), first = dayOfWeek(days[0]), dr = OP.draft;
+    const live = d.songs.filter(s => !s.hidden).sort((a, b) => a.id - b.id);
+    const [y, mo] = OP.tm.split("-").map(Number), set = days.filter(x => dr[x]).length;
+    const cur = OP.day && OP.day.slice(0, 7) === OP.tm ? OP.day : days[0], cv = dr[cur] || { song: 0, note: "" }, past = cur < today;
+    body = `<div class="card cal">
+        <div class="cal-head"><button class="vote" data-opmonth="-1" aria-label="이전 달">‹<span class="hide-s"> 이전 달</span></button><b>${y}년 ${mo}월</b><button class="vote" data-opmonth="1" aria-label="다음 달"><span class="hide-s">다음 달 </span>›</button></div>
+        <div class="cal-grid" role="grid" aria-label="${y}년 ${mo}월 오늘의 동요">
+          ${WEEK.map((w, i) => `<span class="cal-w${i === 0 ? " sun" : i === 6 ? " sat" : ""}">${w}</span>`).join("")}
+          ${"<span></span>".repeat(first)}
+          ${days.map(ds => { const e = dr[ds], w = dayOfWeek(ds), sg = e ? live.find(s => s.id === e.song) || d.songs.find(s => s.id === e.song) : null;
+            return `<button class="cal-d${ds === cur ? " sel" : ""}${ds === today ? " is-today" : ""}${ds < today ? " past" : ""}${w === 0 ? " sun" : w === 6 ? " sat" : ""}${e ? " set" : ""}" data-opday="${ds}" style="${sg ? `--c:var(--c${sg.id % 6});--cs:var(--c${sg.id % 6}-soft)` : ""}">
+              <span class="n">${Number(ds.slice(8))}</span><span class="t">${sg ? esc(sg.title) : e ? "없는 곡" : ""}</span>${e && e.note ? `<i class="has-note" aria-label="한마디 있음"></i>` : ""}</button>`; }).join("")}
+        </div>
+        <p class="meta" style="margin:0">색칠된 날이 정해 둔 날이에요. 빈 날은 그날 계절 노래 가운데서 자동으로 골라요. 이 달은 ${set}일 정해 두었어요.</p>
+      </div>
+      <div class="card day-edit"><span class="eyebrow">${Number(cur.slice(5, 7))}월 ${Number(cur.slice(8))}일 (${WEEK[dayOfWeek(cur)]})${cur === today ? " · 오늘" : ""}${past ? " · 지난 날" : ""}</span>
+        <div class="form2"><label class="fld"><span class="label">이날의 동요</span><select id="dSong" data-opday-song="${cur}">
+          <option value="0">자동으로 고르기</option>${live.map(s => `<option value="${s.id}"${s.id === cv.song ? " selected" : ""}>${s.id}. ${esc(s.title)}${s.season ? " (" + esc(s.season) + ")" : ""}</option>`).join("")}</select></label>
+          <label class="fld"><span class="label">운영진 한마디 (선택, 첫 화면에 보여요)</span><input type="text" id="dNote" data-opday-note="${cur}" maxlength="80" value="${esc(cv.note)}" placeholder="예: 첫눈 오는 날 함께 불러요"></label></div>
+        <div class="btns"><button class="vote" data-opstep="-1">‹ 앞날</button><button class="vote" data-opstep="1">다음 날 ›</button>${dr[cur] ? `<button class="vote" data-opclearday="${cur}">이날 비우기</button>` : ""}</div>
+      </div>
+      <div class="card"><span class="eyebrow">한 번에 하기</span>
+        <label class="check"><input type="checkbox" id="opWeekend"${OP.weekend ? " checked" : ""}> 자동 채우기에서 토요일·일요일은 비워 두기</label>
+        <div class="btns"><button class="btn ghost" data-opautofill>빈 날 자동으로 채우기</button>${set ? `<button class="btn ghost" data-opclearmonth>이 달 모두 비우기</button>` : ""}</div>
+        <p class="meta" style="margin:0">자동 채우기는 이 달 계절에 맞는 곡을 차례대로 넣어요. 넣은 뒤 하루씩 바꿀 수 있어요. 지난 날은 건드리지 않아요.</p>
+      </div>
+      <div class="op-save${OP.dirty ? " dirty" : ""}"><span>${OP.dirty ? "아직 저장하지 않은 내용이 있어요" : "저장된 상태예요"}</span><button class="btn" data-opsavetoday${OP.dirty ? "" : " disabled"}>${mo}월 달력 저장</button></div>`;
   }
   if (OP.sub === "lyrics") {
     const counts = { "": pend, O: d.lyrics.filter(l => l.status === "O").length, X: d.lyrics.filter(l => l.status === "X").length };
@@ -1233,30 +1539,54 @@ function renderOp(v) {
       ${list.length ? `<div class="list">${list.map(x => `<div class="oprow acc"><span class="key">${esc(x.region)}</span>
         <span class="min"><b>${esc(x.name)} 선생님 · ${esc(x.school)}</b><small class="meta">아이디 ${esc(x.id)} · 신청 ${esc(x.at)}${x.last ? " · 마지막 로그인 " + esc(x.last) : ""}${x.status === "O" ? " · 반 " + nCls(x.id) + "개" : ""}</small></span>
         <span class="btns">${x.status !== "O" ? `<button class="vote on" data-opacc="${esc(x.id)}" data-st="O">승인</button>` : ""}${x.status !== "X" ? `<button class="vote" data-opacc="${esc(x.id)}" data-st="X">${x.status === "O" ? "막기" : "거절"}</button>` : ""}${x.status === "O" ? `<button class="vote" data-oppw2="${esc(x.id)}">임시 비밀번호</button>` : ""}${x.status === "X" ? `<button class="vote" data-opacc="${esc(x.id)}" data-st="">다시 검토</button>` : ""}</span></div>`).join("")}</div>`
-        : `<div class="empty">${OP.af === "" ? "승인을 기다리는 신청이 없어요" : "여기에 해당하는 계정이 없어요"}</div>`}
-      <div class="card"><span class="label">비밀번호 문의 이메일</span>
-        <p class="meta" style="margin:0">로그인 화면에 "비밀번호를 잊었다면 이 주소로 요청해 주세요"라고 보여요.</p>
-        <div class="form2"><input type="text" id="opMail" value="${esc(d.contact || "")}" placeholder="예: dongyosaem@example.com" aria-label="문의 이메일"><button class="btn" data-opmail>저장</button></div></div>`;
+        : `<div class="empty">${OP.af === "" ? "승인을 기다리는 신청이 없어요" : "여기에 해당하는 계정이 없어요"}</div>`}`;
   }
   if (OP.sub === "classes") {
     const list = d.classes.slice().sort((a, b) => String(b.last).localeCompare(String(a.last)));
-    body = `<p class="meta" style="margin:0">노래상자를 쓰는 반이에요. 장난으로 만든 반이나 이름이 알맞지 않은 반은 숨기면 전국 무대에서 빠져요.</p>
-      ${list.length ? `<div class="list">${list.map(c => `<div class="oprow${c.hidden ? " off" : ""}"><span class="key">${esc(c.region)}</span>
+    body = list.length ? `<div class="list">${list.map(c => `<div class="oprow${c.hidden ? " off" : ""}"><span class="key">${esc(c.region)}</span>
         <span class="min"><b>${esc(c.name)}</b><small class="meta">${c.owner ? esc(c.owner) + " · " : ""}도장 ${c.stamps}개 · 마지막 ${esc(c.last)}${c.hidden ? " · 숨김" : ""}</small></span>
         <button class="vote" data-opclass="${esc(c.pid)}" data-h="${c.hidden ? "" : "1"}">${c.hidden ? "보이기" : "숨기기"}</button></div>`).join("")}</div>`
-        : `<div class="empty">아직 참여한 반이 없어요</div>`}`;
+      : `<div class="empty">아직 참여한 반이 없어요</div>`;
   }
-  v.innerHTML = `<section data-opzone>
-    <div class="card"><span class="eyebrow">동요샘 운영진 메뉴</span>
-      ${OP.demo ? `<p class="meta" style="margin:0">체험 모드예요. 수집기가 연결되지 않아 바꾼 내용은 이 화면에서만 보이고 저장되지 않아요.</p>` : ""}
-      <div class="chips">${subs.map(([k, n]) => `<button class="chip" data-opsub="${k}" aria-pressed="${OP.sub === k}">${n}</button>`).join("")}</div>
+  if (OP.sub === "export") {
+    body = `<div class="op-tiles two">
+        <button class="op-tile" data-opexport="classes"><b>반별 기록</b><span>반 이름 · 학교 · 선생님 · 스티커(모두/올해/이번 달) · 투표 · 가사 · 릴레이</span><small class="meta">CSV 파일로 내려받기</small></button>
+        <button class="op-tile" data-opexport="songs"><b>곡별 기록</b><span>곡마다 부른 반(모두/올해/이번 달) · 이번 달 투표 · 공개된 바꾼 가사</span><small class="meta">CSV 파일로 내려받기</small></button>
+      </div>
+      <p class="meta" style="margin:0">엑셀이나 구글 시트에서 바로 열려요. 선생님 아이디와 학교가 들어 있으니 연구회 밖으로 돌릴 때는 그 칸을 지워 주세요. '올해'는 3월 1일부터 센 기록이에요.</p>`;
+  }
+  if (OP.sub === "mail") {
+    body = `<div class="card"><span class="label">비밀번호 문의 이메일 (화면에 보여요)</span>
+        <p class="meta" style="margin:0">로그인 화면에 "비밀번호를 잊었다면 이 주소로 요청해 주세요"라고 보여요.</p>
+        <div class="form2"><input type="text" id="opMail" value="${esc(d.contact || "")}" placeholder="예: dongyosaem@example.com" aria-label="문의 이메일"><button class="btn" data-opmail>저장</button></div></div>
+      <div class="card"><span class="label">운영진 알림 이메일 (화면에 안 보여요)</span>
+        <p class="meta" style="margin:0">가입 신청이나 새 바꾼 가사가 오면 이 주소로 메일이 가요. 저장하면 확인 메일이 한 통 가요. 하루 40통까지 보내요. 비워 두면 알림을 보내지 않아요.</p>
+        <div class="form2"><input type="text" id="opNotify" value="${esc(d.notify || "")}" placeholder="예: 운영진 메일 주소" aria-label="알림 이메일"><button class="btn" data-opnotify>저장</button></div></div>`;
+  }
+  if (OP.sub === "log") {
+    const L = d.logs || [];
+    body = L.length ? `<div class="card">${L.map(l => `<div class="logrow"><span class="meta">${esc(l.at)}</span><b>${esc(l.who)}</b><span>${esc(l.what)}${l.target ? " · " + esc(l.target) : ""}</span></div>`).join("")}</div>`
+      : `<div class="empty">아직 남은 기록이 없어요</div>`;
+  }
+  v.innerHTML = `<section data-opzone class="opwrap">
+    <div class="op-top"><span class="eyebrow">동요샘 운영진 메뉴</span><span class="meta">${esc(d.me || OP.name || "운영진")} 운영진${OP.demo ? " · 체험 모드라 바꾼 내용은 이 화면에서만 보여요" : ""}</span></div>
+    <div class="admin-layout">
+      <div class="admin-nav" role="navigation" aria-label="운영진 메뉴">
+        ${OP_SUBS.map(([k, n]) => `<button type="button" data-opsub="${k}" class="${OP.sub === k ? "on" : ""}" aria-current="${OP.sub === k ? "page" : "false"}"><span class="ico"></span>${n}${badge[k] ? `<span class="cnt">${badge[k]}</span>` : ""}${k === "today" && !store.get("dys-seen-today", false) ? `<span class="new-dot">NEW</span>` : ""}</button>`).join("")}
+        <div class="nav-sep"></div>
+        <button type="button" class="nav-link" data-tab="today">노래상자로 →</button>
+        ${OP.demo ? "" : `<button type="button" class="nav-link" data-oplogout>운영진 메뉴에서 나가기</button>`}
+      </div>
+      <div class="admin-content">
+        <h2 class="op-title">${sub[1]}</h2><p class="sub">${sub[2]}</p>
+        ${body}
+      </div>
     </div>
-    ${body}
-    <div class="btns"><button class="btn ghost" data-tab="today">노래상자로 돌아가기</button>${OP.demo ? "" : `<button class="btn ghost" data-oplogout>운영진 메뉴에서 나가기</button>`}</div>
   </section>`;
+  const on = v.querySelector(".admin-nav button.on"); if (on && on.scrollIntoView && matchMedia("(max-width: 760px)").matches) on.scrollIntoView({ block: "nearest", inline: "center" });
 }
 function openSongEditor(id) {
-  const d = OP.data, s = d.songs.find(x => x.id === id) || { id: 0, title: "", lyricist: "", composer: "", concert: "", year: String(new Date().getFullYear()), grade: "전 학년", themes: "", season: "", key: "", beat: "", range: "", lyrics: "", intro: "", tip: "", video: "", score: "", hidden: false };
+  const d = OP.data, s = d.songs.find(x => x.id === id) || { id: 0, title: "", lyricist: "", composer: "", concert: "", year: String(new Date().getFullYear()), grade: "전 학년", themes: "", season: "", key: "", beat: "", range: "", lyrics: "", intro: "", tip: "", video: "", score: "", hidden: false, consent: false };
   const picked = String(s.themes).split(/[,，、]/).map(x => x.trim()).filter(Boolean);
   const extra = picked.filter(t => !THEMES.includes(t)).join(", ");
   const concerts = [...new Set(d.songs.map(x => x.concert).filter(Boolean))];
@@ -1274,30 +1604,66 @@ function openSongEditor(id) {
     <div class="chips" id="f_themes">${THEMES.map(t => `<button class="chip" data-opth="${t}" aria-pressed="${picked.includes(t)}">${t}</button>`).join("")}</div>
     ${f("f_extra", "그 밖의 주제 (쉼표로)", extra, "예: 환경, 우정")}
     <div class="form3">${f("f_key", "조성", s.key, "D")}${f("f_beat", "박자", s.beat, "2/4")}${f("f_range", "음역", s.range, "레~레")}</div>
-    <label class="fld"><span class="label">가사 (줄 바꿔 적기)</span><textarea id="f_lyrics" rows="6">${esc(s.lyrics)}</textarea></label>
+    <label class="fld"><span class="label">가사 (줄 바꿔 적기, 노래방 화면에서 한 줄씩 보여요)</span><textarea id="f_lyrics" rows="6">${esc(s.lyrics)}</textarea></label>
     <label class="fld"><span class="label">곡 소개</span><textarea id="f_intro" rows="3" class="plain">${esc(s.intro)}</textarea></label>
     <label class="fld"><span class="label">수업 활용</span><textarea id="f_tip" rows="3" class="plain">${esc(s.tip)}</textarea></label>
-    ${f("f_video", "영상 주소 (https://로 시작)", s.video, "https://youtu.be/…")}
+    ${f("f_video", "영상 주소 (유튜브 주소면 화면 안에서 바로 재생돼요)", s.video, "https://youtu.be/…")}
     ${f("f_score", "악보 주소 (https://로 시작)", s.score, "https://drive.google.com/…")}
     <label class="check"><input type="checkbox" id="f_hidden"${s.hidden ? " checked" : ""}> 화면에서 숨기기</label>
+    <label class="check consent"><input type="checkbox" id="f_consent"${s.consent ? " checked" : ""}> 작사·작곡 선생님께 노래상자에 가사·영상·악보를 공개해도 된다는 동의를 받았어요 <small class="meta">(꼭 확인해야 저장돼요)</small></label>
     <div class="btns"><button class="btn" data-opsave="${s.id}">${s.id ? "고친 내용 저장" : "곡 올리기"}</button>
       ${s.id ? `<span class="del-zone"><button class="btn ghost" data-opdelask="${s.id}">이 곡 지우기</button><button class="btn danger" data-opdel="${s.id}" hidden>정말 지우기 (되돌릴 수 없어요)</button></span>` : ""}</div>
     <p class="meta" style="margin:0">숨기기는 화면에서만 빼고 기록은 남겨 둬요. 지우기는 곡 목록에서 아예 없애요.</p>
   </div></div>`;
 }
 async function opLogin() {
-  const pw = $("#opPw"); if (!pw || !pw.value) { toast("운영진 비밀번호를 적어 주세요"); return; }
-  try { const r = await opPost("opLogin", [pw.value]);
+  const pw = $("#opPw"), nm = $("#opName"), name = nm ? nm.value.trim() : "";
+  if (!name) { toast("운영진 이름을 적어 주세요"); nm && nm.focus(); return; }
+  if (!pw || !pw.value) { toast("운영진 비밀번호를 적어 주세요"); return; }
+  try { const r = await opPost("opLogin", [pw.value, name]);
     if (!r.ok) { toast(r.message); return; }
-    OP.token = r.token; store.set("dys_op", r.token); OP.data = null; toast("들어왔어요"); render(); opEnsure();
+    OP.token = r.token; OP.name = r.name || name; store.set("dys_op", r.token); store.set("dys-opname", OP.name); OP.data = null; toast(`${OP.name} 운영진, 어서 오세요`); render(); opEnsure();
   } catch (e) { toast(e.message); }
 }
+/* CSV 내려받기 (엑셀에서 한글이 깨지지 않게 BOM을 붙여요) */
+function csvDownload(name, head, rows) {
+  const q = v => { const s = String(v == null ? "" : v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const text = "﻿" + [head].concat(rows).map(r => r.map(q).join(",")).join("\r\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" })); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function opDemoExport() {
+  const d = OP.data, m = MONTH;
+  return { month: m, classHead: ["반 이름", "지역", "학교", "선생님", "아이디", "스티커(모두)", "스티커(올해)", "스티커(이번 달)", "이번 달 투표 곡번호", "올린 가사", "릴레이 참여", "만든 날", "마지막 기록", "숨김"],
+    classes: d.classes.map(c => [c.name, c.region, "", "", c.owner, c.stamps, c.stamps, Math.ceil(c.stamps / 3), "", 0, 0, "", c.last, c.hidden ? "숨김" : ""]),
+    songHead: ["곡번호", "곡 제목", "작사", "작곡", "발표회", "부른 반(모두)", "부른 반(올해)", "부른 반(이번 달)", "이번 달 투표", "공개된 바꾼 가사", "숨김", "공개 동의"],
+    songs: d.songs.map(s => [s.id, s.title, s.lyricist, s.composer, s.concert, (NAT.songYear || {})[s.id] || 0, (NAT.songYear || {})[s.id] || 0, (NAT.songMonth || {})[s.id] || 0, votesFor(s.id), d.lyrics.filter(l => l.songId === s.id && l.status === "O").length, s.hidden ? "숨김" : "", s.consent ? "O" : ""]) };
+}
+async function opExport(kind) {
+  if (APP.busy) return;
+  APP.busy = true; document.body.classList.add("busy");
+  try {
+    const r = OP.demo ? opDemoExport() : await opPost("opExport", [OP.token]);
+    const day = localDay();
+    if (kind === "classes") csvDownload(`동요샘_반별기록_${day}.csv`, r.classHead, r.classes);
+    else csvDownload(`동요샘_곡별기록_${day}.csv`, r.songHead, r.songs);
+    toast("파일을 내려받았어요");
+  } catch (e) { toast(e.message); }
+  finally { APP.busy = false; document.body.classList.remove("busy"); }
+}
+function opGoSub(k) {
+  if (OP.sub === "today" && k !== "today" && OP.dirty && !confirmLeave()) return;
+  OP.sub = k; store.set("dys-opsub", k);
+  if (k === "today") { store.set("dys-seen-today", true); OP.draft = null; OP.tm = ""; }
+  render(); const c = $(".admin-content"); if (c && c.getBoundingClientRect().top < 0) c.scrollIntoView({ block: "start" });
+}
+function confirmLeave() { if (OP.warned) return true; OP.warned = true; toast("달력에 저장하지 않은 내용이 있어요. 한 번 더 누르면 저장하지 않고 넘어가요"); setTimeout(() => OP.warned = false, 4000); return false; }
 document.addEventListener("click", e => {
   const t = e.target.closest("button"); if (!t || !t.closest("[data-opzone]")) return;
   const d = t.dataset;
   if (t.hasAttribute("data-oplogin")) { opLogin(); return; }
   if (t.hasAttribute("data-oplogout")) { opPost("opLogout", [OP.token]).catch(() => {}); OP.token = ""; OP.data = null; store.del("dys_op"); render(); toast("운영진 메뉴에서 나왔어요"); return; }
-  if (d.opsub) { OP.sub = d.opsub; render(); return; }
+  if (d.opsub) { opGoSub(d.opsub); return; }
   if (d.oplf !== undefined) { OP.lf = d.oplf; render(); return; }
   if (d.opedit !== undefined) { openSongEditor(+d.opedit); return; }
   if (d.opth) { t.setAttribute("aria-pressed", t.getAttribute("aria-pressed") !== "true"); return; }
@@ -1306,9 +1672,10 @@ document.addEventListener("click", e => {
     const themes = [...document.querySelectorAll("#f_themes [aria-pressed='true']")].map(b => b.dataset.opth).concat(g("f_extra").split(/[,，、]/).map(x => x.trim()).filter(Boolean));
     const song = { id: +d.opsave, title: g("f_title"), lyricist: g("f_lyricist"), composer: g("f_composer"), concert: g("f_concert"), year: g("f_year"), grade: g("f_grade"), season: g("f_season"),
       themes: [...new Set(themes)].join(", "), key: g("f_key"), beat: g("f_beat"), range: g("f_range"), lyrics: $("#f_lyrics").value.replace(/\s+$/, ""), intro: g("f_intro"), tip: g("f_tip"),
-      video: g("f_video"), score: g("f_score"), hidden: $("#f_hidden").checked };
+      video: g("f_video"), score: g("f_score"), hidden: $("#f_hidden").checked, consent: $("#f_consent").checked };
     if (!song.title) { toast("곡 제목을 적어 주세요"); $("#f_title").focus(); return; }
     if ((song.video && !/^https:\/\//.test(song.video)) || (song.score && !/^https:\/\//.test(song.score))) { toast("영상·악보 주소는 https:// 로 시작해야 해요"); return; }
+    if (!song.consent) { toast("작사·작곡 선생님께 공개 동의를 받았는지 확인해 주세요"); $("#f_consent").focus(); return; }
     opCall("opSaveSong", [song], song.id ? "곡을 고쳤어요" : "새 곡을 올렸어요").then(ok => { if (ok) $("#sheetHost").innerHTML = ""; });
     return;
   }
@@ -1323,26 +1690,52 @@ document.addEventListener("click", e => {
   if (d.opacc) { opCall("opAccount", [d.opacc, d.st], d.st === "O" ? "승인했어요" : d.st === "X" ? "거절했어요" : "다시 검토로 돌렸어요"); return; }
   if (d.oppw2) { opCall("opResetPw", [d.oppw2], "임시 비밀번호를 만들었어요"); return; }
   if (t.hasAttribute("data-opmail")) { opCall("opContact", [$("#opMail").value.trim()], "문의 이메일을 저장했어요"); return; }
+  if (t.hasAttribute("data-opnotify")) { const m = $("#opNotify").value.trim(); opCall("opNotify", [m], m ? "알림 이메일을 저장했어요. 확인 메일을 보냈어요" : "알림을 껐어요"); return; }
+  if (d.opexport) { opExport(d.opexport); return; }
+  /* 오늘의 동요 달력 */
+  if (d.opmonth) { if (OP.dirty && !confirmLeave()) return; opDraftLoad(monthAdd(OP.tm, +d.opmonth)); render(); return; }
+  if (d.opday) { OP.day = d.opday; render(); const s = $("#dSong"); if (s && matchMedia("(max-width: 760px)").matches) s.closest(".card").scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
+  if (d.opstep) { const days = monthDays(OP.tm), i = days.indexOf(OP.day) + +d.opstep;
+    if (i < 0 || i >= days.length) { if (OP.dirty && !confirmLeave()) return; const keep = OP.draft, m = monthAdd(OP.tm, +d.opstep); opDraftLoad(m); OP.day = i < 0 ? monthDays(m).slice(-1)[0] : monthDays(m)[0]; } else OP.day = days[i];
+    render(); return; }
+  if (d.opclearday) { delete OP.draft[d.opclearday]; OP.dirty = true; render(); return; }
+  if (t.hasAttribute("data-opautofill")) { opAutoFill(); return; }
+  if (t.hasAttribute("data-opclearmonth")) { OP.draft = {}; OP.dirty = true; render(); toast("이 달을 비웠어요. 저장을 눌러야 반영돼요"); return; }
+  if (t.hasAttribute("data-opsavetoday")) {
+    const entries = Object.entries(OP.draft).filter(([k, v]) => k.slice(0, 7) === OP.tm && v.song).map(([date, v]) => ({ date, song: v.song, note: v.note || "" }));
+    opCall("opToday", [OP.tm, entries], `${Number(OP.tm.slice(5))}월 달력을 저장했어요`).then(ok => { if (ok) { const m = OP.tm, day = OP.day; opDraftLoad(m); OP.day = day; render(); } });
+    return;
+  }
   if (d.copy) { const v = d.copy; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast("복사했어요"), () => toast(v)); return; }
+});
+document.addEventListener("change", e => {
+  const el = e.target; if (!el.closest || !el.closest("[data-opzone]")) return;
+  if (el.id === "opWeekend") { OP.weekend = el.checked; store.set("dys-op-weekend", OP.weekend); return; }
+  if (el.dataset.opdaySong) { const k = el.dataset.opdaySong, v = +el.value;
+    if (v) OP.draft[k] = { song: v, note: (OP.draft[k] || {}).note || ($("#dNote") || {}).value || "" }; else delete OP.draft[k];
+    OP.dirty = true; render(); return; }
+  if (el.dataset.opdayNote) { const k = el.dataset.opdayNote, note = el.value.trim();
+    if (!OP.draft[k]) { if (note) { toast("한마디를 남기려면 먼저 이날의 동요를 골라 주세요"); } return; }
+    OP.draft[k].note = note; OP.dirty = true; render(); return; }
 });
 
 /* ---------- 시작 ---------- */
 (async function start() {
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
   ME = demoMeLoad(); NAT = localNational(true);
+  if (APP.q.demo !== undefined) APP.booting = false;
   render();
   try { const j = await fetch("national.json", { cache: "no-store" }).then(r => r.json()); if (/^https:\/\/script\.google\.com\//.test(j.collector || "") && APP.q.demo === undefined) OP.url = j.collector; } catch (e) {}
   APP.cfgLoaded = true;
   if (OP.url && APP.q.demo === undefined) { APP.live = true; APP.server = OP.url; setMe(null); }
   if (tab === "op") { OP.demo = !OP.url; OP.data = null; }
-  if (!APP.live) { render(); return; }
+  if (!APP.live) { APP.booting = false; render(); return; }
   const tasks = [loadNational()];
   if (APP.token) tasks.push(rpc("me", [APP.token]).then(setAcc).catch(e => { signOut(/로그인이 필요/.test(e.message) ? "로그인이 끝났어요. 다시 로그인해 주세요" : ""); }));
   await Promise.all(tasks);
+  APP.booting = false;
   render();
 })();
-
-
 </script>
 <script>
 /* ---------- 꾸밈: LP 턴테이블, 대한민국 지도, 단상, 칭찬 스티커 쿵, 탐험 지도, 계절 하늘, 메뉴 아이콘, 아래 플레이어 ---------- */
@@ -1374,7 +1767,9 @@ document.addEventListener("click", e => {
     if (!bar) { document.body.insertAdjacentHTML("beforeend", '<div class="playerbar" role="region" aria-label="노래 플레이어"></div>'); bar = document.querySelector(".playerbar"); }
     const s = playerSong(); if (!s) { bar.hidden = true; return; }
     bar.hidden = false;
-    const play = s.video
+    const play = ytId(s.video)
+      ? `<button class="main" data-pl="video" aria-label="영상 재생"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="#2B3A55"/></svg></button>`
+      : s.video
       ? `<a class="main" href="${esc(s.video)}" target="_blank" rel="noopener" aria-label="영상으로 듣기"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="#2B3A55"/></svg></a>`
       : `<button class="main" data-pl="novideo" aria-label="듣기"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="#2B3A55"/></svg></button>`;
     bar.innerHTML = `<span class="mini-lp" aria-hidden="true"></span>
@@ -1386,10 +1781,11 @@ document.addEventListener("click", e => {
     const s = playerSong(), i = Math.max(0, SONGS.findIndex(x => x.id === s.id));
     if (b.dataset.pl === "prev") { PLAYER.id = SONGS[(i - 1 + SONGS.length) % SONGS.length].id; renderPlayer(); }
     if (b.dataset.pl === "next") { PLAYER.id = SONGS[(i + 1) % SONGS.length].id; renderPlayer(); }
+    if (b.dataset.pl === "video") { openSong(s.id, { video: true }); return; }
     if (b.dataset.pl === "novideo") { toast("아직 영상이 없는 곡이에요. 가사를 열어 드릴게요"); openSong(s.id); }
   });
   const origOpen = window.openSong;
-  window.openSong = function (id) { PLAYER.id = id; origOpen(id); renderPlayer(); };
+  window.openSong = function (id, o) { PLAYER.id = id; origOpen(id, o); renderPlayer(); };
 
   /* 쿵! 소리 */
   function thump() {
@@ -1427,7 +1823,7 @@ document.addEventListener("click", e => {
   const CENTER = { 서울:[126.98,37.56], 인천:[126.55,37.42], 경기:[127.45,37.85], 강원:[128.3,37.72], 충북:[127.82,36.86], 충남:[126.82,36.55], 세종:[127.24,36.6], 대전:[127.47,36.3],
     전북:[127.12,35.74], 광주:[126.84,35.15], 전남:[126.95,34.78], 경북:[128.82,36.4], 대구:[128.58,35.85], 울산:[129.25,35.55], 부산:[129.05,35.18], 경남:[128.2,35.3], 제주:[126.55,33.38] };
   function koreaMap() {
-    const sc = NAT.regions, max = Math.max(1, ...Object.values(sc).map(x => x.stamps));
+    const sc = regionsNow(), max = Math.max(1, ...Object.values(sc).map(x => x.stamps));
     let land = "", marks = "", mine = "";
     Object.entries(KMAP.paths).forEach(([r, d]) => { land += `<path class="prov${r === ME.region ? " me" : ""}" d="${d}" fill="${FILL[r] || "#ddd"}"/>`; });
     Object.entries(CENTER).forEach(([r, ll], i) => {
@@ -1454,11 +1850,11 @@ document.addEventListener("click", e => {
     if (tm) { tm.outerHTML = koreaMap(); const lg = document.querySelector(".legend"); if (lg) lg.textContent = "동그라미가 클수록 도장이 많아요 · 쿵! 찍힌 곳이 우리 지역 · 시도 경계: 통계청(2013)"; }
     const tops = document.querySelector(".tops");
     if (tops) {
-      const sung = chartMode === "sung", val = s => sung ? classesSung(s.id) : votesFor(s.id);
+      const sung = chartMode === "sung", val = s => sung ? sungIn(s.id) : votesFor(s.id);
       const list = SONGS.slice().sort((a, b) => val(b) - val(a)).slice(0, 3);
       const trophy = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0z" fill="#F2C230" stroke="#B07A2A" stroke-width="1.4"/><path d="M12 13v4M8 20h8" stroke="#B07A2A" stroke-width="2" stroke-linecap="round"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3" fill="none" stroke="#B07A2A" stroke-width="1.6"/></svg>';
       const pod = (s, k) => s ? `<button class="pod p${k}" data-open="${s.id}">${k === 1 ? trophy : ""}<b>${esc(s.title)}</b><small>${sung ? val(s) + "개 반" : val(s) + "표"}</small><span class="block">${k}</span></button>` : "<span></span>";
-      tops.outerHTML = `<div class="card"><span class="eyebrow">${sung ? "가장 많이 불린 노래" : MONTH_LABEL() + " 투표 단상"}</span><div class="podium">${pod(list[1], 2)}${pod(list[0], 1)}${pod(list[2], 3)}</div></div>`;
+      tops.outerHTML = `<div class="card"><span class="eyebrow">${sung ? (PERIOD === "year" ? "올해" : "이번 달") + " 가장 많이 불린 노래" : MONTH_LABEL() + " 투표 단상"}</span><div class="podium">${pod(list[1], 2)}${pod(list[0], 1)}${pod(list[2], 3)}</div></div>`;
     }
     if (kungId) {
       const on = document.querySelector(`.stampbook .stamp.on[data-stamp="${kungId}"]`);
@@ -1482,7 +1878,6 @@ document.addEventListener("click", e => {
   window.render = function () { orig.apply(this, arguments); try { enhance(); } catch (e) { console.error(e); } };
   window.render();
 })();
-
 </script>
 </body>
 </html>

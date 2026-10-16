@@ -17,21 +17,24 @@
  * 시트에서 직접 고쳐도 됩니다. 고친 내용은 2분 안에 화면에 반영됩니다.
  *************************************************************/
 
-const SERVER_VERSION = 4;   // 4: 곡 지우기·예시 곡 한꺼번에 지우기  3: 한 시트 방식 — 가입·승인·로그인, 계정 하나에 여러 반
+const SERVER_VERSION = 5;   // 5: 이번 달·학년도 집계, 로그인 유지, 알림 메일, 기록 내려받기, 공개 동의, 운영 기록  4: 곡 지우기·예시 곡 한꺼번에 지우기  3: 한 시트 방식 — 가입·승인·로그인, 계정 하나에 여러 반
 const TZ_ = 'Asia/Seoul';
 const BOARD_CACHE_SEC = 120;
-const TOKEN_SEC = 21600;    // 로그인 유지 6시간
+const TOKEN_SEC = 21600;    // 로그인 6시간 (로그인 유지를 고르면 30일)
+const KEEP_DAYS = 30;
 const MAX_CLASSES = 20;     // 계정 하나에 만들 수 있는 반
 const REGIONS_ = ['서울','부산','대구','인천','광주','대전','울산','세종','경기','강원','충북','충남','전북','전남','경북','경남','제주'];
 
-const SH_ACC = '계정', SH_CLASSES = '반', SH_SONGS = '곡 목록', SH_SET = '설정', SH_LYRICS = '바꾼 가사', SH_RELAY = '릴레이 기록';
+const SH_ACC = '계정', SH_CLASSES = '반', SH_SONGS = '곡 목록', SH_SET = '설정', SH_LYRICS = '바꾼 가사', SH_RELAY = '릴레이 기록', SH_LOG = '운영 기록', SH_TODAY = '오늘의 동요';
 const HEAD_ = {
   '계정': ['아이디', '비밀번호(암호화)', '선생님 이름', '학교', '지역', '신청한 날', '승인', '마지막 로그인', '메모'],
   '반': ['반 ID', '아이디', '반 이름', '지역', '도장', '투표 달', '투표 곡', '좋아요', '릴레이', '만든 날', '마지막 기록', '숨김'],
-  '곡 목록': ['곡번호', '곡 제목', '작사', '작곡', '발표회', '발표 연도', '추천 학년군', '주제(쉼표로)', '계절', '조성', '박자', '음역', '가사', '소개', '수업 활용', '영상 주소', '악보 주소', '숨김'],
+  '곡 목록': ['곡번호', '곡 제목', '작사', '작곡', '발표회', '발표 연도', '추천 학년군', '주제(쉼표로)', '계절', '조성', '박자', '음역', '가사', '소개', '수업 활용', '영상 주소', '악보 주소', '숨김', '공개 동의'],
   '설정': ['항목', '값', '설명'],
   '바꾼 가사': ['가사 ID', '반 ID', '곡번호', '바꾼 가사', '반 이름', '지역', '받은 날', '공개'],
-  '릴레이 기록': ['릴레이', '반 ID', '반 이름', '지역', '이어받은 때']
+  '릴레이 기록': ['릴레이', '반 ID', '반 이름', '지역', '이어받은 때'],
+  '운영 기록': ['때', '운영진', '한 일', '대상'],
+  '오늘의 동요': ['날짜', '곡번호', '한마디']
 };
 
 /************ 입구 ************/
@@ -57,6 +60,27 @@ function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).se
 /************ 공통 ************/
 function now_() { return Utilities.formatDate(new Date(), TZ_, 'yyyy-MM-dd HH:mm:ss'); }
 function month_() { return Utilities.formatDate(new Date(), TZ_, 'yyyy-MM'); }
+function today_() { return Utilities.formatDate(new Date(), TZ_, 'yyyy-MM-dd'); }
+// 학년도 시작일 (3월 1일)
+function yearStart_() { const t = today_(), y = Number(t.slice(0, 4)), m = Number(t.slice(5, 7)); return (m >= 3 ? y : y - 1) + '-03-01'; }
+// 도장: [곡번호, 찍은 날] 목록 (예전 숫자만 있던 기록도 읽음)
+function stampsOf_(cell) { return parse_(cell, []).map(function (x) { return Array.isArray(x) ? [num_(x[0]), String(x[1] || '')] : [num_(x), '']; }).filter(function (x) { return x[0]; }); }
+// 시트가 날짜로 바꿔 버린 칸도 yyyy-MM-dd 글자로
+function dstr_(v) { return v instanceof Date ? Utilities.formatDate(v, TZ_, 'yyyy-MM-dd') : String(v || '').trim().slice(0, 10); }
+function tstr_(v) { return v instanceof Date ? Utilities.formatDate(v, TZ_, 'yyyy-MM-dd HH:mm') : String(v || '').trim().slice(0, 16); }
+function mstr_(v) { return v instanceof Date ? Utilities.formatDate(v, TZ_, 'yyyy-MM') : String(v || '').trim().slice(0, 7); }
+function okMail_(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || '').trim()); }
+const APP_URL = 'https://musicalpe.github.io/DongyoSSAM/';
+// 운영진 알림 메일 (하루 40통까지)
+function notify_(subject, body) {
+  try {
+    const to = String(settings_()['알림 이메일'] || '').trim(); if (!okMail_(to)) return;
+    const p = PropertiesService.getScriptProperties(), k = 'MAIL_' + today_(), n = Number(p.getProperty(k) || 0);
+    if (n >= 40) return;
+    p.setProperty(k, String(n + 1));
+    MailApp.sendEmail({ to: to, subject: '[동요샘 노래상자] ' + subject, body: body + '\n\n운영진 메뉴: ' + APP_URL + '?tab=op' });
+  } catch (e) {}
+}
 function hash_(s) {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8)
     .map(function (b) { const v = (b + 256) % 256; return (v < 16 ? '0' : '') + v.toString(16); }).join('');
@@ -75,10 +99,12 @@ function sheet_(name) {
     sh.appendRow(HEAD_[name]); sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, HEAD_[name].length).setFontWeight('bold');
     if (name === SH_SONGS) seedSongs_(sh);
-    if (name === SH_SET) sh.getRange(2, 1, 3, 3).setValues([
+    if (name === SH_TODAY) sh.getRange('A:A').setNumberFormat('@');
+    if (name === SH_SET) sh.getRange(2, 1, 4, 3).setValues([
       ['릴레이 이름', '첫 번째 릴레이', '이름을 바꾸면 새 릴레이가 처음부터 시작돼요'],
       ['릴레이 곡번호', 3, '곡 목록의 곡번호'],
-      ['문의 이메일', '', '비밀번호를 잊은 선생님이 연락할 주소 (화면에 보여요)']
+      ['문의 이메일', '', '비밀번호를 잊은 선생님이 연락할 주소 (화면에 보여요)'],
+      ['알림 이메일', '', '가입 신청·새 가사가 오면 알림을 받을 운영진 주소 (화면에 안 보여요)']
     ]);
   }
   return sh;
@@ -117,10 +143,11 @@ function signup_(p) {
     if (v.slice(1).some(function (r) { return String(r[0]) === id; })) throw new Error('이미 있는 아이디예요. 다른 아이디를 정해 주세요.');
     if (v.slice(1).filter(function (r) { return !String(r[6]).trim(); }).length >= 300) throw new Error('지금은 가입 신청이 너무 많아요. 잠시 뒤 다시 신청해 주세요.');
     sheet_(SH_ACC).appendRow([id, pwHash_(id, pw), name, school, region, now_(), '', '', '']);
+    notify_('가입 신청: ' + name + ' 선생님 (' + school + ')', '새 가입 신청이 왔어요.\n\n아이디: ' + id + '\n이름: ' + name + '\n학교: ' + school + ' (' + region + ')\n\n운영진 메뉴의 계정 칸에서 승인해 주세요.');
     return { ok: true, message: '가입 신청을 받았어요. 운영진이 승인하면 로그인할 수 있어요.' };
   });
 }
-function login_(id, pw) {
+function login_(id, pw, keep) {
   id = String(id || '').trim().toLowerCase();
   const a = findAcc_(id);
   if (!a || String(a.r[1]) !== pwHash_(id, String(pw || ''))) return { ok: false, message: '아이디나 비밀번호가 맞지 않아요.' };
@@ -128,12 +155,21 @@ function login_(id, pw) {
   if (!isO_(st)) return { ok: false, message: st ? '가입이 승인되지 않은 계정이에요. 운영진에게 문의해 주세요.' : '아직 승인 전이에요. 운영진이 승인하면 로그인할 수 있어요.' };
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('U_' + token, id, TOKEN_SEC);
+  if (keep) {
+    const p = PropertiesService.getScriptProperties(), all = p.getProperties(), nowMs = Date.now();
+    Object.keys(all).forEach(function (k) { if (k.indexOf('T_') === 0 && Number(String(all[k]).split('|')[1]) < nowMs) p.deleteProperty(k); });
+    p.setProperty('T_' + token, id + '|' + (nowMs + KEEP_DAYS * 86400000));
+  }
   sheet_(SH_ACC).getRange(a.row, 8).setValue(now_());
   return { ok: true, token: token, me: me_(id) };
 }
-function logout_(token) { if (token) CacheService.getScriptCache().remove('U_' + token); return { ok: true }; }
+function logout_(token) { if (token) { CacheService.getScriptCache().remove('U_' + token); PropertiesService.getScriptProperties().deleteProperty('T_' + token); } return { ok: true }; }
 function who_(token) {
-  const id = token ? CacheService.getScriptCache().get('U_' + token) : null;
+  let id = token ? CacheService.getScriptCache().get('U_' + token) : null;
+  if (!id && token) {
+    const v = PropertiesService.getScriptProperties().getProperty('T_' + token);
+    if (v && Number(v.split('|')[1]) > Date.now()) { id = v.split('|')[0]; CacheService.getScriptCache().put('U_' + token, id, TOKEN_SEC); }
+  }
   if (!id) throw new Error('로그인이 필요해요. 다시 로그인해 주세요.');
   return id;
 }
@@ -147,8 +183,9 @@ function changePw_(token, oldPw, newPw) {
 
 /************ 반 ************/
 function classRow_(r) {
-  return { cid: String(r[0]), owner: String(r[1]), name: String(r[2]), region: String(r[3]), stamps: parse_(r[4], []),
-    vote: String(r[5]) && num_(r[6]) ? { month: String(r[5]), song: num_(r[6]) } : null, likes: parse_(r[7], []), relays: parse_(r[8], []), hidden: isO_(r[11]) };
+  const st = stampsOf_(r[4]);
+  return { cid: String(r[0]), owner: String(r[1]), name: String(r[2]), region: String(r[3]), stamps: st.map(function (x) { return x[0]; }), stampDates: st,
+    vote: mstr_(r[5]) && num_(r[6]) ? { month: mstr_(r[5]), song: num_(r[6]) } : null, likes: parse_(r[7], []), relays: parse_(r[8], []), hidden: isO_(r[11]) };
 }
 function me_(id) {
   const a = findAcc_(id);
@@ -158,7 +195,7 @@ function me_(id) {
     (lyr[String(r[1])] = lyr[String(r[1])] || []).push({ id: String(r[0]), songId: num_(r[2]), text: String(r[3]), status: isO_(st) ? 'O' : st ? 'X' : '' });
   });
   const classes = values_(SH_CLASSES).slice(1).filter(function (r) { return String(r[1]) === id; }).map(function (r) {
-    const c = classRow_(r); delete c.owner; c.lyrics = lyr[c.cid] || []; return c;
+    const c = classRow_(r); delete c.owner; delete c.stampDates; c.lyrics = lyr[c.cid] || []; return c;
   });
   return { id: id, name: a ? String(a.r[2]) : '', school: a ? String(a.r[3]) : '', region: a ? String(a.r[4]) : '', classes: classes, month: month_() };
 }
@@ -197,8 +234,8 @@ function touch_(c) { c.sh.getRange(c.row, 11).setValue(now_()); }
 function toggleStamp_(token, cid, songId) {
   const id = who_(token), s = num_(songId); if (!s) throw new Error('곡을 찾지 못했어요.');
   return withLock_(function () {
-    const c = myClass_(id, cid), list = parse_(c.r[4], []), i = list.indexOf(s);
-    if (i >= 0) list.splice(i, 1); else list.push(s);
+    const c = myClass_(id, cid), list = stampsOf_(c.r[4]), i = list.findIndex(function (x) { return x[0] === s; });
+    if (i >= 0) list.splice(i, 1); else list.push([s, today_()]);
     c.sh.getRange(c.row, 5).setValue(JSON.stringify(list)); touch_(c); bust_(); return me_(id);
   });
 }
@@ -206,7 +243,7 @@ function vote_(token, cid, songId) {
   const id = who_(token), s = num_(songId); if (!s) throw new Error('곡을 찾지 못했어요.');
   return withLock_(function () {
     const c = myClass_(id, cid);
-    c.sh.getRange(c.row, 6, 1, 2).setValues([[month_(), s]]); touch_(c); bust_(); return me_(id);
+    c.sh.getRange(c.row, 6).setNumberFormat('@'); c.sh.getRange(c.row, 6, 1, 2).setValues([[month_(), s]]); touch_(c); bust_(); return me_(id);
   });
 }
 function joinRelay_(token, cid, relayId) {
@@ -229,6 +266,7 @@ function addLyric_(token, cid, songId, text) {
     const mine = v.slice(1).filter(function (r) { return String(r[1]) === String(cid); });
     if (mine.filter(function (r) { return num_(r[2]) === s; }).length >= 3) throw new Error('한 곡에 우리 반 가사는 세 개까지 올릴 수 있어요.');
     sheet_(SH_LYRICS).appendRow([cid + '-' + (mine.length + 1), cid, s, t, String(c.r[2]), String(c.r[3]), now_(), '']);
+    notify_('새 바꾼 가사: ' + String(c.r[2]), String(c.r[2]) + ' (' + String(c.r[3]) + ')에서 ' + s + '번 곡의 바꾼 가사를 올렸어요.\n\n' + t + '\n\n운영진 메뉴의 가사 확인 칸에서 공개하거나 숨겨 주세요.');
     touch_(c); return me_(id);
   });
 }
@@ -249,15 +287,23 @@ function getBoard_() {
   if (hit) return JSON.parse(hit);
   const month = month_(), ok = {};
   values_(SH_ACC).slice(1).forEach(function (r) { if (isO_(r[6])) ok[String(r[0])] = 1; });
-  const regions = {}; REGIONS_.forEach(function (r) { regions[r] = { stamps: 0, classes: 0 }; });
-  const songClasses = {}, votes = {}, likeCount = {}, classes = {};
-  let classCount = 0;
+  const ys = yearStart_();
+  const regions = {}, regionsYear = {}; REGIONS_.forEach(function (r) { regions[r] = { stamps: 0, classes: 0 }; regionsYear[r] = { stamps: 0, classes: 0 }; });
+  const songClasses = {}, songMonth = {}, songYear = {}, votes = {}, likeCount = {}, classes = {};
+  let classCount = 0, classYear = 0;
   values_(SH_CLASSES).slice(1).forEach(function (r) {
     const c = classRow_(r);
     if (!c.cid || c.hidden || !ok[c.owner] || !regions[c.region]) return;
     classes[c.cid] = c;
-    if (c.stamps.length) { regions[c.region].stamps += c.stamps.length; regions[c.region].classes++; classCount++; }
-    c.stamps.forEach(function (s) { songClasses[s] = (songClasses[s] || 0) + 1; });
+    const inMonth = c.stampDates.filter(function (x) { return x[1].slice(0, 7) === month; }).length;
+    const inYear = c.stampDates.filter(function (x) { return !x[1] || x[1] >= ys; });
+    if (inMonth) { regions[c.region].stamps += inMonth; regions[c.region].classes++; classCount++; }
+    if (inYear.length) { regionsYear[c.region].stamps += inYear.length; regionsYear[c.region].classes++; classYear++; }
+    c.stampDates.forEach(function (x) {
+      songClasses[x[0]] = (songClasses[x[0]] || 0) + 1;
+      if (!x[1] || x[1] >= ys) songYear[x[0]] = (songYear[x[0]] || 0) + 1;
+      if (x[1].slice(0, 7) === month) songMonth[x[0]] = (songMonth[x[0]] || 0) + 1;
+    });
     if (c.vote && c.vote.month === month) votes[c.vote.song] = (votes[c.vote.song] || 0) + 1;
     c.likes.forEach(function (k) { likeCount[k] = (likeCount[k] || 0) + 1; });
   });
@@ -285,8 +331,10 @@ function getBoard_() {
   });
   const set = settings_();
   const relay = { id: clean_(set['릴레이 이름'], 30) || '첫 번째 릴레이', song: num_(set['릴레이 곡번호']) || (songs[0] ? songs[0].id : 0) };
-  const contact = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(set['문의 이메일'] || '').trim()) ? String(set['문의 이메일']).trim() : '';
-  const out = { month: month, classes: classCount, regions: regions, songClasses: songClasses, votes: votes, relays: relays, lyrics: lyrics, songs: songs, relay: relay, contact: contact, updated: now_() };
+  const contact = okMail_(set['문의 이메일']) ? String(set['문의 이메일']).trim() : '';
+  const td = today_(), sched = {};
+  values_(SH_TODAY).slice(1).forEach(function (r) { const d = dstr_(r[0]), id = num_(r[1]); if (id && d >= td && d <= td.slice(0, 7) + '-31') sched[d] = { song: id, note: clean_(r[2], 80) }; });
+  const out = { month: month, today: td, yearStart: ys, classes: classCount, classesYear: classYear, regions: regions, regionsYear: regionsYear, songClasses: songClasses, songMonth: songMonth, songYear: songYear, todaySong: sched[td] || null, votes: votes, relays: relays, lyrics: lyrics, songs: songs, relay: relay, contact: contact, updated: now_() };
   try { cache.put('board', JSON.stringify(out), BOARD_CACHE_SEC); } catch (e) {}
   return out;
 }
@@ -294,43 +342,63 @@ function clearBoardCache() { bust_(); }
 
 /************ 운영진 ************/
 function opHash_() { return PropertiesService.getScriptProperties().getProperty('OP_HASH') || hash_('1234'); }
-function opLogin_(pw) {
+function opLogin_(pw, name) {
   if (hash_(String(pw || '')) !== opHash_()) return { ok: false, message: '운영진 비밀번호가 맞지 않아요.' };
+  const n = clean_(name, 20);
+  if (!n) return { ok: false, message: '운영진 이름을 적어 주세요. 누가 처리했는지 기록에 남아요.' };
   const token = Utilities.getUuid();
-  CacheService.getScriptCache().put('OP_' + token, '1', TOKEN_SEC);
-  return { ok: true, token: token };
+  CacheService.getScriptCache().put('OP_' + token, n, TOKEN_SEC);
+  log_(n, '운영진 메뉴에 들어옴', '');
+  return { ok: true, token: token, name: n };
 }
+function log_(who, what, target) { try { sheet_(SH_LOG).appendRow([now_(), who, what, String(target || '').slice(0, 80)]); } catch (e) {} }
+function opWho_(token) { return CacheService.getScriptCache().get('OP_' + token) || '운영진'; }
 function opLogout_(token) { if (token) CacheService.getScriptCache().remove('OP_' + token); return { ok: true }; }
 function opNeed_(token) { if (!token || !CacheService.getScriptCache().get('OP_' + token)) throw new Error('운영진 로그인이 필요해요. 다시 로그인해 주세요.'); }
+// 알림 메일 권한 허용: 새 코드를 붙여 넣은 뒤 이 함수를 한 번 실행하면 메일 보내기 권한을 허용하는 창이 떠요 (메일은 보내지 않아요)
+function allowMail() { Logger.log('오늘 보낼 수 있는 메일: ' + MailApp.getRemainingDailyQuota()); }
 // 운영진 비밀번호 정하기: 아래 "새비밀번호"를 바꾸고 이 함수를 한 번 실행하세요
 function setOperatorPassword() { PropertiesService.getScriptProperties().setProperty('OP_HASH', hash_('새비밀번호')); }
 
+// 예전 시트에 새 칸 제목 채우기
+function fixHeads_() {
+  [SH_SONGS, SH_ACC, SH_CLASSES].forEach(function (n) {
+    const sh = sheet_(n), h = HEAD_[n], cur = sh.getRange(1, 1, 1, h.length).getValues()[0];
+    h.forEach(function (t, i) { if (String(cur[i]).trim() === '') sh.getRange(1, i + 1).setValue(t).setFontWeight('bold'); });
+  });
+}
 function opData_(token) {
   opNeed_(token);
+  fixHeads_();
   const songs = values_(SH_SONGS).slice(1).filter(function (r) { return num_(r[0]); }).map(function (r) {
     return { id: num_(r[0]), title: String(r[1]), lyricist: String(r[2]), composer: String(r[3]), concert: String(r[4]), year: r[5] === '' ? '' : String(r[5]),
       grade: String(r[6]), themes: String(r[7]), season: String(r[8]), key: String(r[9]), beat: String(r[10]), range: String(r[11]),
-      lyrics: String(r[12]), intro: String(r[13]), tip: String(r[14]), video: String(r[15]), score: String(r[16]), hidden: isO_(r[17]) };
+      lyrics: String(r[12]), intro: String(r[13]), tip: String(r[14]), video: String(r[15]), score: String(r[16]), hidden: isO_(r[17]), consent: isO_(r[18]) };
   });
   const lyrics = values_(SH_LYRICS).slice(1).filter(function (r) { return r[0] !== ''; }).map(function (r) {
     const st = String(r[7] || '').trim();
-    return { id: String(r[0]), songId: num_(r[2]), text: String(r[3]), cls: String(r[4]), region: String(r[5]), at: String(r[6]).slice(0, 16), status: isO_(st) ? 'O' : st ? 'X' : '' };
+    return { id: String(r[0]), songId: num_(r[2]), text: String(r[3]), cls: String(r[4]), region: String(r[5]), at: tstr_(r[6]), status: isO_(st) ? 'O' : st ? 'X' : '' };
   });
+  const from = Utilities.formatDate(new Date(Date.now() - 62 * 86400000), TZ_, 'yyyy-MM') + '-01', schedule = {};
+  values_(SH_TODAY).slice(1).forEach(function (r) { const d = dstr_(r[0]), id = num_(r[1]); if (id && d >= from) schedule[d] = { song: id, note: String(r[2] || '') }; });
+  const logs = values_(SH_LOG).slice(1).slice(-60).reverse().map(function (r) { return { at: tstr_(r[0]), who: String(r[1]), what: String(r[2]), target: String(r[3]) }; });
   const accounts = values_(SH_ACC).slice(1).filter(function (r) { return r[0] !== ''; }).map(function (r) {
     const st = String(r[6] || '').trim();
-    return { id: String(r[0]), name: String(r[2]), school: String(r[3]), region: String(r[4]), at: String(r[5]).slice(0, 16), last: String(r[7]).slice(0, 16), status: isO_(st) ? 'O' : st ? 'X' : '' };
+    return { id: String(r[0]), name: String(r[2]), school: String(r[3]), region: String(r[4]), at: tstr_(r[5]), last: tstr_(r[7]), status: isO_(st) ? 'O' : st ? 'X' : '' };
   });
   const classes = values_(SH_CLASSES).slice(1).filter(function (r) { return r[0] !== ''; }).map(function (r) {
-    return { pid: String(r[0]), owner: String(r[1]), name: String(r[2]), region: String(r[3]), stamps: parse_(r[4], []).length, last: String(r[10]).slice(0, 16), hidden: isO_(r[11]) };
+    return { pid: String(r[0]), owner: String(r[1]), name: String(r[2]), region: String(r[3]), stamps: parse_(r[4], []).length, last: tstr_(r[10]), hidden: isO_(r[11]) };
   });
   const set = settings_();
-  return { songs: songs, lyrics: lyrics, accounts: accounts, classes: classes, contact: String(set['문의 이메일'] || ''),
+  return { songs: songs, lyrics: lyrics, accounts: accounts, classes: classes, logs: logs, schedule: schedule, today: today_(), me: opWho_(token), contact: String(set['문의 이메일'] || ''), notify: String(set['알림 이메일'] || ''),
     relay: { id: String(set['릴레이 이름'] || ''), song: num_(set['릴레이 곡번호']) } };
 }
 function opAccount_(token, id, status) {
   opNeed_(token);
   const a = findAcc_(String(id)); if (!a) throw new Error('계정을 찾지 못했어요.');
   sheet_(SH_ACC).getRange(a.row, 7).setValue(status === 'O' ? 'O' : status === 'X' ? 'X' : '');
+  sheet_(SH_ACC).getRange(a.row, 9).setValue((status === 'O' ? '승인' : status === 'X' ? '거절' : '다시 검토') + ' · ' + opWho_(token) + ' · ' + now_().slice(0, 16));
+  log_(opWho_(token), status === 'O' ? '계정 승인' : status === 'X' ? '계정 거절' : '계정 다시 검토', id + ' ' + String(a.r[2]));
   bust_(); return opData_(token);
 }
 function opResetPw_(token, id) {
@@ -339,20 +407,72 @@ function opResetPw_(token, id) {
   const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
   let pw = ''; for (let i = 0; i < 8; i++) pw += chars.charAt(Math.floor(Math.random() * chars.length));
   sheet_(SH_ACC).getRange(a.row, 2).setValue(pwHash_(String(id), pw));
+  log_(opWho_(token), '임시 비밀번호 만듦', id);
   const d = opData_(token); d.tempPw = { id: String(id), pw: pw }; return d;
 }
 function opContact_(token, email) {
   opNeed_(token);
   const e = String(email || '').trim();
-  if (e && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) throw new Error('이메일 주소 모양이 아니에요.');
+  if (e && !okMail_(e)) throw new Error('이메일 주소 모양이 아니에요.');
   putSetting_('문의 이메일', e, '비밀번호를 잊은 선생님이 연락할 주소 (화면에 보여요)');
+  log_(opWho_(token), '문의 이메일 바꿈', e);
   bust_(); return opData_(token);
+}
+function opNotify_(token, email) {
+  opNeed_(token);
+  const e = String(email || '').trim();
+  if (e && !okMail_(e)) throw new Error('이메일 주소 모양이 아니에요.');
+  putSetting_('알림 이메일', e, '가입 신청·새 가사가 오면 알림을 받을 운영진 주소 (화면에 안 보여요)');
+  log_(opWho_(token), '알림 이메일 바꿈', e);
+  if (e) { try { MailApp.sendEmail({ to: e, subject: '[동요샘 노래상자] 알림 메일 확인', body: '이제 가입 신청과 새 바꾼 가사가 오면 이 주소로 알려 드려요.\n\n운영진 메뉴: ' + APP_URL + '?tab=op' }); } catch (err) { throw new Error('알림 메일을 보내지 못했어요. 서버를 배포할 때 메일 보내기 권한을 허용했는지 확인해 주세요.'); } }
+  return opData_(token);
+}
+// 오늘의 동요 달력: 한 달치를 통째로 바꿔 저장 (entries: [{date, song, note}])
+function opToday_(token, month, entries) {
+  opNeed_(token);
+  const m = String(month || '');
+  if (!/^\d{4}-\d{2}$/.test(m)) throw new Error('달을 알 수 없어요.');
+  return withLock_(function () {
+    const sh = sheet_(SH_TODAY), v = sh.getDataRange().getValues();
+    for (let i = v.length - 1; i >= 1; i--) if (dstr_(v[i][0]).slice(0, 7) === m) sh.deleteRow(i + 1);
+    const rows = (Array.isArray(entries) ? entries : []).filter(function (e) { return e && String(e.date).slice(0, 7) === m && /^\d{4}-\d{2}-\d{2}$/.test(String(e.date)) && num_(e.song); })
+      .map(function (e) { return [String(e.date), num_(e.song), clean_(e.note, 80)]; });
+    if (rows.length) { sh.getRange('A:A').setNumberFormat('@'); sh.getRange(sh.getLastRow() + 1, 1, rows.length, 3).setValues(rows); }
+    log_(opWho_(token), '오늘의 동요 달력 저장', m + ' · ' + rows.length + '일');
+    bust_(); return opData_(token);
+  });
+}
+// 기록 내려받기: 반별·곡별
+function opExport_(token) {
+  opNeed_(token);
+  const month = month_(), ys = yearStart_(), acc = {};
+  values_(SH_ACC).slice(1).forEach(function (r) { acc[String(r[0])] = { name: String(r[2]), school: String(r[3]) }; });
+  const lyrCount = {}, lyrSong = {};
+  values_(SH_LYRICS).slice(1).forEach(function (r) { lyrCount[String(r[1])] = (lyrCount[String(r[1])] || 0) + 1; if (isO_(r[7])) lyrSong[num_(r[2])] = (lyrSong[num_(r[2])] || 0) + 1; });
+  const songStat = {};
+  const classes = values_(SH_CLASSES).slice(1).filter(function (r) { return r[0] !== ''; }).map(function (r) {
+    const c = classRow_(r), a = acc[c.owner] || { name: '', school: '' };
+    const m = c.stampDates.filter(function (x) { return x[1].slice(0, 7) === month; }).length, y = c.stampDates.filter(function (x) { return !x[1] || x[1] >= ys; }).length;
+    c.stampDates.forEach(function (x) { const st = songStat[x[0]] = songStat[x[0]] || { all: 0, year: 0, month: 0 }; st.all++; if (!x[1] || x[1] >= ys) st.year++; if (x[1].slice(0, 7) === month) st.month++; });
+    return [c.name, c.region, a.school, a.name, c.owner, c.stamps.length, y, m, c.vote && c.vote.month === month ? c.vote.song : '', lyrCount[c.cid] || 0, c.relays.length, dstr_(r[9]), tstr_(r[10]), c.hidden ? '숨김' : ''];
+  });
+  const votes = {};
+  values_(SH_CLASSES).slice(1).forEach(function (r) { if (mstr_(r[5]) === month && num_(r[6])) votes[num_(r[6])] = (votes[num_(r[6])] || 0) + 1; });
+  const songs = values_(SH_SONGS).slice(1).filter(function (r) { return num_(r[0]); }).map(function (r) {
+    const id = num_(r[0]), st = songStat[id] || { all: 0, year: 0, month: 0 };
+    return [id, String(r[1]), String(r[2]), String(r[3]), String(r[4]), st.all, st.year, st.month, votes[id] || 0, lyrSong[id] || 0, isO_(r[17]) ? '숨김' : '', isO_(r[18]) ? 'O' : ''];
+  });
+  log_(opWho_(token), '기록 내려받기', '');
+  return { month: month, yearStart: ys,
+    classHead: ['반 이름', '지역', '학교', '선생님', '아이디', '스티커(모두)', '스티커(올해)', '스티커(이번 달)', '이번 달 투표 곡번호', '올린 가사', '릴레이 참여', '만든 날', '마지막 기록', '숨김'], classes: classes,
+    songHead: ['곡번호', '곡 제목', '작사', '작곡', '발표회', '부른 반(모두)', '부른 반(올해)', '부른 반(이번 달)', '이번 달 투표', '공개된 바꾼 가사', '숨김', '공개 동의'], songs: songs };
 }
 function opSaveSong_(token, s) {
   opNeed_(token);
   s = s || {};
   const title = clean_(s.title, 40);
   if (!title) throw new Error('곡 제목을 적어 주세요.');
+  if (!s.consent) throw new Error('작사·작곡 선생님께 공개 동의를 받았는지 확인해 주세요.');
   const link = function (u) { u = String(u || '').trim(); if (u && !/^https:\/\//.test(u)) throw new Error('영상·악보 주소는 https:// 로 시작해야 해요.'); return u.slice(0, 500); };
   const long = function (t, n) { return String(t == null ? '' : t).replace(/\r/g, '').replace(/[<>]/g, '').slice(0, n); };
   return withLock_(function () {
@@ -362,10 +482,11 @@ function opSaveSong_(token, s) {
     if (!id) id = max + 1;
     const data = [id, title, clean_(s.lyricist, 40), clean_(s.composer, 40), clean_(s.concert, 40), num_(s.year) || '', clean_(s.grade, 10),
       clean_(s.themes, 60), clean_(s.season, 4), clean_(s.key, 4), clean_(s.beat, 6), clean_(s.range, 12),
-      long(s.lyrics, 2000), long(s.intro, 600), long(s.tip, 600), link(s.video), link(s.score), s.hidden ? 'O' : ''];
+      long(s.lyrics, 2000), long(s.intro, 600), long(s.tip, 600), link(s.video), link(s.score), s.hidden ? 'O' : '', 'O'];
     if (row) sh.getRange(row, 1, 1, data.length).setValues([data]);
     else { sh.appendRow(data); row = sh.getLastRow(); }
     sh.getRange(row, 13, 1, 3).setWrap(true);
+    log_(opWho_(token), num_(s.id) ? '곡 고침' : '새 곡 올림', id + '. ' + title);
     bust_(); return opData_(token);
   });
 }
@@ -374,7 +495,7 @@ function opDeleteSong_(token, id) {
   const n = num_(id); if (!n) throw new Error('곡을 찾지 못했어요.');
   return withLock_(function () {
     const sh = sheet_(SH_SONGS), v = sh.getDataRange().getValues();
-    for (let i = v.length - 1; i >= 1; i--) if (num_(v[i][0]) === n) { sh.deleteRow(i + 1); bust_(); return opData_(token); }
+    for (let i = v.length - 1; i >= 1; i--) if (num_(v[i][0]) === n) { log_(opWho_(token), '곡 지움', n + '. ' + String(v[i][1])); sh.deleteRow(i + 1); bust_(); return opData_(token); }
     throw new Error('곡을 찾지 못했어요.');
   });
 }
@@ -383,7 +504,9 @@ function opClearExamples_(token) {
   opNeed_(token);
   return withLock_(function () {
     const sh = sheet_(SH_SONGS), v = sh.getDataRange().getValues();
-    for (let i = v.length - 1; i >= 1; i--) if (/^예시/.test(String(v[i][2])) || /^예시/.test(String(v[i][3]))) sh.deleteRow(i + 1);
+    let n = 0;
+    for (let i = v.length - 1; i >= 1; i--) if (/^예시/.test(String(v[i][2])) || /^예시/.test(String(v[i][3]))) { sh.deleteRow(i + 1); n++; }
+    log_(opWho_(token), '예시 곡 모두 지움', n + '곡');
     bust_(); return opData_(token);
   });
 }
@@ -392,6 +515,7 @@ function opLyric_(token, id, status) {
   const sh = sheet_(SH_LYRICS), v = sh.getDataRange().getValues();
   for (let i = 1; i < v.length; i++) if (String(v[i][0]) === String(id)) {
     sh.getRange(i + 1, 8).setValue(status === 'O' ? 'O' : status === 'X' ? 'X' : '');
+    log_(opWho_(token), status === 'O' ? '가사 공개' : status === 'X' ? '가사 숨김' : '가사 확인 전으로', String(v[i][4]) + ' · ' + String(v[i][3]).split('\n')[0]);
     bust_(); return opData_(token);
   }
   throw new Error('그 가사를 찾지 못했어요.');
@@ -401,6 +525,7 @@ function opRelay_(token, name, songId) {
   const n = clean_(name, 30), id = num_(songId);
   if (!n || !id) throw new Error('릴레이 이름과 곡을 정해 주세요.');
   putSetting_('릴레이 이름', n); putSetting_('릴레이 곡번호', id);
+  log_(opWho_(token), '릴레이 정함', n + ' · ' + id + '번 곡');
   bust_(); return opData_(token);
 }
 function opClass_(token, cid, hidden) {
@@ -408,6 +533,7 @@ function opClass_(token, cid, hidden) {
   const sh = sheet_(SH_CLASSES), v = sh.getDataRange().getValues();
   for (let i = 1; i < v.length; i++) if (String(v[i][0]) === String(cid)) {
     sh.getRange(i + 1, 12).setValue(hidden ? 'O' : '');
+    log_(opWho_(token), hidden ? '반 숨김' : '반 다시 보이기', String(v[i][2]));
     bust_(); return opData_(token);
   }
   throw new Error('그 반을 찾지 못했어요.');
@@ -420,7 +546,7 @@ const FN_ = {
   toggleStamp: toggleStamp_, vote: vote_, joinRelay: joinRelay_, addLyric: addLyric_, toggleLike: toggleLike_,
   opLogin: opLogin_, opLogout: opLogout_, opData: opData_, opSaveSong: opSaveSong_, opLyric: opLyric_, opRelay: opRelay_,
   opClass: opClass_, opAccount: opAccount_, opResetPw: opResetPw_, opContact: opContact_,
-  opDeleteSong: opDeleteSong_, opClearExamples: opClearExamples_
+  opDeleteSong: opDeleteSong_, opClearExamples: opClearExamples_, opNotify: opNotify_, opExport: opExport_, opToday: opToday_
 };
 
 /************ 곡 목록 예시 (처음 한 번) ************/
