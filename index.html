@@ -479,6 +479,8 @@ body{padding-bottom:0!important}
 .tpw{font-family:ui-monospace,Menlo,monospace;font-size:18px;letter-spacing:.08em;background:var(--paper);padding:2px 8px;border-radius:8px}
 .btn.danger{background:var(--c0);color:#fff;border-color:var(--c0)}
 .del-zone{display:inline-flex;gap:8px}
+.vote.danger{background:var(--c0);border-color:var(--c0);color:#fff}
+.oprow .del-zone{flex-wrap:nowrap}
 </style>
 </head>
 <body style="margin:0">
@@ -1200,7 +1202,7 @@ function renderOp(v) {
       <div class="btns"><button class="btn" data-opedit="0">새 곡 올리기</button></div>
       <div class="list">${list.map(s => `<div class="oprow${s.hidden ? " off" : ""}"><span class="key" style="--c:var(--c${s.id % 6});--cs:var(--c${s.id % 6}-soft)">${s.id}</span>
         <span class="min"><b>${esc(s.title)}</b><small class="meta">${esc(s.concert || "발표회 미정")}${s.year ? " · " + esc(s.year) : ""}${s.hidden ? " · 숨김" : ""}${s.video ? " · 영상" : ""}${s.score ? " · 악보" : ""}</small></span>
-        <button class="vote" data-opedit="${s.id}">고치기</button></div>`).join("")}</div>`;
+        <span class="btns del-zone"><button class="vote" data-opedit="${s.id}">고치기</button><button class="vote" data-opdelask="${s.id}">지우기</button><button class="vote danger" data-opdel="${s.id}" hidden>정말 지우기</button></span></div>`).join("")}</div>`;
   }
   if (OP.sub === "lyrics") {
     const counts = { "": pend, O: d.lyrics.filter(l => l.status === "O").length, X: d.lyrics.filter(l => l.status === "X").length };
@@ -1315,7 +1317,7 @@ document.addEventListener("click", e => {
   if (d.opclass) { opCall("opClass", [d.opclass, !!d.h], d.h ? "그 반을 숨겼어요" : "그 반을 다시 보이게 했어요"); return; }
   if (d.opconfirm !== undefined) { OP.confirmEx = d.opconfirm === "ex"; render(); return; }
   if (t.hasAttribute("data-opclearex")) { OP.confirmEx = false; opCall("opClearExamples", [], "예시 곡을 모두 지웠어요"); return; }
-  if (d.opdelask) { const z = t.closest(".del-zone"); t.hidden = true; z.querySelector("[data-opdel]").hidden = false; return; }
+  if (d.opdelask) { const z = t.closest(".del-zone"); t.hidden = true; z.querySelector("[data-opdel]").hidden = false; toast("한 번 더 누르면 지워져요. 되돌릴 수 없어요"); return; }
   if (d.opdel) { opCall("opDeleteSong", [+d.opdel], "곡을 지웠어요").then(ok => { if (ok) $("#sheetHost").innerHTML = ""; }); return; }
   if (d.opaf !== undefined) { OP.af = d.opaf; if (OP.data) delete OP.data.tempPw; render(); return; }
   if (d.opacc) { opCall("opAccount", [d.opacc, d.st], d.st === "O" ? "승인했어요" : d.st === "X" ? "거절했어요" : "다시 검토로 돌렸어요"); return; }
