@@ -282,6 +282,130 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
 .lyr{display:grid;gap:4px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:10px 12px}
 .lyr:hover{border-color:var(--c3)}
 .lyr .v{white-space:pre-line;line-height:1.6}
+/* ===== 꾸밈: 둥근 카드·입체 메뉴·LP·지도·단상·스티커판·탐험 지도·계절 하늘·플레이어 ===== */
+
+/* 2. 둥근 카드 + 파스텔 그림자 */
+.card, .song, .crow, .concert, .variant, .stampbook, .oprow, .cafe, .hero, .topcard {
+  border-radius: 20px !important;
+}
+.card, .song, .crow, .hero, .topcard, .stampbook {
+  border: 1.5px solid color-mix(in srgb, var(--line) 70%, transparent) !important;
+  box-shadow: 0 8px 22px rgba(74, 143, 224, .13), 0 2px 0 rgba(74, 143, 224, .06) !important;
+}
+.today { transform: none !important; border: 2px solid var(--c4-soft) !important; box-shadow: 0 10px 28px rgba(240, 100, 90, .14) !important; }
+.today::after { display: none }
+
+/* 1. 머리: 음악 보물상자 + 떠다니는 구름 + 반짝 음표 */
+.cloud { animation: drift 9s ease-in-out infinite alternate !important }
+@keyframes drift { to { transform: translateX(22px) } }
+.sparkle { animation: sp 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center }
+@keyframes sp { 50% { opacity: .2; transform: scale(.5) } }
+
+/* 4. 왼쪽 메뉴: 아이콘 + 톡 튀어나온 3D 버튼 */
+@media (min-width:1000px) {
+  nav { background: var(--paper) !important; box-shadow: 0 8px 22px rgba(74,143,224,.12); border-radius: 22px !important; }
+  nav button { display: flex !important; align-items: center; gap: 10px; border-width: 0 !important; background: var(--cs, var(--c4-soft)) !important;
+    box-shadow: 0 5px 0 var(--c) !important; margin-bottom: 4px; transform: translateY(0); }
+  nav button[aria-selected="true"] { background: var(--c) !important; color: #fff !important; box-shadow: 0 5px 0 color-mix(in srgb, var(--c) 60%, #000) !important; }
+}
+nav button:nth-child(1){--cs:var(--c0-soft)} nav button:nth-child(2){--cs:var(--c1-soft)} nav button:nth-child(3){--cs:var(--c3-soft)} nav button:nth-child(4){--cs:var(--c4-soft)} nav button:nth-child(5){--cs:var(--c5-soft)}
+.navi { width: 22px; height: 22px; flex: none }
+@media (max-width:999px) { .navi { width: 16px; height: 16px; vertical-align: -3px; margin-right: 4px } nav button { box-shadow: 0 3px 0 var(--c) } }
+
+/* 2. 오늘의 동요: LP 턴테이블 카드 */
+.today { display: grid !important; grid-template-columns: 176px minmax(0,1fr); column-gap: 20px; align-items: start }
+.today > * { grid-column: 2 }
+.today > .turntable { grid-column: 1; grid-row: 1 / span 9 }
+.turntable { position: relative; width: 176px; height: 176px; border-radius: 22px; background: linear-gradient(145deg, #F7D9A8, #E9B978); box-shadow: inset 0 -6px 0 rgba(0,0,0,.08) }
+.lp { position: absolute; left: 14px; top: 14px; width: 140px; height: 140px; border-radius: 50%;
+  background: repeating-radial-gradient(circle, #23263A 0 3px, #2E3250 3px 5px); box-shadow: 0 6px 14px rgba(0,0,0,.25); animation: spin 6s linear infinite }
+.lp::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 20deg, transparent 0 20%, rgba(255,255,255,.12) 25%, transparent 30% 70%, rgba(255,255,255,.1) 75%, transparent 80%) }
+.lp-label { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: var(--c0);
+  display: grid; place-items: center; color: #fff; font-family: var(--display); font-size: 11px; line-height: 1.1; text-align: center; padding: 6px }
+.lp-label::after { content: ""; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #23263A; left: 25px; top: 25px }
+.arm { position: absolute; right: 10px; top: 10px; width: 10px; height: 104px; border-radius: 6px; background: #C9CED8; transform-origin: 5px 5px; transform: rotate(24deg) }
+.arm::before { content: ""; position: absolute; left: -5px; top: -5px; width: 20px; height: 20px; border-radius: 50%; background: #9AA3B5 }
+.arm::after { content: ""; position: absolute; left: -3px; bottom: -6px; width: 16px; height: 16px; border-radius: 4px; background: #6B7488 }
+@keyframes spin { to { transform: rotate(360deg) } }
+@media (max-width:700px) {
+  .today { grid-template-columns: 1fr }
+  .today > *, .today > .turntable { grid-column: 1; grid-row: auto }
+  .turntable { justify-self: center; margin-bottom: 4px }
+}
+
+/* 4. 언제든 듣기: 아래 고정 플레이어 바 */
+.playerbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom,0px)); z-index: 15;
+  width: min(720px, calc(100% - 24px)); display: grid; grid-template-columns: 44px minmax(0,1fr) auto; gap: 12px; align-items: center;
+  background: #2B3A55; color: #fff; border-radius: 999px; padding: 8px 10px 8px 8px; box-shadow: 0 10px 26px rgba(43,58,85,.35) }
+.playerbar .mini-lp { width: 44px; height: 44px; border-radius: 50%; background: repeating-radial-gradient(circle, #23263A 0 2px, #3A3F60 2px 4px); position: relative; animation: spin 6s linear infinite }
+.playerbar .mini-lp::after { content: ""; position: absolute; inset: 15px; border-radius: 50%; background: var(--c0) }
+.playerbar b { display: block; font-family: var(--display); font-weight: 400; font-size: 16px }
+.playerbar small { opacity: .75; font-size: 12px }
+.playerbar .pb { display: flex; gap: 6px }
+.playerbar .pb > * { all: unset; box-sizing: border-box; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.14); cursor: pointer }
+.playerbar .pb > .main { background: #F2C230 }
+.playerbar .pb > *:focus-visible, .pl-title:focus-visible { outline: 2px solid #F2C230; outline-offset: 2px }
+.pl-title { all: unset; cursor: pointer; min-width: 0; display: grid; color: #fff }
+.pl-title b, .pl-title small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.playerbar[hidden] { display: none }
+.playerbar svg { width: 16px; height: 16px }
+body { padding-bottom: 80px }
+
+/* 2. 전국 무대: 대한민국 지도 + 지역 도장 */
+.kmap { width: 100%; max-width: 440px; display: block; margin: 0 auto }
+.kmap .land { fill: var(--c3-soft); stroke: var(--c3); stroke-width: 3; stroke-linejoin: round }
+.kmap .stampc { stroke: #fff; stroke-width: 2.5 }
+.kmap text { font-family: var(--body); font-weight: 700; text-anchor: middle; fill: #fff; paint-order: stroke; }
+.kmap .rname { font-size: 11px; fill: var(--ink); stroke: var(--paper); stroke-width: 3 }
+.kmap .rnum { font-size: 11px; stroke: none }
+.kmap .kung { font-family: var(--display); font-size: 20px; fill: var(--c1); stroke: var(--paper); stroke-width: 4; font-weight: 400 }
+
+/* 3. 차트: 1~3위 단상 */
+.podium { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); align-items: end; gap: 8px; padding: 6px 4px 0 }
+.pod { display: grid; justify-items: center; gap: 6px; text-align: center; min-width: 0 }
+.pod b { font-family: var(--display); font-weight: 400; font-size: 15px; line-height: 1.25; word-break: keep-all }
+.pod .block { width: 100%; border-radius: 14px 14px 6px 6px; display: grid; place-items: center; color: #fff; font-family: var(--display); font-size: 28px; box-shadow: inset 0 -6px 0 rgba(0,0,0,.12) }
+.pod.p1 .block { height: 110px; background: linear-gradient(#FFD45E, #F2B630) } .pod.p2 .block { height: 82px; background: linear-gradient(#C8D6E8, #9DB2CC) } .pod.p3 .block { height: 62px; background: linear-gradient(#F7B98A, #E8955B) }
+.pod svg { width: 40px; height: 40px }
+.pod small { color: var(--muted); font-size: 12px }
+
+/* 3. 우리 반: 칭찬 스티커판 + 탐험 지도 + 쿵 효과 */
+.stampbook { background: #FFF6DE repeating-linear-gradient(0deg, transparent 0 26px, rgba(214,180,120,.25) 26px 27px) !important; border: 3px dashed #E6C48A !important; position: relative }
+
+.stamp { border-radius: 50% !important; border: 2px dashed #E3C79A !important; color: #B9985E !important; background: rgba(255,255,255,.6) !important; font-size: 12px !important }
+.stamp.on { border: none !important; color: #fff !important; transform: rotate(-8deg); background: var(--c) !important;
+  clip-path: polygon(50% 0%,61% 12%,76% 6%,80% 22%,95% 25%,91% 40%,100% 50%,91% 60%,95% 75%,80% 78%,76% 94%,61% 88%,50% 100%,39% 88%,24% 94%,20% 78%,5% 75%,9% 60%,0% 50%,9% 40%,5% 25%,20% 22%,24% 6%,39% 12%) }
+.stamp.on b { color: #fff !important }
+.cell { position: relative; display: block; min-width: 0 }
+.kung-fx { position: absolute; left: -50%; top: -50%; width: 200%; height: 200%; pointer-events: none; overflow: visible; z-index: 2; animation: kungfx 1.4s ease-out forwards }
+@keyframes kungfx { 0% { opacity: 0 } 12% { opacity: 1 } 70% { opacity: 1 } 100% { opacity: 0 } }
+.kung-word { position: absolute; right: -6px; top: -10px; z-index: 3; pointer-events: none; animation: kungfade 1.4s ease-out forwards; font-family: var(--display); font-size: 26px; color: var(--c0); -webkit-text-stroke: 4px #fff; paint-order: stroke fill; transform: rotate(-10deg) }
+.quest-map { position: relative; padding-left: 8px }
+.quest-map .quest { position: relative; padding: 8px 0 8px 34px !important; grid-template-columns: minmax(0,1fr) auto !important }
+.quest-map .quest .ok { position: absolute; left: 0; top: 50%; margin-top: -12px; width: 24px !important; height: 24px !important; border-radius: 50% !important; border: 3px solid var(--line) !important; background: var(--paper) }
+.quest-map .quest.cleared .ok { background: var(--c3) !important; border-color: var(--c3) !important }
+.quest-map .quest:not(:last-child)::after { content: ""; position: absolute; left: 11px; top: 50%; height: 100%; border-left: 3px dashed var(--c1) }
+.quest-map .flag { position: absolute; left: -2px; top: -26px; font-family: var(--display); font-size: 13px; color: var(--c1) }
+.quest-map .goal { font-family: var(--display); color: var(--c0); padding-left: 34px; margin-top: 4px }
+
+/* 팁: 계절 테마 머리 그림 */
+.season-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0 }
+
+@keyframes kungfade { 0% { opacity: 0; transform: scale(.6) rotate(-10deg) } 15% { opacity: 1; transform: scale(1.15) rotate(-10deg) } 70% { opacity: 1 } 100% { opacity: 0 } }
+.season-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0 }
+.scene.s-spring { background: linear-gradient(to bottom, #FDEAF1, var(--bg)) }
+.scene.s-summer { background: linear-gradient(to bottom, #D6F3FF, var(--bg)) }
+.scene.s-autumn { background: linear-gradient(to bottom, #FFF1DE, var(--bg)) }
+.scene.s-winter { background: linear-gradient(to bottom, #E8F0FA, var(--bg)) }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) .scene[class*="s-"] { background: linear-gradient(to bottom, var(--sky), var(--bg)) } :root:not([data-theme="light"]) .season-layer { opacity: .35 } }
+:root[data-theme="dark"] .scene[class*="s-"] { background: linear-gradient(to bottom, var(--sky), var(--bg)) } :root[data-theme="dark"] .season-layer { opacity: .35 }
+.toast { bottom: calc(86px + env(safe-area-inset-bottom,0px)) !important }
+.pod { all: unset; cursor: pointer; display: grid; justify-items: center; gap: 6px; text-align: center; min-width: 0 }
+.pod:focus-visible { outline: 3px dashed var(--accent); outline-offset: 3px; border-radius: 12px }
+@media (prefers-reduced-motion: reduce) { .lp, .playerbar .mini-lp, .cloud, .sparkle { animation: none !important } .kung-fx, .kung-word { animation-duration: .01s } }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) .stampbook { background: #3A3120 repeating-linear-gradient(0deg, transparent 0 26px, rgba(214,180,120,.12) 26px 27px) !important } }
+:root[data-theme="dark"] .stampbook { background: #3A3120 !important }
+
 </style>
 </head>
 <body style="margin:0">
@@ -339,6 +463,7 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
 const APP = { version: '0.4', q: {}, live: false, shellUrl: '', collector: '', token: '', relay: { id: '예시 릴레이', song: 3 }, busy: false };
 new URLSearchParams(location.search).forEach(function (v, k) { APP.q[k] = v; });
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d } catch (e) { return d } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch (e) {} }, del(k) { try { localStorage.removeItem(k) } catch (e) {} } };
+function soundOn() { return store.get("dys-sound", true); }
 (function () {
   let s = APP.q.s || '';
   if (s) store.set('dys_shell', s); else s = store.get('dys_shell', '');
@@ -712,10 +837,10 @@ function renderMine(v) {
         <div class="level"><b>${cur[1]}</b><span class="meta">도장 ${ME.stamps.size}개${next ? ` · ${next[0] - ME.stamps.size}개 더 모으면 ${next[1]}` : " · 최고 단계"}</span></div>
         <div class="prog"><span style="width:${pct}%"></span></div>
       </div>
-      <h2>노래 도장판</h2><p class="sub">반이 함께 부른 곡에 도장을 찍어요. 다시 누르면 지워져요.</p>
-      <div class="stampbook">${SONGS.map(s => `<button class="stamp${ME.stamps.has(s.id) ? " on" : ""}" style="--c:var(--c${s.id % 6})" data-stamp="${s.id}" aria-pressed="${ME.stamps.has(s.id)}">${ME.stamps.has(s.id) ? `<b>${esc(s.title)}</b>불렀어요` : esc(s.title)}</button>`).join("")}</div>
+      <h2>칭찬 스티커판</h2><p class="sub">반이 함께 부른 곡에 스티커를 붙여요. 다시 누르면 떼어져요. <button class="more" data-sound>효과음 ${soundOn() ? "끄기" : "켜기"}</button></p>
+      <div class="stampbook">${SONGS.map(s => `<span class="cell"><button class="stamp${ME.stamps.has(s.id) ? " on" : ""}" style="--c:var(--c${s.id % 6})" data-stamp="${s.id}" aria-pressed="${ME.stamps.has(s.id)}">${ME.stamps.has(s.id) ? `<b>${esc(s.title)}</b>불렀어요` : esc(s.title)}</button></span>`).join("")}</div>
       </div><div class="col">
-      <h2>도전 과제</h2>
+      <h2>노래 탐험 지도</h2>
       <div class="card">${quests().map(q => `<div class="quest${q.have >= q.need ? " cleared" : ""}"><span class="ok"></span><span>${esc(q.name)}</span><span class="meta num">${q.have}/${q.need}</span></div>`).join("")}</div>
       ${mineLyrics ? `<h2>우리 반이 올린 가사</h2><div class="card">${mineLyrics}</div>` : ""}
       ${APP.live && APP.token ? `<h2>선생님 메뉴</h2><div class="card">
@@ -1032,6 +1157,145 @@ document.addEventListener("click", e => {
   render();
 })();
 
+
+</script>
+<script>
+/* ---------- 꾸밈: LP 턴테이블, 대한민국 지도, 단상, 칭찬 스티커 쿵, 탐험 지도, 계절 하늘, 메뉴 아이콘, 아래 플레이어 ---------- */
+(function () {
+  const COLORS = ["#F0645A", "#F7953E", "#4FB36A", "#4A8FE0", "#9A7AD6"];
+  const ICON = {
+    today: '<path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="2.6" fill="currentColor"/><circle cx="16.5" cy="16" r="2.6" fill="currentColor"/>',
+    songs: '<circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15 15l5 5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>',
+    stage: '<path d="M12 21s-6-6.2-6-11a6 6 0 0 1 12 0c0 4.8-6 11-6 11z" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="10" r="2.2" fill="currentColor"/>',
+    chart: '<path d="M7 4h10v4a5 5 0 0 1-10 0z" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 13v4M8 20h8M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+    mine: '<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>'
+  };
+  const leaf = (x, y, r, c) => `<path transform="translate(${x} ${y}) rotate(${r})" d="M0 -9 C7 -6 8 4 0 9 C-8 4 -7 -6 0 -9z M0 -9 V9" fill="${c}" stroke="${c}" stroke-width="1"/>`;
+  const petal = (x, y, r) => `<g transform="translate(${x} ${y}) rotate(${r})"><path d="M0 0 C-5 -6 -4 -12 0 -10 C4 -12 5 -6 0 0z" fill="#F9B4C8"/></g>`;
+  const flake = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><path d="M0 -8V8M-7 -4l14 8M-7 4l14 -8"/></g>`;
+  const SEASON = {
+    spring: [petal(60, 30, 20), petal(180, 60, -30), petal(320, 24, 50), petal(520, 70, 10), petal(700, 34, -40), petal(860, 64, 30), petal(980, 22, 0), petal(1120, 54, -20), petal(250, 100, 60), petal(620, 110, -10)].join(""),
+    summer: `<path d="M0 118 Q60 104 120 118 T240 118 T360 118 T480 118 T600 118 T720 118 T840 118 T960 118 T1080 118 T1200 118 V160 H0Z" fill="#7CCBEA" opacity=".55"/><path d="M0 130 Q60 118 120 130 T240 130 T360 130 T480 130 T600 130 T720 130 T840 130 T960 130 T1080 130 T1200 130 V160 H0Z" fill="#4BB4E0" opacity=".45"/>`,
+    autumn: [leaf(70, 26, 20, "#F7953E"), leaf(210, 70, -40, "#F0645A"), leaf(380, 30, 60, "#F2C230"), leaf(560, 80, 10, "#F7953E"), leaf(760, 28, -20, "#F0645A"), leaf(930, 70, 40, "#F2C230"), leaf(1080, 30, -60, "#F7953E"), leaf(300, 112, 30, "#E8955B"), leaf(660, 120, -30, "#F0645A")].join(""),
+    winter: [flake(60, 30, 1), flake(170, 80, .7), flake(300, 26, .9), flake(450, 70, 1.1), flake(600, 30, .8), flake(760, 84, 1), flake(900, 24, .7), flake(1040, 66, 1), flake(1180, 30, .8), flake(520, 116, .7), flake(240, 120, .9)].join("")
+  };
+  const seasonKey = () => { const m = new Date().getMonth(); return m <= 1 || m === 11 ? "winter" : m <= 4 ? "spring" : m <= 7 ? "summer" : "autumn"; };
+
+  /* 아래 플레이어: 지금 고른 곡 (오늘의 동요부터 시작, 곡을 열면 그 곡으로) */
+  const PLAYER = { id: 0 };
+  function playerSong() { return songById(PLAYER.id) || pickToday().song; }
+  function renderPlayer() {
+    let bar = document.querySelector(".playerbar");
+    if (!bar) { document.body.insertAdjacentHTML("beforeend", '<div class="playerbar" role="region" aria-label="노래 플레이어"></div>'); bar = document.querySelector(".playerbar"); }
+    const s = playerSong(); if (!s) { bar.hidden = true; return; }
+    bar.hidden = false;
+    const play = s.video
+      ? `<a class="main" href="${esc(s.video)}" target="_blank" rel="noopener" aria-label="영상으로 듣기"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="#2B3A55"/></svg></a>`
+      : `<button class="main" data-pl="novideo" aria-label="듣기"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="#2B3A55"/></svg></button>`;
+    bar.innerHTML = `<span class="mini-lp" aria-hidden="true"></span>
+      <button class="pl-title" data-open="${s.id}"><b>${esc(s.title)}</b><small>${s.video ? "누르면 가사, 가운데 버튼은 영상" : "누르면 가사와 수업 활용"}</small></button>
+      <span class="pb"><button data-pl="prev" aria-label="이전 곡"><svg viewBox="0 0 16 16"><path d="M3 3h2v10H3zM14 3v10L6 8z" fill="#fff"/></svg></button>${play}<button data-pl="next" aria-label="다음 곡"><svg viewBox="0 0 16 16"><path d="M11 3h2v10h-2zM2 3v10l8-5z" fill="#fff"/></svg></button></span>`;
+  }
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-pl]"); if (!b) return;
+    const s = playerSong(), i = Math.max(0, SONGS.findIndex(x => x.id === s.id));
+    if (b.dataset.pl === "prev") { PLAYER.id = SONGS[(i - 1 + SONGS.length) % SONGS.length].id; renderPlayer(); }
+    if (b.dataset.pl === "next") { PLAYER.id = SONGS[(i + 1) % SONGS.length].id; renderPlayer(); }
+    if (b.dataset.pl === "novideo") { toast("아직 영상이 없는 곡이에요. 가사를 열어 드릴게요"); openSong(s.id); }
+  });
+  const origOpen = window.openSong;
+  window.openSong = function (id) { PLAYER.id = id; origOpen(id); renderPlayer(); };
+
+  /* 쿵! 소리 */
+  function thump() {
+    if (!soundOn()) return;
+    try {
+      const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+      const ac = thump.ac || (thump.ac = new C()), t = ac.currentTime;
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(48, t + .22);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.9, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .3);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + .32);
+      const o2 = ac.createOscillator(), g2 = ac.createGain();
+      o2.type = "triangle"; o2.frequency.setValueAtTime(880, t + .08); o2.frequency.setValueAtTime(1175, t + .16);
+      g2.gain.setValueAtTime(.0001, t + .08); g2.gain.exponentialRampToValueAtTime(.18, t + .1); g2.gain.exponentialRampToValueAtTime(.0001, t + .4);
+      o2.connect(g2).connect(ac.destination); o2.start(t + .08); o2.stop(t + .42);
+    } catch (e) {}
+  }
+  let kungId = 0;
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-sound]");
+    if (b) { store.set("dys-sound", !soundOn()); toast(soundOn() ? "효과음을 켰어요" : "효과음을 껐어요"); render(); return; }
+    const st = e.target.closest("[data-stamp]");
+    if (!st || APP.busy) return;
+    if (APP.live && (!APP.token || !ME.configured)) return;
+    const id = +st.dataset.stamp;
+    if (!ME.stamps.has(id)) { kungId = id; thump(); setTimeout(() => { kungId = 0; }, 1600); }
+  }, true);
+
+  /* 대한민국 지도 (그림 지도) */
+  const P = (lon, lat) => [(lon - 125.6) * 100, (38.75 - lat) * 116];
+  const OUTLINE = [[126.1,37.75],[126.7,37.95],[127.2,38.3],[128.3,38.62],[128.65,38.3],[129.3,37.1],[129.45,36.0],[129.35,35.45],[129.05,35.08],[128.5,34.86],[127.8,34.7],[127.4,34.52],[126.6,34.32],[126.25,34.6],[126.4,35.1],[126.48,35.6],[126.7,36.0],[126.5,36.5],[126.15,36.8],[126.65,37.2],[126.6,37.5]];
+  const CENTER = { 서울:[126.98,37.6], 인천:[126.45,37.42], 경기:[127.45,37.82], 강원:[128.35,37.75], 충북:[127.85,36.88], 충남:[126.8,36.55], 세종:[127.18,36.68], 대전:[127.48,36.3],
+    전북:[127.1,35.78], 광주:[126.78,35.18], 전남:[126.95,34.72], 경북:[128.8,36.35], 대구:[128.55,35.86], 울산:[129.25,35.6], 부산:[129.02,35.15], 경남:[128.15,35.28], 제주:[126.55,33.4] };
+  function koreaMap() {
+    const sc = NAT.regions, max = Math.max(1, ...Object.values(sc).map(x => x.stamps));
+    const d = "M" + OUTLINE.map(p => P(...p).map(v => v.toFixed(1)).join(" ")).join(" L") + " Z";
+    const [jx, jy] = P(126.55, 33.38);
+    let marks = "", mine = "";
+    Object.entries(CENTER).forEach(([r, ll], i) => {
+      const [x, y] = P(...ll), n = sc[r] ? sc[r].stamps : 0, rad = 9 + Math.sqrt(n / max) * 13;
+      marks += `<g><circle class="stampc" cx="${x}" cy="${y}" r="${rad}" fill="${COLORS[i % 5]}" opacity="${n ? .92 : .35}"/><text class="rnum" x="${x}" y="${y + 4}">${n}</text><text class="rname" x="${x}" y="${y + rad + 12}">${r}</text></g>`;
+      if (r === ME.region) mine = `<circle cx="${x}" cy="${y}" r="${rad + 6}" fill="none" stroke="#F7953E" stroke-width="3" stroke-dasharray="4 3"/><text class="kung" x="${x + rad + 20}" y="${y - rad}">쿵!</text>`;
+    });
+    return `<svg class="kmap" viewBox="0 0 420 640" role="img" aria-label="시도별 도장 수 지도">
+      <path class="land" d="${d}"/><ellipse class="land" cx="${jx}" cy="${jy}" rx="34" ry="15"/>${marks}${mine}</svg>`;
+  }
+
+  function enhance() {
+    document.querySelectorAll("#tabs button").forEach(b => { if (!b.querySelector(".navi")) b.insertAdjacentHTML("afterbegin", `<svg class="navi" viewBox="0 0 24 24" aria-hidden="true">${ICON[b.dataset.tab] || ""}</svg>`); });
+    const scene = document.querySelector(".scene");
+    if (scene && !scene.querySelector(".season-layer")) {
+      const k = seasonKey(); scene.classList.add("s-" + k);
+      scene.insertAdjacentHTML("afterbegin", `<svg class="season-layer" viewBox="0 0 1200 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${SEASON[k]}</svg>`);
+    }
+    const today = document.querySelector(".today");
+    if (today && !today.querySelector(".turntable")) {
+      const t = today.querySelector("h3") ? today.querySelector("h3").textContent : "";
+      today.insertAdjacentHTML("afterbegin", `<div class="turntable" aria-hidden="true"><div class="lp"><span class="lp-label">${esc(t)}</span></div><div class="arm"></div></div>`);
+    }
+    const tm = document.querySelector(".tilemap");
+    if (tm) { tm.outerHTML = koreaMap(); const lg = document.querySelector(".legend"); if (lg) lg.textContent = "동그라미가 클수록 도장이 많아요 · 쿵! 찍힌 곳이 우리 지역"; }
+    const tops = document.querySelector(".tops");
+    if (tops) {
+      const sung = chartMode === "sung", val = s => sung ? classesSung(s.id) : votesFor(s.id);
+      const list = SONGS.slice().sort((a, b) => val(b) - val(a)).slice(0, 3);
+      const trophy = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0z" fill="#F2C230" stroke="#B07A2A" stroke-width="1.4"/><path d="M12 13v4M8 20h8" stroke="#B07A2A" stroke-width="2" stroke-linecap="round"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3" fill="none" stroke="#B07A2A" stroke-width="1.6"/></svg>';
+      const pod = (s, k) => s ? `<button class="pod p${k}" data-open="${s.id}">${k === 1 ? trophy : ""}<b>${esc(s.title)}</b><small>${sung ? val(s) + "개 반" : val(s) + "표"}</small><span class="block">${k}</span></button>` : "<span></span>";
+      tops.outerHTML = `<div class="card"><span class="eyebrow">${sung ? "가장 많이 불린 노래" : MONTH_LABEL() + " 투표 단상"}</span><div class="podium">${pod(list[1], 2)}${pod(list[0], 1)}${pod(list[2], 3)}</div></div>`;
+    }
+    if (kungId) {
+      const on = document.querySelector(`.stampbook .stamp.on[data-stamp="${kungId}"]`);
+      if (on && on.parentElement.classList.contains("cell") && !on.parentElement.querySelector(".kung-fx")) {
+        let rays = "";
+        for (let i = 0; i < 10; i++) {
+          const a = i * 36 * Math.PI / 180;
+          rays += `<path d="M${Math.cos(a) * 58} ${Math.sin(a) * 58} L${Math.cos(a) * 80} ${Math.sin(a) * 80}" stroke="${COLORS[i % 5]}" stroke-width="5" stroke-linecap="round"/><circle cx="${Math.cos(a + .3) * 72}" cy="${Math.sin(a + .3) * 72}" r="3.5" fill="${COLORS[(i + 2) % 5]}"/>`;
+        }
+        on.parentElement.insertAdjacentHTML("beforeend", `<svg class="kung-fx" viewBox="-100 -100 200 200" aria-hidden="true">${rays}</svg><span class="kung-word">쿵!</span>`);
+      }
+    }
+    document.querySelectorAll("h2").forEach(h => {
+      if (h.textContent.trim() !== "노래 탐험 지도") return;
+      const card = h.nextElementSibling;
+      if (card && card.classList.contains("card") && !card.classList.contains("quest-map")) { card.classList.add("quest-map"); card.insertAdjacentHTML("beforeend", '<div class="goal">도착! 동요샘 명예반</div>'); }
+    });
+    renderPlayer();
+  }
+  const orig = window.render;
+  window.render = function () { orig.apply(this, arguments); try { enhance(); } catch (e) { console.error(e); } };
+  window.render();
+})();
 
 </script>
 </body>
