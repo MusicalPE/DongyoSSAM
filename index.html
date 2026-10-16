@@ -1637,7 +1637,7 @@ function renderOp(v) {
       : `<div class="empty">아직 남은 기록이 없어요</div>`;
   }
   v.innerHTML = `<section data-opzone class="opwrap">
-    <div class="op-top"><span class="eyebrow">동요샘 운영진 메뉴</span><span class="meta">${esc(d.me || OP.name || "운영진")} 운영진${OP.demo ? " · 체험 모드라 바꾼 내용은 이 화면에서만 보여요" : ""}</span></div>
+    <div class="op-top"><span class="eyebrow">동요샘 운영진 메뉴</span><span class="meta">${esc(d.me || OP.name || "운영진")}${/운영진$/.test(d.me || OP.name || "운영진") ? "" : " 운영진"}${OP.demo ? " · 체험 모드라 바꾼 내용은 이 화면에서만 보여요" : ""}</span></div>
     <div class="admin-layout">
       <div class="admin-nav" role="navigation" aria-label="운영진 메뉴">
         ${OP_SUBS.map(([k, n]) => `<button type="button" data-opsub="${k}" class="${OP.sub === k ? "on" : ""}" aria-current="${OP.sub === k ? "page" : "false"}"><span class="ico"></span>${n}${badge[k] ? `<span class="cnt">${badge[k]}</span>` : ""}${k === "today" && !store.get("dys-seen-today", false) ? `<span class="new-dot">NEW</span>` : ""}</button>`).join("")}
@@ -1700,7 +1700,7 @@ async function opLogin() {
   if (!pw || !pw.value) { toast("운영진 비밀번호를 적어 주세요"); return; }
   try { const r = await opPost("opLogin", [pw.value, name]);
     if (!r.ok) { toast(r.message); return; }
-    OP.token = r.token; OP.name = r.name || name; store.set("dys_op", r.token); store.set("dys-opname", OP.name); OP.data = null; toast(`${OP.name} 운영진, 어서 오세요`); render(); opEnsure();
+    OP.token = r.token; OP.name = r.name || name; store.set("dys_op", r.token); store.set("dys-opname", OP.name); OP.data = null; toast(`${OP.name}${/운영진$/.test(OP.name) ? "" : " 운영진"}, 어서 오세요`); render(); opEnsure();
   } catch (e) { toast(e.message); }
 }
 /* CSV 내려받기 (엑셀에서 한글이 깨지지 않게 BOM을 붙여요) */
