@@ -562,7 +562,18 @@ body.kara-on{overflow:hidden}
 .check.consent{align-items:flex-start;background:var(--c2-soft);border-radius:12px;padding:10px 12px}
 .check.consent input{margin-top:4px}
 .op-login{max-width:620px}
-body.op-on .playerbar{display:none!important}
+body.op-on .playerbar,body.op-on .mini-video{display:none!important}
+.playerbar .mini-lp{animation-play-state:paused}
+.playerbar.playing .mini-lp{animation-play-state:running}
+.mini-video{position:fixed;z-index:16;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:min(360px,calc(100vw - 32px));background:#2B3A55;border:3px solid #2B3A55;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(20,30,60,.35)}
+.mini-video.big{width:min(760px,calc(100vw - 32px))}
+.mv-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 6px 6px 12px;color:#fff}
+.mv-head b{font-family:var(--display);font-weight:400;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mv-head span{display:flex;gap:4px;flex:none}
+.mv-head button{font:700 13px var(--body);color:#fff;background:rgba(255,255,255,.16);border:0;border-radius:999px;padding:5px 11px;cursor:pointer}
+.mv-frame{position:relative;aspect-ratio:16/9;background:#000}
+.mv-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+@media (max-width:600px){.mini-video{left:16px;right:16px;width:auto}.mini-video.big{width:auto}}
 /* 오늘의 동요 달력 */
 .cal-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .cal-head b{font-family:var(--display);font-weight:400;font-size:24px;white-space:nowrap}
@@ -1116,7 +1127,19 @@ function ytId(u) {
   const m = /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/))([A-Za-z0-9_-]{11})/.exec(String(u || ""));
   return m ? m[1] : "";
 }
-function videoBox(s) { const y = ytId(s.video); return y ? `<div class="vbox"><iframe src="https://www.youtube-nocookie.com/embed/${y}?rel=0&autoplay=1&playsinline=1" title="${esc(s.title)} 영상" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>` : ""; }
+/* 구글 드라이브 파일 주소에서 파일 번호 꺼내기 (노래 mp3·영상 mp4) */
+function driveId(u) {
+  const m = /drive\.google\.com\/(?:file\/d\/|open\?(?:.*&)?id=|uc\?(?:.*&)?id=)([A-Za-z0-9_-]{20,})/.exec(String(u || ""));
+  return m ? m[1] : "";
+}
+/* 화면 안에서 틀 수 있는 주소로 바꾸기: 유튜브, 구글 드라이브 */
+function embedSrc(u) {
+  const y = ytId(u); if (y) return `https://www.youtube-nocookie.com/embed/${y}?rel=0&autoplay=1&playsinline=1`;
+  const d = driveId(u); if (d) return `https://drive.google.com/file/d/${d}/preview`;
+  return "";
+}
+function videoBox(s) {
+  if (document.querySelector(".mini-video")) { const c = document.querySelector('.mini-video [data-mv="close"]'); if (c) c.click(); } const y = embedSrc(s.video); return y ? `<div class="vbox"><iframe src="${y}" title="${esc(s.title)} 영상" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>` : ""; }
 function openSong(id, o) {
   const s = songById(id); if (!s) return;
   const vs = variantsFor(id), on = myVoteSong() === id;
@@ -1142,7 +1165,7 @@ function openSong(id, o) {
       ${stampBtn(id)}
       <button class="btn ghost" data-vote="${id}">${on ? "이달의 노래로 투표함" : "이달의 노래로 투표"}</button>
       <button class="btn ghost" data-karaoke="${id}">노래방 화면</button>
-      ${ytId(s.video) ? `<button class="btn ghost" data-video="${id}">${vidOpen ? "영상 닫기" : "영상 보기"}</button>` : s.video ? `<a class="btn ghost" href="${esc(s.video)}" target="_blank" rel="noopener">영상 보기</a>` : `<button class="btn ghost" disabled>영상 준비 중</button>`}
+      ${embedSrc(s.video) ? `<button class="btn ghost" data-video="${id}">${vidOpen ? "영상 닫기" : "영상 보기"}</button>` : s.video ? `<a class="btn ghost" href="${esc(s.video)}" target="_blank" rel="noopener">영상 보기</a>` : `<button class="btn ghost" disabled>영상 준비 중</button>`}
       ${s.score ? `<a class="btn ghost" href="${esc(s.score)}" target="_blank" rel="noopener">악보 보기</a>` : `<button class="btn ghost" disabled>악보 준비 중</button>`}
     </div>
     <h4>우리 반 가사 바꾸기</h4>
@@ -1271,7 +1294,7 @@ document.addEventListener("click", e => {
   if (d.open) { openSong(+d.open); return; }
   if (d.chart) { chartMode = d.chart; render(); return; }
   if (d.period) { PERIOD = d.period; store.set("dys-period", PERIOD); render(); return; }
-  if (t.closest("[data-opzone]")) return;
+  if (t.closest("[data-opzone], .playerbar, .mini-video")) return;
   if (d.karaoke) { openKaraoke(+d.karaoke); return; }
   if (d.video) { const h = $("#vHost"), s = songById(+d.video); if (!h || !s) return; const open = !h.innerHTML.trim(); h.innerHTML = open ? videoBox(s) : ""; t.textContent = open ? "영상 닫기" : "영상 보기"; if (open) h.scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
   if (t.hasAttribute("data-login")) { doLogin(); return; }
@@ -1477,7 +1500,7 @@ function renderOp(v) {
         <div class="btns">${OP.confirmEx ? `<button class="btn" data-opclearex>예, 예시 곡 ${ex.length}개 모두 지우기</button><button class="btn ghost" data-opconfirm="">그만두기</button>` : `<button class="btn ghost" data-opconfirm="ex">예시 곡 모두 지우기</button>`}</div></div>` : ""}
       <div class="btns"><button class="btn" data-opedit="0">새 곡 올리기</button></div>
       <div class="list">${list.map(s => `<div class="oprow${s.hidden ? " off" : ""}"><span class="key" style="--c:var(--c${s.id % 6});--cs:var(--c${s.id % 6}-soft)">${s.id}</span>
-        <span class="min"><b>${esc(s.title)}${s.consent ? "" : ` <span class="badge warn">동의 확인 필요</span>`}</b><small class="meta">${esc(s.concert || "발표회 미정")}${s.year ? " · " + esc(s.year) : ""}${s.hidden ? " · 숨김" : ""}${s.video ? (ytId(s.video) ? " · 영상(바로 재생)" : " · 영상") : ""}${s.score ? " · 악보" : ""}</small></span>
+        <span class="min"><b>${esc(s.title)}${s.consent ? "" : ` <span class="badge warn">동의 확인 필요</span>`}</b><small class="meta">${esc(s.concert || "발표회 미정")}${s.year ? " · " + esc(s.year) : ""}${s.hidden ? " · 숨김" : ""}${s.video ? (embedSrc(s.video) ? " · 영상(바로 재생)" : " · 영상") : ""}${s.score ? " · 악보" : ""}</small></span>
         <span class="btns del-zone"><button class="vote" data-opedit="${s.id}">고치기</button><button class="vote" data-opdelask="${s.id}">지우기</button><button class="vote danger" data-opdel="${s.id}" hidden>정말 지우기</button></span></div>`).join("")}</div>`;
   }
   if (OP.sub === "today") {
@@ -1607,7 +1630,7 @@ function openSongEditor(id) {
     <label class="fld"><span class="label">가사 (줄 바꿔 적기, 노래방 화면에서 한 줄씩 보여요)</span><textarea id="f_lyrics" rows="6">${esc(s.lyrics)}</textarea></label>
     <label class="fld"><span class="label">곡 소개</span><textarea id="f_intro" rows="3" class="plain">${esc(s.intro)}</textarea></label>
     <label class="fld"><span class="label">수업 활용</span><textarea id="f_tip" rows="3" class="plain">${esc(s.tip)}</textarea></label>
-    ${f("f_video", "영상 주소 (유튜브 주소면 화면 안에서 바로 재생돼요)", s.video, "https://youtu.be/…")}
+    ${f("f_video", "영상·노래 주소 (유튜브 주소나 구글 드라이브 공유 주소면 화면 안에서 바로 재생돼요)", s.video, "https://youtu.be/…")}
     ${f("f_score", "악보 주소 (https://로 시작)", s.score, "https://drive.google.com/…")}
     <label class="check"><input type="checkbox" id="f_hidden"${s.hidden ? " checked" : ""}> 화면에서 숨기기</label>
     <label class="check consent"><input type="checkbox" id="f_consent"${s.consent ? " checked" : ""}> 작사·작곡 선생님께 노래상자에 가사·영상·악보를 공개해도 된다는 동의를 받았어요 <small class="meta">(꼭 확인해야 저장돼요)</small></label>
@@ -1760,28 +1783,50 @@ document.addEventListener("change", e => {
   const seasonKey = () => { const m = new Date().getMonth(); return m <= 1 || m === 11 ? "winter" : m <= 4 ? "spring" : m <= 7 ? "summer" : "autumn"; };
 
   /* 아래 플레이어: 지금 고른 곡 (오늘의 동요부터 시작, 곡을 열면 그 곡으로) */
-  const PLAYER = { id: 0 };
+  const PLAYER = { id: 0, playing: 0 };
+  /* 작은 영상 창: 플레이어 막대 위에 떠서 다른 메뉴로 가도 계속 재생 */
+  function miniPlay(s) {
+    let box = document.querySelector(".mini-video");
+    const y = s && embedSrc(s.video);
+    if (!y) { if (box) box.remove(); PLAYER.playing = 0; renderPlayer(); return; }
+    if (!box) { document.body.insertAdjacentHTML("beforeend", '<div class="mini-video" role="region" aria-label="영상 재생"></div>'); box = document.querySelector(".mini-video"); }
+    PLAYER.playing = s.id;
+    box.innerHTML = `<div class="mv-head"><b>${esc(s.title)}</b><span><button data-mv="big" aria-label="크게 보기">크게</button><button data-mv="close" aria-label="영상 닫기">닫기</button></span></div>
+      <div class="mv-frame"><iframe src="${y}" title="${esc(s.title)} 영상" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+    renderPlayer();
+  }
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-mv]"); if (!b) return;
+    e.stopPropagation();
+    const box = document.querySelector(".mini-video");
+    if (b.dataset.mv === "close") miniPlay(null);
+    if (b.dataset.mv === "big" && box) { box.classList.toggle("big"); b.textContent = box.classList.contains("big") ? "작게" : "크게"; }
+  }, true);
   function playerSong() { return songById(PLAYER.id) || pickToday().song; }
   function renderPlayer() {
     let bar = document.querySelector(".playerbar");
     if (!bar) { document.body.insertAdjacentHTML("beforeend", '<div class="playerbar" role="region" aria-label="노래 플레이어"></div>'); bar = document.querySelector(".playerbar"); }
     const s = playerSong(); if (!s) { bar.hidden = true; return; }
     bar.hidden = false;
-    const play = ytId(s.video)
-      ? `<button class="main" data-pl="video" aria-label="영상 재생"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="#2B3A55"/></svg></button>`
+    const on = PLAYER.playing === s.id;
+    bar.classList.toggle("playing", !!PLAYER.playing);
+    const play = embedSrc(s.video)
+      ? `<button class="main" data-pl="${on ? "stop" : "video"}" aria-label="${on ? "영상 멈추기" : "영상 재생"}"><svg viewBox="0 0 16 16">${on ? '<path d="M4 3h3v10H4zM9 3h3v10H9z" fill="#2B3A55"/>' : '<path d="M4 2l10 6-10 6z" fill="#2B3A55"/>'}</svg></button>`
       : s.video
       ? `<a class="main" href="${esc(s.video)}" target="_blank" rel="noopener" aria-label="영상으로 듣기"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="#2B3A55"/></svg></a>`
       : `<button class="main" data-pl="novideo" aria-label="듣기"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z" fill="#2B3A55"/></svg></button>`;
     bar.innerHTML = `<span class="mini-lp" aria-hidden="true"></span>
-      <button class="pl-title" data-open="${s.id}"><b>${esc(s.title)}</b><small>${s.video ? "누르면 가사, 가운데 버튼은 영상" : "누르면 가사와 수업 활용"}</small></button>
+      <button class="pl-title" data-open="${s.id}"><b>${esc(s.title)}</b><small>${on ? "영상 재생 중 · 누르면 가사" : s.video ? "누르면 가사, 가운데 버튼은 영상" : "누르면 가사와 수업 활용"}</small></button>
       <span class="pb"><button data-pl="prev" aria-label="이전 곡"><svg viewBox="0 0 16 16"><path d="M3 3h2v10H3zM14 3v10L6 8z" fill="#fff"/></svg></button>${play}<button data-pl="next" aria-label="다음 곡"><svg viewBox="0 0 16 16"><path d="M11 3h2v10h-2zM2 3v10l8-5z" fill="#fff"/></svg></button></span>`;
   }
   document.addEventListener("click", e => {
     const b = e.target.closest("[data-pl]"); if (!b) return;
     const s = playerSong(), i = Math.max(0, SONGS.findIndex(x => x.id === s.id));
-    if (b.dataset.pl === "prev") { PLAYER.id = SONGS[(i - 1 + SONGS.length) % SONGS.length].id; renderPlayer(); }
-    if (b.dataset.pl === "next") { PLAYER.id = SONGS[(i + 1) % SONGS.length].id; renderPlayer(); }
-    if (b.dataset.pl === "video") { openSong(s.id, { video: true }); return; }
+    const go = d => { PLAYER.id = SONGS[(i + d + SONGS.length) % SONGS.length].id; if (PLAYER.playing) { const n = songById(PLAYER.id); if (embedSrc(n.video)) { miniPlay(n); return; } } renderPlayer(); };
+    if (b.dataset.pl === "prev") go(-1);
+    if (b.dataset.pl === "next") go(1);
+    if (b.dataset.pl === "video") { miniPlay(s); return; }
+    if (b.dataset.pl === "stop") { miniPlay(null); return; }
     if (b.dataset.pl === "novideo") { toast("아직 영상이 없는 곡이에요. 가사를 열어 드릴게요"); openSong(s.id); }
   });
   const origOpen = window.openSong;
