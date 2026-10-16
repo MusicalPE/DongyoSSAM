@@ -16,7 +16,10 @@
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#DDF0FF">
-<link rel="icon" href="img/logo.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="노래상자">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -622,6 +625,23 @@ body.kara-on .mini-video{z-index:41;top:max(56px,env(safe-area-inset-top));botto
 .op-save{position:static;bottom:12px;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:10px 14px;font-weight:700;color:var(--muted)}
 .op-save.dirty{position:sticky;border-color:var(--c1);background:var(--c1-soft);color:var(--ink)}
 .op-save .btn[disabled]{opacity:.5;cursor:default}
+
+/* ===== 제목: 카톡 썸네일처럼 반듯한 색 글자 + 작은 설명 ===== */
+.scene .tbox{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.scene .h1t{-webkit-text-stroke:0!important;letter-spacing:0!important;line-height:1.05}
+.scene .h1t span{transform:none!important;text-shadow:3px 0 0 var(--paper),-3px 0 0 var(--paper),0 3px 0 var(--paper),0 -3px 0 var(--paper),2px 2px 0 var(--paper),-2px 2px 0 var(--paper),2px -2px 0 var(--paper),-2px -2px 0 var(--paper),0 5px 0 rgba(43,58,85,.18)!important}
+.scene .h1sub{font-family:var(--body);font-weight:700;font-size:13px;color:var(--ink);letter-spacing:-.01em;white-space:nowrap;text-shadow:0 0 6px var(--paper),0 0 2px var(--paper);margin-left:2px}
+@media (min-width:1000px){.scene .h1t{font-size:64px!important}.scene .h1sub{font-size:20px;margin-left:4px}.scene .tbox{gap:6px}}
+@media (max-width:480px){.scene .h1sub{font-size:12px}}
+/* 앱 아이콘 만들기 버튼 (제목 칸 오른쪽 아래) */
+.app-install{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:12px;z-index:2;display:inline-flex;align-items:center;gap:6px;font:700 13px var(--body);color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:5px 12px 5px 9px;cursor:pointer;box-shadow:0 3px 0 var(--shadow)}
+.app-install svg{width:16px;height:16px;color:var(--c4)}
+.app-install:hover{border-color:var(--c4)}
+.app-install[hidden]{display:none}
+@media (min-width:1000px){.app-install{right:28px;bottom:16px;font-size:15px;padding:7px 16px 7px 12px}.app-install svg{width:18px;height:18px}}
+@media (max-width:480px){.app-install span{display:none}.app-install{padding:6px;bottom:8px}}
+.install-steps{display:grid;gap:10px}
+.install-steps .card{gap:6px}
 </style>
 </head>
 <body style="margin:0">
@@ -653,7 +673,8 @@ body.kara-on .mini-video{z-index:41;top:max(56px,env(safe-area-inset-top));botto
     <g class="float f2" fill="var(--c5)"><ellipse cx="370" cy="96" rx="6" ry="4.5" transform="rotate(-20 370 96)"/><ellipse cx="388" cy="90" rx="6" ry="4.5" transform="rotate(-20 388 90)"/>
       <rect x="374.5" y="74" width="2.2" height="22"/><rect x="392.5" y="68" width="2.2" height="22"/><path d="M374.5 74l20-6v4l-20 6z"/></g>
   </svg>
-  <div class="title"><h1><button class="home" data-tab="today" title="첫 화면으로" aria-label="동요샘 노래상자 첫 화면으로"><img class="logo" src="img/logo.png" alt="동요샘" width="371" height="272"><span class="h1t"><span class="r0">노</span><span class="r1">래</span><span class="r2">상</span><span class="r3">자</span></span></button></h1></div>
+  <div class="title"><h1><button class="home" data-tab="today" title="첫 화면으로" aria-label="동요샘 노래상자 첫 화면으로"><img class="logo" src="img/logo.png" alt="동요샘" width="371" height="272"><span class="tbox"><span class="h1t"><span class="r0">노</span><span class="r1">래</span><span class="r2">상</span><span class="r3">자</span></span><span class="h1sub">선생님이 지은 동요를 함께 불러요</span></span></button></h1></div>
+  <button class="app-install" id="appInstall" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v7M9 11l3 3 3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>앱 아이콘 만들기</span></button>
   </div>
   <svg class="hills" viewBox="0 96 400 54" preserveAspectRatio="none" aria-hidden="true">
     <path d="M0 128 Q 80 98 170 122 T 400 116 V150 H0Z" fill="var(--hill1)"/>
@@ -1830,9 +1851,39 @@ document.addEventListener("change", e => {
     OP.draft[k].note = note; OP.dirty = true; render(); return; }
 });
 
+/* ---------- 앱 아이콘 만들기 (바탕화면·홈 화면에 설치) ---------- */
+const INSTALL = { ev: null };
+try { if ("serviceWorker" in navigator && location.protocol === "https:" && !/claude|usercontent/.test(location.hostname)) navigator.serviceWorker.register("sw.js"); } catch (e) {}
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); INSTALL.ev = e; installUI(); });
+window.addEventListener("appinstalled", () => { INSTALL.ev = null; const b = $("#appInstall"); if (b) b.hidden = true; toast("앱 아이콘을 만들었어요. 바탕화면이나 홈 화면에서 '노래상자'를 찾아 보세요"); });
+function installUI() {
+  const b = $("#appInstall"); if (!b) return;
+  const standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+  b.hidden = standalone || location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
+}
+function installHelp() {
+  const ua = navigator.userAgent || "", ios = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1), android = /Android/.test(ua);
+  const steps = ios ? [["사파리로 열기", "카카오톡 안에서 열었다면 오른쪽 아래 ··· 를 눌러 '사파리로 열기'를 먼저 해요."], ["공유 버튼 누르기", "사파리 아래쪽 가운데의 공유 버튼(네모에서 화살표가 위로 나온 모양)을 눌러요."], ["홈 화면에 추가", "목록을 내려 '홈 화면에 추가'를 누르고 오른쪽 위 '추가'를 누르면 '노래상자' 아이콘이 생겨요."]]
+    : android ? [["크롬으로 열기", "카카오톡 안에서 열었다면 오른쪽 위 ⋮ 를 눌러 '다른 브라우저로 열기'로 크롬에서 열어요."], ["메뉴 열기", "크롬 오른쪽 위 ⋮ 를 눌러요."], ["홈 화면에 추가", "'홈 화면에 추가' 또는 '앱 설치'를 누르면 '노래상자' 아이콘이 생겨요."]]
+    : [["크롬이나 엣지로 열기", "PC에서는 크롬이나 엣지 브라우저로 노래상자를 열어요."], ["설치 아이콘 누르기", "주소창 오른쪽 끝의 설치 아이콘(모니터에 화살표 모양)을 눌러요."], ["메뉴로 하기", "아이콘이 안 보이면 메뉴(⋮ 또는 ···) → '앱' 또는 '저장 및 공유' → '노래상자 설치'(바로가기 만들기)를 골라요."]];
+  $("#sheetHost").innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="앱 아이콘 만들기"><div class="in">
+    <button class="btn ghost close" data-close>닫기</button>
+    <h3>앱 아이콘 만들기</h3>
+    <p class="meta" style="margin:0">바탕화면이나 휴대폰 홈 화면에 '노래상자' 아이콘을 만들어 두면 앱처럼 바로 열 수 있어요.</p>
+    <div class="install-steps">${steps.map(([t, d], i) => `<div class="card"><span class="eyebrow">${i + 1}. ${t}</span><span>${d}</span></div>`).join("")}</div>
+  </div></div>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("#appInstall"); if (!b) return;
+  e.stopPropagation();
+  if (INSTALL.ev) { const ev = INSTALL.ev; ev.prompt(); (ev.userChoice || Promise.resolve({})).then(r => { if (r.outcome === "accepted") { INSTALL.ev = null; b.hidden = true; } }); return; }
+  installHelp();
+}, true);
+
 /* ---------- 시작 ---------- */
 (async function start() {
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
+  installUI();
   ME = demoMeLoad(); NAT = localNational(true);
   if (APP.q.demo !== undefined) APP.booting = false;
   render();
