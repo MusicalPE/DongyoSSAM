@@ -191,7 +191,7 @@ textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height
 .topcard.sung{background:var(--c3-soft);border-color:var(--c3)}
 .topcard .eyebrow{font-size:16px}
 .topcard b{font-family:var(--display);font-weight:400;font-size:20px;line-height:1.25;overflow-wrap:anywhere}
-.done-chip{font-family:var(--display);font-size:12.5px;line-height:1.3;text-align:center;width:64px;color:var(--leaf);border:2px solid var(--c3);background:var(--c3-soft);border-radius:12px;padding:3px 6px}
+.done-chip{font-family:var(--display);font-size:12.5px;line-height:1.3;text-align:center;white-space:nowrap;color:var(--leaf);border:2px solid var(--c3);background:var(--c3-soft);border-radius:12px;padding:3px 6px}
 </style>
 </head>
 <body style="margin:0">
@@ -525,7 +525,7 @@ function render() {
       <p class="sub" style="margin:0">${sung ? "반이 함께 부르고 도장을 찍은 곡을 셌어요. 지금까지 쌓인 기록이에요." : "반마다 한 달에 한 곡씩 투표할 수 있어요. 매달 1일에 새로 시작해요."}</p>
       <div class="list">${list.map((s, i) => { const on = mv === s.id;
         return `<div class="crow p${i + 1}"><span class="n">${i + 1}</span><span class="min"><b data-open="${s.id}">${esc(s.title)}</b><br><small class="meta">${sung ? classesSung(s.id) + "개 반" : votesFor(s.id) + "표"} · ${esc(s.lyric)}</small></span>
-        ${sung ? (ME.stamps.has(s.id) ? `<span class="done-chip">우리 반 불렀어요</span>` : `<button class="vote" data-open="${s.id}">들어 보기</button>`) : `<button class="vote${on ? " on" : ""}" data-vote="${s.id}">${on ? "투표함" : "투표"}</button>`}</div>` }).join("")}</div>
+        ${sung ? (ME.stamps.has(s.id) ? `<span class="done-chip">우리 반<br>불렀어요</span>` : `<button class="vote" data-open="${s.id}">들어 보기</button>`) : `<button class="vote${on ? " on" : ""}" data-vote="${s.id}">${on ? "투표함" : "투표"}</button>`}</div>` }).join("")}</div>
       ${sung ? "" : `<p class="meta">${mv ? "이번 달 투표를 했어요. 다른 곡을 누르면 투표가 옮겨져요." : "아직 이번 달 투표를 하지 않았어요."}</p>`}
     </section>`;
   }
