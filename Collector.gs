@@ -17,7 +17,7 @@
  * 시트에서 직접 고쳐도 됩니다. 고친 내용은 2분 안에 화면에 반영됩니다.
  *************************************************************/
 
-const SERVER_VERSION = 6;   // 6: 노래 파일(mp3)·악보 파일 올리기, 곡 종류(창작곡·편곡)·편곡자, 발표회 없는 개인 창작곡  5: 이번 달·학년도 집계, 로그인 유지, 알림 메일, 기록 내려받기, 공개 동의, 운영 기록  4: 곡 지우기·예시 곡 한꺼번에 지우기  3: 한 시트 방식 — 가입·승인·로그인, 계정 하나에 여러 반
+const SERVER_VERSION = 7;   // 7: 엑셀로 곡 한꺼번에 올리기  6: 노래 파일(mp3)·악보 파일 올리기, 곡 종류(창작곡·편곡)·편곡자, 발표회 없는 개인 창작곡  5: 이번 달·학년도 집계, 로그인 유지, 알림 메일, 기록 내려받기, 공개 동의, 운영 기록  4: 곡 지우기·예시 곡 한꺼번에 지우기  3: 한 시트 방식 — 가입·승인·로그인, 계정 하나에 여러 반
 const TZ_ = 'Asia/Seoul';
 const BOARD_CACHE_SEC = 120;
 const TOKEN_SEC = 21600;    // 로그인 6시간 (로그인 유지를 고르면 30일)
@@ -445,6 +445,32 @@ function opToday_(token, month, entries) {
     bust_(); return opData_(token);
   });
 }
+// 엑셀로 여러 곡 한꺼번에 올리기: 같은 제목이 이미 있으면 건너뜀, 잘못된 줄은 이유와 함께 알려 줌
+function opBulkSongs_(token, list) {
+  opNeed_(token);
+  if (!Array.isArray(list) || !list.length) throw new Error('올릴 곡이 없어요.');
+  if (list.length > 200) throw new Error('한 번에 200곡까지 올릴 수 있어요.');
+  return withLock_(function () {
+    const sh = sheet_(SH_SONGS), v = sh.getDataRange().getValues(), have = {};
+    let max = 0;
+    for (let i = 1; i < v.length; i++) { max = Math.max(max, num_(v[i][0])); have[String(v[i][1]).trim()] = 1; }
+    const rows = [], skipped = [];
+    list.forEach(function (s, k) {
+      const t = clean_(s && s.title, 40), at = (s && s.line) || (k + 1);
+      if (t && have[t]) { skipped.push(at + '번째 줄 「' + t + '」: 같은 제목이 이미 있어요'); return; }
+      try { rows.push(songData_(s, max + rows.length + 1)); have[t] = 1; }
+      catch (e) { skipped.push(at + '번째 줄' + (t ? ' 「' + t + '」' : '') + ': ' + e.message); }
+    });
+    if (rows.length) {
+      const start = sh.getLastRow() + 1;
+      sh.getRange(start, 1, rows.length, rows[0].length).setValues(rows);
+      sh.getRange(start, 13, rows.length, 3).setWrap(true);
+    }
+    log_(opWho_(token), '엑셀로 곡 올림', rows.length + '곡' + (skipped.length ? ' · 건너뜀 ' + skipped.length : ''));
+    bust_();
+    const d = opData_(token); d.bulk = { added: rows.length, skipped: skipped }; return d;
+  });
+}
 // 노래 파일(mp3)·악보(PDF·그림) 올리기: 운영진 구글 드라이브의 '동요샘 노래상자 파일' 폴더에 저장하고 링크로 공유
 const UPLOAD_MAX = 20 * 1024 * 1024;
 function folder_() {
@@ -495,24 +521,31 @@ function opExport_(token) {
     classHead: ['반 이름', '지역', '학교', '선생님', '아이디', '스티커(모두)', '스티커(올해)', '스티커(이번 달)', '이번 달 투표 곡번호', '올린 가사', '릴레이 참여', '만든 날', '마지막 기록', '숨김'], classes: classes,
     songHead: ['곡번호', '곡 제목', '곡 종류', '작사', '작곡', '편곡', '발표회', '부른 반(모두)', '부른 반(올해)', '부른 반(이번 달)', '이번 달 투표', '공개된 바꾼 가사', '숨김', '공개 동의'], songs: songs };
 }
-function opSaveSong_(token, s) {
-  opNeed_(token);
+// 곡 한 줄 만들기 (확인할 것을 확인하고, 시트에 들어갈 칸 순서대로)
+function songData_(s, id) {
   s = s || {};
   const title = clean_(s.title, 40);
   if (!title) throw new Error('곡 제목을 적어 주세요.');
   if (!s.consent) throw new Error('작사·작곡·편곡 선생님께 공개 동의를 받았는지 확인해 주세요.');
   if (s.type === '편곡' && !clean_(s.arranger, 40)) throw new Error('편곡한 선생님 이름을 적어 주세요.');
   if (/^[-–—\s]+$/.test(String(s.concert || ''))) s.concert = '';
-  const link = function (u) { u = String(u || '').trim(); if (u && !/^https:\/\//.test(u)) throw new Error('영상·악보 주소는 https:// 로 시작해야 해요.'); return u.slice(0, 500); };
+  const link = function (u) { u = String(u || '').trim(); if (u && !/^https:\/\//.test(u)) throw new Error('영상·노래·악보 주소는 https:// 로 시작해야 해요.'); return u.slice(0, 500); };
   const long = function (t, n) { return String(t == null ? '' : t).replace(/\r/g, '').replace(/[<>]/g, '').slice(0, n); };
+  return [id, title, clean_(s.lyricist, 40), clean_(s.composer, 40), clean_(s.concert, 40), num_(s.year) || '', clean_(s.grade, 10),
+    clean_(s.themes, 60), clean_(s.season, 20), clean_(s.key, 4), clean_(s.beat, 6), clean_(s.range, 12),
+    long(s.lyrics, 2000), long(s.intro, 600), long(s.tip, 600), link(s.video), link(s.score), s.hidden ? 'O' : '', 'O', link(s.audio), s.type === '편곡' ? '편곡' : '창작곡', s.type === '편곡' ? clean_(s.arranger, 40) : ''];
+}
+function opSaveSong_(token, s) {
+  opNeed_(token);
+  s = s || {};
+  songData_(s, 0);
+  const title = clean_(s.title, 40);
   return withLock_(function () {
     const sh = sheet_(SH_SONGS), v = sh.getDataRange().getValues();
     let id = num_(s.id), row = 0, max = 0;
     for (let i = 1; i < v.length; i++) { const n = num_(v[i][0]); max = Math.max(max, n); if (id && n === id) row = i + 1; }
     if (!id) id = max + 1;
-    const data = [id, title, clean_(s.lyricist, 40), clean_(s.composer, 40), clean_(s.concert, 40), num_(s.year) || '', clean_(s.grade, 10),
-      clean_(s.themes, 60), clean_(s.season, 20), clean_(s.key, 4), clean_(s.beat, 6), clean_(s.range, 12),
-      long(s.lyrics, 2000), long(s.intro, 600), long(s.tip, 600), link(s.video), link(s.score), s.hidden ? 'O' : '', 'O', link(s.audio), s.type === '편곡' ? '편곡' : '창작곡', s.type === '편곡' ? clean_(s.arranger, 40) : ''];
+    const data = songData_(s, id);
     if (row) sh.getRange(row, 1, 1, data.length).setValues([data]);
     else { sh.appendRow(data); row = sh.getLastRow(); }
     sh.getRange(row, 13, 1, 3).setWrap(true);
@@ -576,7 +609,7 @@ const FN_ = {
   toggleStamp: toggleStamp_, vote: vote_, joinRelay: joinRelay_, addLyric: addLyric_, toggleLike: toggleLike_,
   opLogin: opLogin_, opLogout: opLogout_, opData: opData_, opSaveSong: opSaveSong_, opLyric: opLyric_, opRelay: opRelay_,
   opClass: opClass_, opAccount: opAccount_, opResetPw: opResetPw_, opContact: opContact_,
-  opDeleteSong: opDeleteSong_, opClearExamples: opClearExamples_, opNotify: opNotify_, opExport: opExport_, opToday: opToday_, opUpload: opUpload_
+  opDeleteSong: opDeleteSong_, opClearExamples: opClearExamples_, opNotify: opNotify_, opExport: opExport_, opToday: opToday_, opUpload: opUpload_, opBulkSongs: opBulkSongs_
 };
 
 /************ 곡 목록 예시 (처음 한 번) ************/

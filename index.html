@@ -639,6 +639,20 @@ body.kara-on .mini-video{z-index:41;top:max(56px,env(safe-area-inset-top));botto
 @media (min-width:1000px){.app-install{right:28px;bottom:16px;font-size:15px;padding:7px 16px 7px 12px}.app-install svg{width:18px;height:18px}}
 @media (max-width:480px){.app-install span{display:none}.app-install{padding:6px;bottom:8px}}
 .install-steps{display:grid;gap:10px}
+/* 엑셀로 한꺼번에 올리기 */
+.bulk-steps{margin:0;padding-left:20px;display:grid;gap:8px;line-height:1.7}
+.bulk-steps .btn{padding:3px 12px;font-size:14px;vertical-align:1px}
+.bulk-sum{font-size:15px}.bulk-sum .bad{color:var(--c0);font-weight:700}
+.bulk-table{overflow-x:auto;border:2px solid var(--line);border-radius:14px;background:var(--paper);max-height:46vh}
+.bulk-table table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:720px}
+.bulk-table th,.bulk-table td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.bulk-table th{position:sticky;top:0;background:var(--sky);white-space:nowrap}
+.bulk-table tr.bad td{background:var(--c0-soft)}
+.sheet #bulkIn{max-width:1000px}
+.bulk-table td{word-break:keep-all}
+.bulk-table td:nth-child(3),.bulk-table td:nth-child(1){white-space:nowrap}
+.bulk-table tr.bad td:last-child{color:var(--c0);font-weight:700}
+.bulk-skip{margin:0;padding-left:20px;font-size:14px}
 .install-steps .card{gap:6px}
 /* 모바일: 제목을 해를 뺀 칸 가운데로, 위아래 여백 맞춤 */
 @media (max-width:699px){.scene .title{top:26px;right:min(21vw,90px)}}
@@ -1564,7 +1578,7 @@ function renderOp(v) {
     body = `${ex.length ? `<div class="card temp"><span class="eyebrow">예시 곡 ${ex.length}개가 남아 있어요</span>
         <p style="margin:0">처음 설치할 때 들어간 예시 곡이에요. 하나씩 '고치기'로 실제 동요샘 곡으로 바꾸거나, 한꺼번에 지울 수 있어요. 지운 곡은 되돌릴 수 없어요.</p>
         <div class="btns">${OP.confirmEx ? `<button class="btn" data-opclearex>예, 예시 곡 ${ex.length}개 모두 지우기</button><button class="btn ghost" data-opconfirm="">그만두기</button>` : `<button class="btn ghost" data-opconfirm="ex">예시 곡 모두 지우기</button>`}</div></div>` : ""}
-      <div class="btns"><button class="btn" data-opedit="0">새 곡 올리기</button></div>
+      <div class="btns"><button class="btn" data-opedit="0">새 곡 올리기</button><button class="btn ghost" data-opbulk>엑셀로 한꺼번에 올리기</button></div>
       <div class="list">${list.map(s => `<div class="oprow${s.hidden ? " off" : ""}"><span class="key" style="--c:var(--c${s.id % 6});--cs:var(--c${s.id % 6}-soft)">${s.id}</span>
         <span class="min"><b>${esc(s.title)}${s.consent ? "" : ` <span class="badge warn">동의 확인 필요</span>`}</b><small class="meta">${s.type === "편곡" ? "편곡 · " : ""}${esc(noConcert(s.concert) ? "발표회 없음" : s.concert)}${s.year ? " · " + esc(s.year) : ""}${s.hidden ? " · 숨김" : ""}${s.video ? (embedSrc(s.video) ? " · 영상(바로 재생)" : " · 영상") : ""}${s.score ? " · 악보" : ""}</small></span>
         <span class="btns del-zone"><button class="vote" data-opedit="${s.id}">고치기</button><button class="vote" data-opdelask="${s.id}">지우기</button><button class="vote danger" data-opdel="${s.id}" hidden>정말 지우기</button></span></div>`).join("")}</div>`;
@@ -1806,6 +1820,9 @@ document.addEventListener("click", e => {
   if (t.hasAttribute("data-opmail")) { opCall("opContact", [$("#opMail").value.trim()], "문의 이메일을 저장했어요"); return; }
   if (t.hasAttribute("data-opnotify")) { const m = $("#opNotify").value.trim(); opCall("opNotify", [m], m ? "알림 이메일을 저장했어요. 확인 메일을 보냈어요" : "알림을 껐어요"); return; }
   if (d.opexport) { opExport(d.opexport); return; }
+  if (t.hasAttribute("data-opbulk")) { openBulk(); return; }
+  if (t.hasAttribute("data-opbulksave")) { bulkSave(); return; }
+  if (t.hasAttribute("data-opbulkreset")) { BULK.rows = null; drawBulk(); $("#bulkText").focus(); return; }
   /* 오늘의 동요 달력 */
   if (d.opmonth) { if (OP.dirty && !confirmLeave()) return; opDraftLoad(monthAdd(OP.tm, +d.opmonth)); render(); return; }
   if (d.opday) { OP.day = d.opday; render(); const s = $("#dSong"); if (s && matchMedia("(max-width: 760px)").matches) s.closest(".card").scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
@@ -1822,6 +1839,110 @@ document.addEventListener("click", e => {
   }
   if (d.copy) { const v = d.copy; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast("복사했어요"), () => toast(v)); return; }
 });
+/* ---------- 엑셀로 곡 한꺼번에 올리기 ---------- */
+const BULK_COLS = { "곡 제목": "title", "제목": "title", "곡 종류": "type", "종류": "type", "작사": "lyricist", "작곡": "composer", "편곡": "arranger", "발표회": "concert",
+  "발표 연도": "year", "연도": "year", "만든 해": "year", "추천 학년군": "grade", "학년군": "grade", "계절": "season", "주제": "themes", "조성": "key", "박자": "beat", "음역": "range",
+  "가사": "lyrics", "곡 소개": "intro", "소개": "intro", "수업 활용": "tip", "영상 주소": "video", "영상": "video", "노래 파일 주소": "audio", "노래 파일": "audio", "mp3": "audio",
+  "악보 주소": "score", "악보": "score", "공개 동의": "consent", "동의": "consent" };
+const BULK = { rows: null, result: null };
+/* 엑셀에서 복사한 글(탭으로 나뉘고, 줄 바꿈이 있는 칸은 따옴표로 감싸짐) 읽기 */
+function parseTSV(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  text = String(text || "").replace(/\r\n?/g, "\n");
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; continue; }
+    if (ch === '"' && cell === "") { q = true; continue; }
+    if (ch === "\t") { row.push(cell); cell = ""; continue; }
+    if (ch === "\n") { row.push(cell); rows.push(row); row = []; cell = ""; continue; }
+    cell += ch;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+function bulkFromTable(table) {
+  const rows = table.map(r => r.map(c => String(c == null ? "" : c).trim()));
+  const hi = rows.findIndex(r => r.some(c => BULK_COLS[c.replace(/[*\s]*\(.*\)$/, "").replace(/\*/g, "").trim()] === "title"));
+  if (hi < 0) return { error: "제목 줄(곡 제목, 작사, 작곡…)을 찾지 못했어요. 양식의 1번째 줄부터 함께 복사해 주세요." };
+  const keys = rows[hi].map(c => BULK_COLS[c.replace(/[*\s]*\(.*\)$/, "").replace(/\*/g, "").trim()] || "");
+  const out = [];
+  rows.slice(hi + 1).forEach((r, k) => {
+    const o = { line: hi + k + 2 }; keys.forEach((key, j) => { if (key && r[j] !== undefined) o[key] = r[j]; });
+    if (!o.title || /^\(?예시\)?/.test(o.title)) return;
+    const seasons = /사계절/.test(o.season || "") ? SEASONS.slice() : SEASONS.filter(x => (o.season || "").includes(x));
+    const g = GRADES.find(x => (o.grade || "").replace(/\s/g, "").startsWith(x.replace(/\s/g, "").slice(0, 3))) || "전 학년";
+    const s = { line: o.line, title: o.title, type: /편곡/.test(o.type || "") ? "편곡" : "창작곡", lyricist: o.lyricist || "", composer: o.composer || "", arranger: o.arranger || "",
+      concert: noConcert(o.concert) ? "" : o.concert, year: (String(o.year || "").match(/\d{4}/) || [""])[0], grade: g, season: seasons.length === 4 ? "사계절" : seasons.join(", "),
+      themes: String(o.themes || "").split(/[,，、/]/).map(x => x.trim()).filter(Boolean).join(", "), key: o.key || "", beat: o.beat || "", range: o.range || "",
+      lyrics: String(o.lyrics || "").replace(/\s+$/, ""), intro: o.intro || "", tip: o.tip || "", video: o.video || "", audio: o.audio || "", score: o.score || "",
+      consent: /^(o|○|◯|ㅇ|예|네|동의|y|yes|true|v|✓)$/i.test(String(o.consent || "").trim()), hidden: false };
+    const prob = [];
+    if (s.type === "편곡" && !s.arranger) prob.push("편곡한 선생님 이름이 없어요");
+    if (!s.consent) prob.push("공개 동의가 O가 아니에요");
+    if ([s.video, s.audio, s.score].some(u => u && !/^https:\/\//.test(u))) prob.push("주소는 https:// 로 시작해야 해요");
+    if (OP.data && OP.data.songs.some(x => String(x.title).trim() === s.title)) prob.push("같은 제목이 이미 있어요");
+    s.prob = prob; out.push(s);
+  });
+  return { rows: out };
+}
+function loadXLSX() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  return new Promise((ok, no) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; sc.onload = () => ok(window.XLSX); sc.onerror = () => no(new Error("엑셀 파일을 읽는 도구를 불러오지 못했어요. 표를 복사해서 붙여 넣어 주세요.")); document.head.appendChild(sc); });
+}
+function openBulk() {
+  BULK.rows = null; BULK.result = null;
+  $("#sheetHost").innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="엑셀로 한꺼번에 올리기" data-opzone><div class="in" id="bulkIn"></div></div>`;
+  drawBulk();
+}
+function drawBulk() {
+  const host = $("#bulkIn"); if (!host) return;
+  const R = BULK.rows, ok = R ? R.filter(r => !r.prob.length) : [], bad = R ? R.filter(r => r.prob.length) : [];
+  host.innerHTML = `<button class="btn ghost close" data-close>닫기</button>
+    <h3>엑셀로 한꺼번에 올리기</h3>
+    <ol class="bulk-steps">
+      <li><b>양식 내려받기</b> · <a class="btn ghost" href="templates/song_template.xlsx" download="동요샘_곡_일괄등록_양식.xlsx">양식 파일 받기</a></li>
+      <li><b>한 곡에 한 줄씩 적기</b> · 가사는 칸 안에서 Alt+Enter로 줄을 바꿔요. 회색 (예시) 줄은 저절로 빠져요. 구글 시트로 공유해서 여럿이 함께 적어도 돼요.</li>
+      <li><b>공개 동의 칸에 O</b> · O인 곡은 '공개 동의 받음'에 저절로 체크돼서 올라가요. O가 아닌 줄은 올라가지 않아요.</li>
+      <li><b>표 전체를 복사해서 아래에 붙여 넣기</b> (엑셀·구글 시트 모두, 1번째 제목 줄부터) · 또는 <label class="btn ghost up-btn">엑셀 파일 고르기<input type="file" accept=".xlsx,.xls,.csv" data-opbulkfile hidden></label></li>
+    </ol>
+    <textarea id="bulkText" rows="5" class="plain" placeholder="여기에 엑셀 표를 붙여 넣어요 (Ctrl+V)"></textarea>
+    ${BULK.result ? `<div class="card temp"><span class="eyebrow">${BULK.result.added}곡을 올렸어요</span>${BULK.result.skipped.length ? `<p style="margin:0">건너뛴 줄 ${BULK.result.skipped.length}개</p><ul class="bulk-skip">${BULK.result.skipped.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : `<p style="margin:0">모든 줄이 잘 올라갔어요.</p>`}</div>` : ""}
+    ${R ? `<div class="bulk-sum"><b>${R.length}곡</b> 읽음 · 올릴 수 있는 곡 <b>${ok.length}</b>${bad.length ? ` · <span class="bad">확인할 줄 ${bad.length}</span>` : ""}</div>
+      <div class="bulk-table"><table><tr><th>줄</th><th>곡 제목</th><th>종류</th><th>지은이</th><th>발표회</th><th>학년군 · 계절</th><th>가사</th><th>공개 동의</th><th>확인</th></tr>
+      ${R.map(r => `<tr class="${r.prob.length ? "bad" : ""}"><td>${r.line}</td><td><b>${esc(r.title)}</b></td><td>${r.type}</td><td>${esc(creditLine(r) || "-")}</td><td>${esc(r.concert || "발표회 없음")}${r.year ? " · " + esc(r.year) : ""}</td><td>${esc(r.grade)}${r.season ? " · " + esc(seasonLabel(r)) : ""}</td><td>${r.lyrics ? r.lyrics.split("\n").length + "줄" : "-"}</td><td>${r.consent ? "O 체크됨" : "-"}</td><td>${r.prob.length ? esc(r.prob.join(", ")) : "좋아요"}</td></tr>`).join("")}</table></div>
+      <div class="btns"><button class="btn" data-opbulksave${ok.length ? "" : " disabled"}>${ok.length}곡 올리기</button><button class="btn ghost" data-opbulkreset>다시 붙여 넣기</button></div>
+      ${bad.length ? `<p class="meta" style="margin:0">확인할 줄은 올리지 않아요. 엑셀에서 고친 뒤 다시 붙여 넣거나, 나머지만 먼저 올려도 돼요.</p>` : ""}` : ""}`;
+  const ta = $("#bulkText");
+  ta.addEventListener("paste", e => { const t = (e.clipboardData || window.clipboardData).getData("text"); if (!t) return; e.preventDefault(); bulkRead(parseTSV(t)); });
+}
+function bulkRead(table) {
+  const r = bulkFromTable(table);
+  if (r.error) { toast(r.error); return; }
+  if (!r.rows.length) { toast("올릴 곡이 없어요. (예시) 줄 말고 4번째 줄부터 적어 주세요"); return; }
+  BULK.rows = r.rows; BULK.result = null; drawBulk();
+}
+async function bulkFile(input) {
+  const f = input.files && input.files[0]; input.value = ""; if (!f) return;
+  try {
+    if (/\.csv$/i.test(f.name)) { const t = await f.text(); bulkRead(t.split(/\r?\n/).map(l => l.split(","))); return; }
+    const X = await loadXLSX(), wb = X.read(await f.arrayBuffer(), { type: "array" });
+    const name = wb.SheetNames.find(n => /곡/.test(n)) || wb.SheetNames[0];
+    bulkRead(X.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: false, defval: "" }));
+  } catch (e) { toast(e.message || "파일을 읽지 못했어요"); }
+}
+async function bulkSave() {
+  const list = (BULK.rows || []).filter(r => !r.prob.length).map(r => { const o = { ...r }; delete o.prob; return o; });
+  if (!list.length) return;
+  if (OP.demo) { const d = OP.data; let max = Math.max(0, ...d.songs.map(x => x.id)); list.forEach(s => d.songs.push({ ...s, id: ++max }));
+    d.logs.unshift({ at: localDay(), who: d.me, what: "엑셀로 곡 올림", target: list.length + "곡" }); opApplySongs(); NAT = localNational(!APP.live);
+    BULK.result = { added: list.length, skipped: [] }; BULK.rows = null; render(); drawBulk(); toast(list.length + "곡을 올렸어요 (체험 모드)"); return; }
+  if (APP.busy) return; APP.busy = true; document.body.classList.add("busy");
+  try { const r = await opPost("opBulkSongs", [OP.token, list]); OP.data = r; opApplySongs(); if (APP.live) await loadNational();
+    BULK.result = r.bulk || { added: list.length, skipped: [] }; BULK.rows = null; render(); drawBulk(); toast(BULK.result.added + "곡을 올렸어요"); }
+  catch (e) { toast(e.message); }
+  finally { APP.busy = false; document.body.classList.remove("busy"); }
+}
+
 /* 노래 파일·악보 올리기 */
 async function opUploadFile(input) {
   const file = input.files && input.files[0], kind = input.dataset.opup; input.value = "";
@@ -1841,6 +1962,7 @@ async function opUploadFile(input) {
 document.addEventListener("change", e => {
   const el = e.target; if (!el.closest || !el.closest("[data-opzone]")) return;
   if (el.dataset.opup) { opUploadFile(el); return; }
+  if (el.hasAttribute("data-opbulkfile")) { bulkFile(el); return; }
   if (el.id === "f_noconcert") { const c = $("#f_concert"); c.disabled = el.checked; if (el.checked) c.value = ""; $("#f_year").previousElementSibling.textContent = el.checked ? "만든 해" : "발표 연도"; return; }
   if (el.id === "opWeekend") { OP.weekend = el.checked; store.set("dys-op-weekend", OP.weekend); return; }
   if (el.dataset.opdaySong) { const k = el.dataset.opdaySong, v = +el.value;
