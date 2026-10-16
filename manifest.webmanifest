@@ -1,7 +1,7 @@
 {
   "id": "/DongyoSSAM/",
   "name": "동요샘 노래상자",
-  "short_name": "노래상자",
+  "short_name": "동요샘",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

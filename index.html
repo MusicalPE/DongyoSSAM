@@ -19,7 +19,7 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-title" content="노래상자">
+<meta name="apple-mobile-web-app-title" content="동요샘">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -1853,7 +1853,7 @@ document.addEventListener("change", e => {
 const INSTALL = { ev: null };
 try { if ("serviceWorker" in navigator && location.protocol === "https:" && !/claude|usercontent/.test(location.hostname)) navigator.serviceWorker.register("sw.js"); } catch (e) {}
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); INSTALL.ev = e; installUI(); });
-window.addEventListener("appinstalled", () => { INSTALL.ev = null; const b = $("#appInstall"); if (b) b.hidden = true; toast("앱 아이콘을 만들었어요. 바탕화면이나 홈 화면에서 '노래상자'를 찾아 보세요"); });
+window.addEventListener("appinstalled", () => { INSTALL.ev = null; const b = $("#appInstall"); if (b) b.hidden = true; toast("앱 아이콘을 만들었어요. 바탕화면이나 홈 화면에서 '동요샘'을 찾아 보세요"); });
 /* 제목 아래 설명 글씨가 '노래상자' 글자 폭을 넘지 않게 크기 맞추기 */
 function fitTitleSub() {
   const t = document.querySelector(".scene .h1t"), sub = document.querySelector(".scene .h1sub"); if (!t || !sub) return;
@@ -1871,13 +1871,13 @@ function installUI() {
 }
 function installHelp() {
   const ua = navigator.userAgent || "", ios = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1), android = /Android/.test(ua);
-  const steps = ios ? [["사파리로 열기", "카카오톡 안에서 열었다면 오른쪽 아래 ··· 를 눌러 '사파리로 열기'를 먼저 해요."], ["공유 버튼 누르기", "사파리 아래쪽 가운데의 공유 버튼(네모에서 화살표가 위로 나온 모양)을 눌러요."], ["홈 화면에 추가", "목록을 내려 '홈 화면에 추가'를 누르고 오른쪽 위 '추가'를 누르면 '노래상자' 아이콘이 생겨요."]]
-    : android ? [["크롬으로 열기", "카카오톡 안에서 열었다면 오른쪽 위 ⋮ 를 눌러 '다른 브라우저로 열기'로 크롬에서 열어요."], ["메뉴 열기", "크롬 오른쪽 위 ⋮ 를 눌러요."], ["홈 화면에 추가", "'홈 화면에 추가' 또는 '앱 설치'를 누르면 '노래상자' 아이콘이 생겨요."]]
-    : [["크롬이나 엣지로 열기", "PC에서는 크롬이나 엣지 브라우저로 노래상자를 열어요."], ["설치 아이콘 누르기", "주소창 오른쪽 끝의 설치 아이콘(모니터에 화살표 모양)을 눌러요."], ["메뉴로 하기", "아이콘이 안 보이면 메뉴(⋮ 또는 ···) → '앱' 또는 '저장 및 공유' → '노래상자 설치'(바로가기 만들기)를 골라요."]];
+  const steps = ios ? [["사파리로 열기", "카카오톡 안에서 열었다면 오른쪽 아래 ··· 를 눌러 '사파리로 열기'를 먼저 해요."], ["공유 버튼 누르기", "사파리 아래쪽 가운데의 공유 버튼(네모에서 화살표가 위로 나온 모양)을 눌러요."], ["홈 화면에 추가", "목록을 내려 '홈 화면에 추가'를 누르고 오른쪽 위 '추가'를 누르면 '동요샘' 아이콘이 생겨요."]]
+    : android ? [["크롬으로 열기", "카카오톡 안에서 열었다면 오른쪽 위 ⋮ 를 눌러 '다른 브라우저로 열기'로 크롬에서 열어요."], ["메뉴 열기", "크롬 오른쪽 위 ⋮ 를 눌러요."], ["홈 화면에 추가", "'홈 화면에 추가' 또는 '앱 설치'를 누르면 '동요샘' 아이콘이 생겨요."]]
+    : [["크롬이나 엣지로 열기", "PC에서는 크롬이나 엣지 브라우저로 노래상자를 열어요."], ["설치 아이콘 누르기", "주소창 오른쪽 끝의 설치 아이콘(모니터에 화살표 모양)을 눌러요."], ["메뉴로 하기", "아이콘이 안 보이면 메뉴(⋮ 또는 ···) → '앱' 또는 '저장 및 공유' → '동요샘 설치'(바로가기 만들기)를 골라요."]];
   $("#sheetHost").innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="앱 아이콘 만들기"><div class="in">
     <button class="btn ghost close" data-close>닫기</button>
     <h3>앱 아이콘 만들기</h3>
-    <p class="meta" style="margin:0">바탕화면이나 휴대폰 홈 화면에 '노래상자' 아이콘을 만들어 두면 앱처럼 바로 열 수 있어요.</p>
+    <p class="meta" style="margin:0">바탕화면이나 휴대폰 홈 화면에 '동요샘' 아이콘을 만들어 두면 앱처럼 바로 열 수 있어요.</p>
     <div class="install-steps">${steps.map(([t, d], i) => `<div class="card"><span class="eyebrow">${i + 1}. ${t}</span><span>${d}</span></div>`).join("")}</div>
   </div></div>`;
 }
