@@ -1873,7 +1873,7 @@ function bulkFromTable(table) {
     const g = GRADES.find(x => (o.grade || "").replace(/\s/g, "").startsWith(x.replace(/\s/g, "").slice(0, 3))) || "전 학년";
     const s = { line: o.line, title: o.title, type: /편곡/.test(o.type || "") ? "편곡" : "창작곡", lyricist: o.lyricist || "", composer: o.composer || "", arranger: o.arranger || "",
       concert: noConcert(o.concert) ? "" : o.concert, year: (String(o.year || "").match(/\d{4}/) || [""])[0], grade: g, season: seasons.length === 4 ? "사계절" : seasons.join(", "),
-      themes: String(o.themes || "").split(/[,，、/]/).map(x => x.trim()).filter(Boolean).join(", "), key: o.key || "", beat: o.beat || "", range: o.range || "",
+      themes: String(o.themes || "").split(/[,，、/]/).map(x => x.trim()).filter(Boolean).join(", "), key: o.key || "", beat: fixBeat(o.beat), range: o.range || "",
       lyrics: String(o.lyrics || "").replace(/\s+$/, ""), intro: o.intro || "", tip: o.tip || "", video: o.video || "", audio: o.audio || "", score: o.score || "",
       consent: /^(o|○|◯|ㅇ|예|네|동의|y|yes|true|v|✓)$/i.test(String(o.consent || "").trim()), hidden: false };
     const prob = [];
@@ -1884,6 +1884,12 @@ function bulkFromTable(table) {
     s.prob = prob; out.push(s);
   });
   return { rows: out };
+}
+/* 시트가 4/4를 날짜로 바꿔 버린 값(2026. 4. 4 / 2026-04-04 / 4월 4일)을 다시 4/4로 */
+function fixBeat(v) {
+  v = String(v || "").trim();
+  const m = /^\d{4}\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{1,2})\.?$/.exec(v) || /^(\d{1,2})월\s*(\d{1,2})일$/.exec(v);
+  return m ? Number(m[1]) + "/" + Number(m[2]) : v;
 }
 function loadXLSX() {
   if (window.XLSX) return Promise.resolve(window.XLSX);

@@ -17,7 +17,7 @@
  * 시트에서 직접 고쳐도 됩니다. 고친 내용은 2분 안에 화면에 반영됩니다.
  *************************************************************/
 
-const SERVER_VERSION = 7;   // 7: 엑셀로 곡 한꺼번에 올리기  6: 노래 파일(mp3)·악보 파일 올리기, 곡 종류(창작곡·편곡)·편곡자, 발표회 없는 개인 창작곡  5: 이번 달·학년도 집계, 로그인 유지, 알림 메일, 기록 내려받기, 공개 동의, 운영 기록  4: 곡 지우기·예시 곡 한꺼번에 지우기  3: 한 시트 방식 — 가입·승인·로그인, 계정 하나에 여러 반
+const SERVER_VERSION = 8;   // 8: 박자(4/4)가 날짜로 바뀌던 문제 고침  7: 엑셀로 곡 한꺼번에 올리기  6: 노래 파일(mp3)·악보 파일 올리기, 곡 종류(창작곡·편곡)·편곡자, 발표회 없는 개인 창작곡  5: 이번 달·학년도 집계, 로그인 유지, 알림 메일, 기록 내려받기, 공개 동의, 운영 기록  4: 곡 지우기·예시 곡 한꺼번에 지우기  3: 한 시트 방식 — 가입·승인·로그인, 계정 하나에 여러 반
 const TZ_ = 'Asia/Seoul';
 const BOARD_CACHE_SEC = 120;
 const TOKEN_SEC = 21600;    // 로그인 6시간 (로그인 유지를 고르면 30일)
@@ -69,6 +69,10 @@ function stampsOf_(cell) { return parse_(cell, []).map(function (x) { return Arr
 function dstr_(v) { return v instanceof Date ? Utilities.formatDate(v, TZ_, 'yyyy-MM-dd') : String(v || '').trim().slice(0, 10); }
 function tstr_(v) { return v instanceof Date ? Utilities.formatDate(v, TZ_, 'yyyy-MM-dd HH:mm') : String(v || '').trim().slice(0, 16); }
 function mstr_(v) { return v instanceof Date ? Utilities.formatDate(v, TZ_, 'yyyy-MM') : String(v || '').trim().slice(0, 7); }
+// 박자: 시트가 4/4를 날짜(4월 4일)로 바꿔 버린 칸도 '4/4'로 되돌려 읽기
+function beatStr_(v) { return v instanceof Date ? Number(Utilities.formatDate(v, TZ_, 'MM')) + '/' + Number(Utilities.formatDate(v, TZ_, 'dd')) : String(v == null ? '' : v).trim(); }
+// 곡 목록에서 글자 그대로 둘 칸(박자·조성·음역·발표 연도)을 '글자' 서식으로
+function songTextCols_(sh, row, n) { sh.getRange(row, 10, n, 3).setNumberFormat('@'); }
 function okMail_(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || '').trim()); }
 const APP_URL = 'https://musicalpe.github.io/DongyoSSAM/';
 // 운영진 알림 메일 (하루 40통까지)
@@ -325,7 +329,7 @@ function getBoard_() {
     if (!id || !String(r[1]).trim() || isO_(r[17])) return;
     songs.push({ id: id, title: clean_(r[1], 40), lyricist: clean_(r[2], 40), composer: clean_(r[3], 40), concert: clean_(r[4], 40),
       year: num_(r[5]) || '', grade: clean_(r[6], 10), themes: String(r[7]).split(/[,，、]/).map(function (x) { return clean_(x, 10); }).filter(String),
-      season: clean_(r[8], 20), key: clean_(r[9], 4), beat: clean_(r[10], 6), range: clean_(r[11], 12),
+      season: clean_(r[8], 20), key: clean_(r[9], 4), beat: clean_(beatStr_(r[10]), 6), range: clean_(r[11], 12),
       lyrics: String(r[12] || '').slice(0, 2000), intro: String(r[13] || '').slice(0, 600), tip: String(r[14] || '').slice(0, 600),
       video: /^https:\/\//.test(String(r[15])) ? String(r[15]).trim() : '', score: /^https:\/\//.test(String(r[16])) ? String(r[16]).trim() : '',
       audio: /^https:\/\//.test(String(r[19] || '')) ? String(r[19]).trim() : '', type: String(r[20] || '').trim() === '편곡' ? '편곡' : '창작곡', arranger: clean_(r[21], 40) });
@@ -375,7 +379,7 @@ function opData_(token) {
   fixHeads_();
   const songs = values_(SH_SONGS).slice(1).filter(function (r) { return num_(r[0]); }).map(function (r) {
     return { id: num_(r[0]), title: String(r[1]), lyricist: String(r[2]), composer: String(r[3]), concert: String(r[4]), year: r[5] === '' ? '' : String(r[5]),
-      grade: String(r[6]), themes: String(r[7]), season: String(r[8]), key: String(r[9]), beat: String(r[10]), range: String(r[11]),
+      grade: String(r[6]), themes: String(r[7]), season: String(r[8]), key: String(r[9]), beat: beatStr_(r[10]), range: String(r[11]),
       lyrics: String(r[12]), intro: String(r[13]), tip: String(r[14]), video: String(r[15]), score: String(r[16]), hidden: isO_(r[17]), consent: isO_(r[18]), audio: String(r[19] || ''), type: String(r[20] || '').trim() === '편곡' ? '편곡' : '창작곡', arranger: String(r[21] || '') };
   });
   const lyrics = values_(SH_LYRICS).slice(1).filter(function (r) { return r[0] !== ''; }).map(function (r) {
@@ -463,6 +467,7 @@ function opBulkSongs_(token, list) {
     });
     if (rows.length) {
       const start = sh.getLastRow() + 1;
+      songTextCols_(sh, start, rows.length);
       sh.getRange(start, 1, rows.length, rows[0].length).setValues(rows);
       sh.getRange(start, 13, rows.length, 3).setWrap(true);
     }
@@ -546,8 +551,9 @@ function opSaveSong_(token, s) {
     for (let i = 1; i < v.length; i++) { const n = num_(v[i][0]); max = Math.max(max, n); if (id && n === id) row = i + 1; }
     if (!id) id = max + 1;
     const data = songData_(s, id);
-    if (row) sh.getRange(row, 1, 1, data.length).setValues([data]);
-    else { sh.appendRow(data); row = sh.getLastRow(); }
+    if (!row) row = sh.getLastRow() + 1;
+    songTextCols_(sh, row, 1);
+    sh.getRange(row, 1, 1, data.length).setValues([data]);
     sh.getRange(row, 13, 1, 3).setWrap(true);
     log_(opWho_(token), num_(s.id) ? '곡 고침' : '새 곡 올림', id + '. ' + title);
     bust_(); return opData_(token);
