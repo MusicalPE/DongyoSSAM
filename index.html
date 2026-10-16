@@ -170,8 +170,19 @@ textarea{min-height:110px;resize:vertical;font-family:var(--hand);font-size:19px
 .status{display:inline-block;margin-top:8px;font-family:var(--display);font-size:13px;color:var(--muted);border:2px dashed var(--line);border-radius:999px;padding:2px 12px}
 .status.on{color:var(--ink);border-style:solid;border-color:var(--c3);background:var(--c3-soft)}
 a.btn{text-decoration:none;display:inline-block}
-input[type=password]{font:inherit;width:100%;padding:9px 12px;border-radius:14px;border:2px solid var(--line);background:var(--paper);color:var(--ink)}
+input[type=number],input[type=password]{font:inherit;width:100%;padding:9px 12px;border-radius:14px;border:2px solid var(--line);background:var(--paper);color:var(--ink)}
 body.busy{cursor:progress}body.busy .btn,body.busy .stamp,body.busy .vote{pointer-events:none;opacity:.7}
+.oprow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--paper);border:2px solid var(--line);border-radius:var(--wob);padding:10px 12px}
+.oprow.off{opacity:.55}
+.oprow .key{font-size:13px}
+.oprow b{font-family:var(--display);font-weight:400;font-size:17px;display:block}
+.warn{margin:0;font-size:13.5px;color:var(--ink);background:var(--c0-soft);border-radius:10px;padding:6px 10px}
+.fld{display:grid;gap:4px;min-width:0}
+.form3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.form3>*{min-width:0}
+textarea.plain{font-family:var(--body);font-size:15px;line-height:1.6;min-height:80px}
+.check{display:flex;gap:8px;align-items:center;font-size:14.5px}
+.foot{margin-top:36px;text-align:center;font-size:13px;color:var(--muted)}
+.linkbtn{font:inherit;background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;padding:4px}
 </style>
 </head>
 <body style="margin:0">
@@ -206,6 +217,7 @@ body.busy{cursor:progress}body.busy .btn,body.busy .stamp,body.busy .vote{pointe
     <button role="tab" data-tab="mine" aria-selected="false">우리 반</button>
   </nav>
   <main id="view"></main>
+  <footer class="foot"><button class="linkbtn" data-tab="op">운영진</button> · Made by 음악적체육인</footer>
 </div>
 <div id="sheetHost"></div>
 <div id="toastHost"></div>
@@ -500,6 +512,7 @@ function render() {
     </section>`;
   }
   if (tab === "mine") renderMine(v);
+  if (tab === "op") renderOp(v);
 }
 
 function renderMine(v) {
@@ -632,6 +645,7 @@ document.addEventListener("click", e => {
   if (d.tab) { goTab(d.tab); return; }
   if (t.hasAttribute("data-close")) { $("#sheetHost").innerHTML = ""; return; }
   if (d.open) { openSong(+d.open); return; }
+  if (t.closest("[data-opzone]")) return;
   if (t.hasAttribute("data-login")) { doLogin(); return; }
   if (t.hasAttribute("data-logout")) { rpc("logout", [APP.token]).catch(() => {}); APP.token = ""; store.del("dys_token|" + APP.shellUrl); render(); toast("로그아웃했어요"); return; }
   if (t.hasAttribute("data-save")) {
@@ -660,19 +674,207 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape") $("#sheetHost").innerHTML = ""; });
 
+/* ---------- 운영진 메뉴 (수집기 시트를 화면에서 관리) ---------- */
+const OP = { token: store.get("dys_op", ""), data: null, sub: "songs", lf: "", demo: false, url: "" };
+function opDemoData() {
+  const lyrics = [];
+  Object.entries(DEMO_VARIANTS).forEach(([sid, arr]) => arr.forEach((v, i) => lyrics.push({ id: "d" + sid + "-" + i, songId: +sid, text: v.text, cls: v.cls, region: v.region, at: "2026-10-14 13:20", status: "O" })));
+  lyrics.push({ id: "x1", songId: 2, text: "빨간 단풍잎에 편지를 써요\n바람아 바람아 전해 주렴\n전학 간 친구에게\n보고 싶다고", cls: "달빛초 4-3", region: "충북", at: "2026-10-16 09:12", status: "" });
+  lyrics.push({ id: "x2", songId: 5, text: "톡 톡 톡 우산 위에서\n또 톡 톡 장화 위에서\n빗방울 합창단이\n우리 반 노래 불러요", cls: "시냇물초 2-1", region: "경남", at: "2026-10-16 10:05", status: "" });
+  return { demo: true, defaultPw: false,
+    songs: SONGS.map(s => { const m = /^작사·작곡 (.+)$/.exec(s.lyric), a = /작사 ([^·]+)/.exec(s.lyric), c = /작곡 (.+)$/.exec(s.lyric);
+      return { ...s, lyricist: m ? m[1] : a ? a[1].trim() : "", composer: m ? m[1] : c ? c[1].trim() : "", themes: s.themes.join(", "), year: String(s.year || ""), hidden: false }; }),
+    lyrics, relay: { ...APP.relay },
+    classes: DEMO_CLASSES.slice(0, 14).map((c, i) => ({ pid: "c" + i, name: c.name, region: c.region, stamps: c.sung.length, last: "2026-10-1" + (i % 6) + " 10:00", hidden: false })) };
+}
+function opApplySongs() {
+  if (!OP.data) return;
+  SONGS = songsFromCollector(OP.data.songs.filter(s => !s.hidden).map(s => ({ ...s, year: Number(s.year) || "", themes: String(s.themes).split(/[,，、]/).map(x => x.trim()).filter(Boolean) })));
+  APP.relay = { ...OP.data.relay };
+}
+function opDemo(fn, args) {
+  const d = OP.data;
+  if (fn === "opSaveSong") { const s = args[0], id = +s.id || Math.max(0, ...d.songs.map(x => x.id)) + 1, i = d.songs.findIndex(x => x.id === id);
+    const row = { ...s, id }; if (i >= 0) d.songs[i] = row; else d.songs.push(row); }
+  if (fn === "opLyric") { const l = d.lyrics.find(x => x.id === args[0]); if (l) l.status = args[1]; }
+  if (fn === "opRelay") d.relay = { id: args[0], song: +args[1] };
+  if (fn === "opClass") { const c = d.classes.find(x => x.pid === args[0]); if (c) c.hidden = args[1]; }
+  if (fn === "opPassword") return { ok: true };
+  opApplySongs(); return d;
+}
+function opPost(fn, args) {
+  return fetch(OP.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ fn, args }), redirect: "follow" })
+    .then(r => { if (!r.ok) throw new Error("수집기 응답 오류 (" + r.status + ")"); return r.json(); })
+    .then(j => { if (!j.ok) throw new Error(j.error || "요청 실패"); return j.result; });
+}
+async function opCall(fn, args, okMsg) {
+  if (APP.busy) return;
+  APP.busy = true; document.body.classList.add("busy");
+  try {
+    const r = OP.demo ? opDemo(fn, args) : await opPost(fn, [OP.token].concat(args));
+    if (fn === "opPassword") { toast(r.ok ? "운영진 비밀번호를 바꿨어요" : r.message); if (r.ok && OP.data) OP.data.defaultPw = false; }
+    else { OP.data = r; if (!OP.demo) { opApplySongs(); if (APP.live) await loadNational(); } else NAT = localNational(!APP.live); if (okMsg) toast(okMsg); }
+    render(); return true;
+  } catch (e) {
+    if (/로그인/.test(e.message)) { OP.token = ""; OP.data = null; store.del("dys_op"); render(); }
+    toast(e.message); return false;
+  } finally { APP.busy = false; document.body.classList.remove("busy"); }
+}
+async function opEnsure() {
+  if (OP.data || OP.loading) return;
+  if (!OP.url && !OP.demo) { OP.demo = true; }
+  if (OP.demo) { OP.data = opDemoData(); render(); return; }
+  if (!OP.token) return;
+  OP.loading = true;
+  try { OP.data = await opPost("opData", [OP.token]); opApplySongs(); }
+  catch (e) { if (/로그인/.test(e.message)) { OP.token = ""; store.del("dys_op"); } toast(e.message); }
+  finally { OP.loading = false; render(); }
+}
+function renderOp(v) {
+  if (!APP.cfgLoaded) { v.innerHTML = `<section data-opzone><div class="empty">운영진 메뉴를 여는 중이에요</div></section>`; return; }
+  if (!OP.url && !OP.demo) OP.demo = true;
+  if (!OP.demo && !OP.token) {
+    v.innerHTML = `<section data-opzone><div class="card"><span class="eyebrow">운영진 로그인</span>
+      <p class="meta" style="margin:0">곡 등록, 바꾼 가사 공개, 릴레이, 참여 반을 관리하는 곳이에요. 운영진 비밀번호로 들어와요.</p>
+      <div class="form2"><input type="password" id="opPw" placeholder="운영진 비밀번호" aria-label="운영진 비밀번호" autocomplete="current-password"><button class="btn" data-oplogin>들어가기</button></div>
+      <div class="btns"><button class="btn ghost" data-tab="today">노래상자로 돌아가기</button></div></div></section>`;
+    $("#opPw").addEventListener("keydown", e => { if (e.key === "Enter") opLogin(); });
+    return;
+  }
+  if (!OP.data) { v.innerHTML = `<section data-opzone><div class="empty">운영진 자료를 불러오는 중이에요</div></section>`; opEnsure(); return; }
+  const d = OP.data, pend = d.lyrics.filter(l => !l.status).length;
+  const subs = [["songs", `곡 관리 ${d.songs.length}`], ["lyrics", `가사 확인${pend ? " " + pend : ""}`], ["relay", "릴레이"], ["classes", `참여 반 ${d.classes.length}`], ["account", "비밀번호"]];
+  const title = id => { const s = d.songs.find(x => x.id === id); return s ? s.title : "곡 " + id; };
+  let body = "";
+  if (OP.sub === "songs") {
+    const list = d.songs.slice().sort((a, b) => b.id - a.id);
+    body = `<div class="btns"><button class="btn" data-opedit="0">새 곡 올리기</button></div>
+      <div class="list">${list.map(s => `<div class="oprow${s.hidden ? " off" : ""}"><span class="key" style="--c:var(--c${s.id % 6});--cs:var(--c${s.id % 6}-soft)">${s.id}</span>
+        <span class="min"><b>${esc(s.title)}</b><small class="meta">${esc(s.concert || "발표회 미정")}${s.year ? " · " + esc(s.year) : ""}${s.hidden ? " · 숨김" : ""}${s.video ? " · 영상" : ""}${s.score ? " · 악보" : ""}</small></span>
+        <button class="vote" data-opedit="${s.id}">고치기</button></div>`).join("")}</div>`;
+  }
+  if (OP.sub === "lyrics") {
+    const counts = { "": pend, O: d.lyrics.filter(l => l.status === "O").length, X: d.lyrics.filter(l => l.status === "X").length };
+    const list = d.lyrics.filter(l => l.status === OP.lf).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    body = `<div class="chips">${[["", "확인 전"], ["O", "공개 중"], ["X", "숨김"]].map(([k, n]) => `<button class="chip" data-oplf="${k}" aria-pressed="${OP.lf === k}">${n} ${counts[k]}</button>`).join("")}</div>
+      <p class="meta" style="margin:0">학생들이 쓴 가사예요. 이름·학교처럼 아이를 알아볼 수 있는 말이나 바르지 않은 말이 없는지 보고 공개해 주세요.</p>
+      ${list.length ? list.map(l => `<div class="variant"><span class="label">「${esc(title(l.songId))}」</span><div class="v">${esc(l.text)}</div>
+        <footer><span>${esc(l.cls)} · ${esc(l.region)} · ${esc(l.at)}</span><span class="btns">
+        ${l.status !== "O" ? `<button class="vote on" data-oplyric="${esc(l.id)}" data-st="O">공개</button>` : ""}
+        ${l.status !== "X" ? `<button class="vote" data-oplyric="${esc(l.id)}" data-st="X">숨기기</button>` : ""}
+        ${l.status ? `<button class="vote" data-oplyric="${esc(l.id)}" data-st="">확인 전으로</button>` : ""}</span></footer></div>`).join("")
+        : `<div class="empty">${OP.lf === "" ? "확인할 가사가 없어요" : "여기에 해당하는 가사가 없어요"}</div>`}`;
+  }
+  if (OP.sub === "relay") {
+    const chain = (NAT.relays || {})[d.relay.id] || [];
+    body = `<div class="card"><span class="label">지금 릴레이</span>
+      <input type="text" id="rName" value="${esc(d.relay.id)}" placeholder="예: 2026년 가을 릴레이" aria-label="릴레이 이름">
+      <select id="rSong" aria-label="릴레이 곡">${d.songs.filter(s => !s.hidden).map(s => `<option value="${s.id}"${s.id === d.relay.song ? " selected" : ""}>${s.id}. ${esc(s.title)}</option>`).join("")}</select>
+      <p class="meta" style="margin:0">이름을 바꾸면 새 릴레이가 첫 줄부터 다시 시작돼요. 곡만 바꾸면 이어 온 반은 그대로 두고 가사 줄만 바뀌어요. 지금 ${chain.length}개 반이 이어받았어요.</p>
+      <div class="btns"><button class="btn" data-oprelay>저장</button></div></div>`;
+  }
+  if (OP.sub === "classes") {
+    const list = d.classes.slice().sort((a, b) => String(b.last).localeCompare(String(a.last)));
+    body = `<p class="meta" style="margin:0">노래상자를 쓰는 반이에요. 장난으로 만든 반이나 이름이 알맞지 않은 반은 숨기면 전국 무대에서 빠져요.</p>
+      ${list.length ? `<div class="list">${list.map(c => `<div class="oprow${c.hidden ? " off" : ""}"><span class="key">${esc(c.region)}</span>
+        <span class="min"><b>${esc(c.name)}</b><small class="meta">도장 ${c.stamps}개 · 마지막 ${esc(c.last)}${c.hidden ? " · 숨김" : ""}</small></span>
+        <button class="vote" data-opclass="${esc(c.pid)}" data-h="${c.hidden ? "" : "1"}">${c.hidden ? "보이기" : "숨기기"}</button></div>`).join("")}</div>`
+        : `<div class="empty">아직 참여한 반이 없어요</div>`}`;
+  }
+  if (OP.sub === "account") {
+    body = `<div class="card"><span class="label">운영진 비밀번호 바꾸기</span>
+      <div class="form2"><input type="password" id="opNew" placeholder="새 비밀번호 (6자 이상)" aria-label="새 운영진 비밀번호" autocomplete="new-password"><button class="btn" data-oppw>바꾸기</button></div>
+      <p class="meta" style="margin:0">바꾼 비밀번호를 운영진끼리만 나눠 주세요.</p>
+      <div class="btns">${OP.demo ? "" : `<button class="btn ghost" data-oplogout>로그아웃</button>`}</div></div>`;
+  }
+  v.innerHTML = `<section data-opzone>
+    <div class="card"><span class="eyebrow">동요샘 운영진 메뉴</span>
+      ${OP.demo ? `<p class="meta" style="margin:0">체험 모드예요. 수집기가 연결되지 않아 바꾼 내용은 이 화면에서만 보이고 저장되지 않아요.</p>` : ""}
+      ${d.defaultPw ? `<p class="warn">처음 비밀번호(1234)를 쓰고 있어요. 비밀번호 칸에서 꼭 바꿔 주세요.</p>` : ""}
+      <div class="chips">${subs.map(([k, n]) => `<button class="chip" data-opsub="${k}" aria-pressed="${OP.sub === k}">${n}</button>`).join("")}</div>
+    </div>
+    ${body}
+    <div class="btns"><button class="btn ghost" data-tab="today">노래상자로 돌아가기</button></div>
+  </section>`;
+}
+function openSongEditor(id) {
+  const d = OP.data, s = d.songs.find(x => x.id === id) || { id: 0, title: "", lyricist: "", composer: "", concert: "", year: String(new Date().getFullYear()), grade: "전 학년", themes: "", season: "", key: "", beat: "", range: "", lyrics: "", intro: "", tip: "", video: "", score: "", hidden: false };
+  const picked = String(s.themes).split(/[,，、]/).map(x => x.trim()).filter(Boolean);
+  const extra = picked.filter(t => !THEMES.includes(t)).join(", ");
+  const concerts = [...new Set(d.songs.map(x => x.concert).filter(Boolean))];
+  const f = (id, label, val, ph, type) => `<label class="fld"><span class="label">${label}</span><input type="${type || "text"}" id="${id}" value="${esc(val)}" placeholder="${esc(ph || "")}"${id === "f_concert" ? ' list="concertList"' : ""}></label>`;
+  const sel = (id, label, opts, val) => `<label class="fld"><span class="label">${label}</span><select id="${id}">${opts.map(o => `<option${o === val ? " selected" : ""}>${o}</option>`).join("")}</select></label>`;
+  $("#sheetHost").innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="곡 편집" data-opzone><div class="in">
+    <button class="btn ghost close" data-close>닫기</button>
+    <h3>${s.id ? s.id + "번 곡 고치기" : "새 곡 올리기"}</h3>
+    <datalist id="concertList">${concerts.map(c => `<option value="${esc(c)}">`).join("")}</datalist>
+    ${f("f_title", "곡 제목", s.title, "예: 운동장 한 바퀴")}
+    <div class="form2">${f("f_lyricist", "작사", s.lyricist, "지은 선생님")}${f("f_composer", "작곡", s.composer, "지은 선생님")}</div>
+    <div class="form2">${f("f_concert", "발표회", s.concert, "제4회 동요샘 창작동요 발표회")}${f("f_year", "발표 연도", s.year, "2026", "number")}</div>
+    <div class="form2">${sel("f_grade", "추천 학년군", GRADES, s.grade || "전 학년")}${sel("f_season", "계절", ["", "봄", "여름", "가을", "겨울"], s.season)}</div>
+    <span class="label">주제</span>
+    <div class="chips" id="f_themes">${THEMES.map(t => `<button class="chip" data-opth="${t}" aria-pressed="${picked.includes(t)}">${t}</button>`).join("")}</div>
+    ${f("f_extra", "그 밖의 주제 (쉼표로)", extra, "예: 환경, 우정")}
+    <div class="form3">${f("f_key", "조성", s.key, "D")}${f("f_beat", "박자", s.beat, "2/4")}${f("f_range", "음역", s.range, "레~레")}</div>
+    <label class="fld"><span class="label">가사 (줄 바꿔 적기)</span><textarea id="f_lyrics" rows="6">${esc(s.lyrics)}</textarea></label>
+    <label class="fld"><span class="label">곡 소개</span><textarea id="f_intro" rows="3" class="plain">${esc(s.intro)}</textarea></label>
+    <label class="fld"><span class="label">수업 활용</span><textarea id="f_tip" rows="3" class="plain">${esc(s.tip)}</textarea></label>
+    ${f("f_video", "영상 주소 (https://로 시작)", s.video, "https://youtu.be/…")}
+    ${f("f_score", "악보 주소 (https://로 시작)", s.score, "https://drive.google.com/…")}
+    <label class="check"><input type="checkbox" id="f_hidden"${s.hidden ? " checked" : ""}> 화면에서 숨기기</label>
+    <div class="btns"><button class="btn" data-opsave="${s.id}">${s.id ? "고친 내용 저장" : "곡 올리기"}</button></div>
+  </div></div>`;
+}
+async function opLogin() {
+  const pw = $("#opPw"); if (!pw || !pw.value) { toast("운영진 비밀번호를 적어 주세요"); return; }
+  try { const r = await opPost("opLogin", [pw.value]);
+    if (!r.ok) { toast(r.message); return; }
+    OP.token = r.token; store.set("dys_op", r.token); OP.data = null; toast(r.defaultPw ? "들어왔어요. 처음 비밀번호이니 꼭 바꿔 주세요" : "들어왔어요"); render(); opEnsure();
+  } catch (e) { toast(e.message); }
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t || !t.closest("[data-opzone]")) return;
+  const d = t.dataset;
+  if (t.hasAttribute("data-oplogin")) { opLogin(); return; }
+  if (t.hasAttribute("data-oplogout")) { opPost("opLogout", [OP.token]).catch(() => {}); OP.token = ""; OP.data = null; store.del("dys_op"); render(); toast("운영진 메뉴에서 나왔어요"); return; }
+  if (d.opsub) { OP.sub = d.opsub; render(); return; }
+  if (d.oplf !== undefined) { OP.lf = d.oplf; render(); return; }
+  if (d.opedit !== undefined) { openSongEditor(+d.opedit); return; }
+  if (d.opth) { t.setAttribute("aria-pressed", t.getAttribute("aria-pressed") !== "true"); return; }
+  if (d.opsave !== undefined) {
+    const g = id => $("#" + id).value.trim();
+    const themes = [...document.querySelectorAll("#f_themes [aria-pressed='true']")].map(b => b.dataset.opth).concat(g("f_extra").split(/[,，、]/).map(x => x.trim()).filter(Boolean));
+    const song = { id: +d.opsave, title: g("f_title"), lyricist: g("f_lyricist"), composer: g("f_composer"), concert: g("f_concert"), year: g("f_year"), grade: g("f_grade"), season: g("f_season"),
+      themes: [...new Set(themes)].join(", "), key: g("f_key"), beat: g("f_beat"), range: g("f_range"), lyrics: $("#f_lyrics").value.replace(/\s+$/, ""), intro: g("f_intro"), tip: g("f_tip"),
+      video: g("f_video"), score: g("f_score"), hidden: $("#f_hidden").checked };
+    if (!song.title) { toast("곡 제목을 적어 주세요"); $("#f_title").focus(); return; }
+    if ((song.video && !/^https:\/\//.test(song.video)) || (song.score && !/^https:\/\//.test(song.score))) { toast("영상·악보 주소는 https:// 로 시작해야 해요"); return; }
+    opCall("opSaveSong", [song], song.id ? "곡을 고쳤어요" : "새 곡을 올렸어요").then(ok => { if (ok) $("#sheetHost").innerHTML = ""; });
+    return;
+  }
+  if (d.oplyric !== undefined) { opCall("opLyric", [d.oplyric, d.st], d.st === "O" ? "가사를 공개했어요" : d.st === "X" ? "가사를 숨겼어요" : "확인 전으로 돌렸어요"); return; }
+  if (t.hasAttribute("data-oprelay")) { const n = $("#rName").value.trim(); if (!n) { toast("릴레이 이름을 적어 주세요"); return; } opCall("opRelay", [n, +$("#rSong").value], "릴레이를 저장했어요"); return; }
+  if (d.opclass) { opCall("opClass", [d.opclass, !!d.h], d.h ? "그 반을 숨겼어요" : "그 반을 다시 보이게 했어요"); return; }
+  if (t.hasAttribute("data-oppw")) { const v = $("#opNew").value.trim(); if (v.length < 6) { toast("운영진 비밀번호는 6자 이상으로 정해 주세요"); return; } opCall("opPassword", [v]); $("#opNew").value = ""; return; }
+});
+
 /* ---------- 시작 ---------- */
 (async function start() {
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
   ME = APP.live ? blankMe() : demoMeLoad();
   NAT = localNational(!APP.live);
   render();
+  try { const j = await fetch("national.json", { cache: "no-store" }).then(r => r.json()); if (/^https:\/\/script\.google\.com\//.test(j.collector || "")) OP.url = j.collector; } catch (e) {}
+  APP.cfgLoaded = true;
+  if (tab === "op") { OP.demo = !OP.url; OP.data = null; render(); }
   if (!APP.live) return;
-  try { const j = await fetch("national.json", { cache: "no-store" }).then(r => r.json()); if (/^https:\/\/script\.google\.com\//.test(j.collector || "")) APP.collector = j.collector; } catch (e) {}
+  APP.collector = OP.url;
   const [st] = await Promise.all([rpc("getState").catch(e => ({ error: e.message })), loadNational()]);
   if (st.error) toast("우리 반 시트를 열지 못했어요: " + st.error); else setMe(st);
   if (!APP.collector) NAT = localNational(false);
   render();
 })();
+
 
 </script>
 </body>
