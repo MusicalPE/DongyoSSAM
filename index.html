@@ -632,12 +632,24 @@ body.kara-on .mini-video{z-index:41;top:max(56px,env(safe-area-inset-top));botto
 @media (min-width:1000px){.scene .tbox{gap:16px}.scene .h1sub{padding:4px 16px}}
 @media (max-width:480px){.scene .h1sub{font-size:12px}}
 /* 앱 아이콘 만들기 버튼 (제목 칸 오른쪽 아래) */
-.app-install{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:12px;z-index:2;display:inline-flex;align-items:center;gap:6px;font:700 13px var(--body);color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:5px 12px 5px 9px;cursor:pointer;box-shadow:0 3px 0 var(--shadow)}
+.hd-acts{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:12px;z-index:2;display:flex;gap:8px;align-items:center}
+.app-install{display:inline-flex;align-items:center;gap:6px;font:700 13px var(--body);color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:5px 12px 5px 9px;cursor:pointer;box-shadow:0 3px 0 var(--shadow)}
 .app-install svg{width:16px;height:16px;color:var(--c4)}
+.app-install.qr-btn svg{color:var(--c2)}
 .app-install:hover{border-color:var(--c4)}
 .app-install[hidden]{display:none}
-@media (min-width:1000px){.app-install{right:28px;bottom:16px;font-size:15px;padding:7px 16px 7px 12px}.app-install svg{width:18px;height:18px}}
-@media (max-width:480px){.app-install span{display:none}.app-install{padding:6px;bottom:8px}}
+@media (min-width:1000px){.hd-acts{right:28px;bottom:16px;gap:10px}.app-install{font-size:15px;padding:7px 16px 7px 12px}.app-install svg{width:18px;height:18px}}
+@media (max-width:480px){.app-install span{display:none}.app-install{padding:6px}.hd-acts{bottom:8px;gap:6px}}
+.qr-box{display:grid;justify-items:center;gap:12px;text-align:center}
+.qr-img{width:min(260px,70vw);aspect-ratio:1;background:#fff;border:2px solid var(--line);border-radius:18px;padding:10px;display:grid;place-items:center}
+.qr-img svg,.qr-img img{width:100%;height:100%;display:block}
+.qr-url{font:700 14px var(--body);color:var(--ink);word-break:break-all;background:var(--c4-soft);border-radius:10px;padding:6px 12px}
+.qr-acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.qr-full{position:fixed;inset:0;z-index:300;background:#fff;display:grid;place-items:center;align-content:center;gap:2vh;cursor:pointer;padding:16px;text-align:center}
+.qr-full .qr-big{width:min(78vh,90vw);aspect-ratio:1}
+.qr-full .qr-big svg{width:100%;height:100%;display:block}
+.qr-full b{font:400 clamp(22px,4vh,44px) var(--display,var(--body));color:#2b2b2b}
+.qr-full small{font:700 clamp(14px,2.2vh,22px) var(--body);color:#555}
 .install-steps{display:grid;gap:10px}
 /* 사용 설명서 링크 (동요샘 카페 아래) */
 .cafe.manual-link{background:var(--c4-soft) repeating-linear-gradient(-45deg,transparent 0 14px,rgba(255,255,255,.18) 14px 28px);border-color:var(--c4)}
@@ -693,7 +705,8 @@ body.kara-on .mini-video{z-index:41;top:max(56px,env(safe-area-inset-top));botto
       <rect x="374.5" y="74" width="2.2" height="22"/><rect x="392.5" y="68" width="2.2" height="22"/><path d="M374.5 74l20-6v4l-20 6z"/></g>
   </svg>
   <div class="title"><h1><button class="home" data-tab="today" title="첫 화면으로" aria-label="동요샘 노래상자 첫 화면으로"><img class="logo" src="img/logo.png" alt="동요샘" width="371" height="272"><span class="tbox"><span class="h1t"><span class="r0">노</span><span class="r1">래</span><span class="r2">상</span><span class="r3">자</span></span><span class="h1sub">선생님이 지은 동요를 함께 불러요</span></span></button></h1></div>
-  <button class="app-install" id="appInstall" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v7M9 11l3 3 3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>앱 아이콘 만들기</span></button>
+  <div class="hd-acts"><button class="app-install qr-btn" id="qrOpen" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></g><g fill="currentColor"><rect x="5.5" y="5.5" width="2" height="2"/><rect x="16.5" y="5.5" width="2" height="2"/><rect x="5.5" y="16.5" width="2" height="2"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/><rect x="18" y="14" width="3" height="2"/><rect x="14" y="18" width="2" height="3"/></g></svg><span>QR로 들어오기</span></button>
+  <button class="app-install" id="appInstall" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v7M9 11l3 3 3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>앱 아이콘 만들기</span></button></div>
   </div>
   <svg class="hills" viewBox="0 96 400 54" preserveAspectRatio="none" aria-hidden="true">
     <path d="M0 128 Q 80 98 170 122 T 400 116 V150 H0Z" fill="var(--hill1)"/>
@@ -2032,6 +2045,71 @@ document.addEventListener("click", e => {
   if (INSTALL.ev) { const ev = INSTALL.ev; ev.prompt(); (ev.userChoice || Promise.resolve({})).then(r => { if (r.outcome === "accepted") { INSTALL.ev = null; b.hidden = true; } }); return; }
   installHelp();
 }, true);
+
+/* ---------- QR로 들어오기 ---------- */
+const SITE_URL = "https://musicalpe.github.io/DongyoSSAM/";
+let qrLib = null;
+function loadQR() {
+  if (window.qrcode) return Promise.resolve(window.qrcode);
+  if (qrLib) return qrLib;
+  qrLib = new Promise((ok, no) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"; s.onload = () => window.qrcode ? ok(window.qrcode) : no(); s.onerror = () => { qrLib = null; no(); }; document.head.appendChild(s); });
+  return qrLib;
+}
+function qrMake(url) { const q = window.qrcode(0, "M"); q.addData(url); q.make(); return q; }
+function qrSvg(q, margin) { return q.createSvgTag({ cellSize: 8, margin: margin == null ? 2 : margin, scalable: true }); }
+function qrPng(q) {
+  const n = q.getModuleCount(), cell = 16, m = 4 * cell, size = n * cell + m * 2, c = document.createElement("canvas");
+  c.width = c.height = size; const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, size, size); x.fillStyle = "#000";
+  for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) x.fillRect(m + k * cell, m + r * cell, cell, cell);
+  return c.toDataURL("image/png");
+}
+function qrOpen() {
+  const host = $("#sheetHost");
+  host.innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="QR로 들어오기"><div class="in">
+    <button class="btn ghost close" data-close>닫기</button>
+    <h3>QR로 들어오기</h3>
+    <div class="qr-box">
+      <p class="meta" style="margin:0">휴대폰 카메라로 찍으면 노래상자로 바로 들어와요. 교실 화면에 크게 띄워 두거나 그림으로 저장해 안내문에 붙여 쓰세요.</p>
+      <div class="qr-img" id="qrImg"><span class="meta">QR을 만들고 있어요…</span></div>
+      <span class="qr-url">${esc(SITE_URL)}</span>
+      <div class="qr-acts">
+        <button class="btn" data-qr="full">크게 띄우기</button>
+        <button class="btn ghost" data-qr="copy">주소 복사</button>
+        <button class="btn ghost" data-qr="save">QR 그림 저장</button>
+      </div>
+    </div>
+  </div></div>`;
+  loadQR().then(() => { const b = $("#qrImg"); if (b) b.innerHTML = qrSvg(qrMake(SITE_URL)); })
+    .catch(() => { const b = $("#qrImg"); if (b) b.innerHTML = `<span class="meta">인터넷 연결을 확인하고 다시 열어 주세요.</span>`; });
+}
+function qrFull() {
+  if (!window.qrcode) return;
+  const d = document.createElement("div"); d.className = "qr-full"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "QR 크게 보기");
+  d.innerHTML = `<div class="qr-big">${qrSvg(qrMake(SITE_URL), 1)}</div><b>휴대폰으로 찍어서 들어와요</b><small>동요샘 노래상자 · 화면을 누르면 닫혀요</small>`;
+  const close = () => { d.remove(); document.removeEventListener("keydown", esc_); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); };
+  const esc_ = e => { if (e.key === "Escape") close(); };
+  d.addEventListener("click", close); document.addEventListener("keydown", esc_);
+  document.body.appendChild(d);
+  if (d.requestFullscreen) d.requestFullscreen().catch(() => {});
+}
+document.addEventListener("click", e => {
+  if (e.target.closest("#qrOpen")) { e.stopPropagation(); qrOpen(); return; }
+  const a = e.target.closest("[data-qr]"); if (!a) return;
+  e.stopPropagation();
+  const k = a.dataset.qr;
+  if (k === "full") qrFull();
+  else if (k === "copy") {
+    const done = () => toast("주소를 복사했어요. 카카오톡이나 알림장에 붙여 넣으세요");
+    (navigator.clipboard ? navigator.clipboard.writeText(SITE_URL) : Promise.reject()).then(done).catch(() => {
+      const t = document.createElement("textarea"); t.value = SITE_URL; document.body.appendChild(t); t.select();
+      try { document.execCommand("copy"); done(); } catch (er) { toast("주소: " + SITE_URL); } t.remove();
+    });
+  } else if (k === "save" && window.qrcode) {
+    const l = document.createElement("a"); l.href = qrPng(qrMake(SITE_URL)); l.download = "동요샘_노래상자_QR.png"; document.body.appendChild(l); l.click(); l.remove();
+    toast("QR 그림을 저장했어요");
+  }
+}, true);
+if (/[?&]qr=1\b/.test(location.search)) setTimeout(qrOpen, 300);
 
 /* ---------- 시작 ---------- */
 (async function start() {
